@@ -1,48 +1,74 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './lib/**/*.{js,ts,jsx,tsx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
-      colors: {
-        navy: {
-          900: '#0f172a',
-          800: '#1e293b',
-          700: '#334155',
-          600: '#475569',
-        },
-        teal: {
-          600: '#0d9488',
-          500: '#14b8a6',
-          400: '#2dd4bf',
-          300: '#5eead4',
-        },
-        gold: '#f59e0b',
-      },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['var(--font-coinbase-display)'],
+        sans: ['var(--font-coinbase-sans)'],
+        mono: ['var(--font-coinbase-mono)'],
       },
-      animation: {
-        'count-up': 'countUp 1s ease-out forwards',
-        'slide-in': 'slideIn 0.3s ease-out',
-        'fade-in': 'fadeIn 0.4s ease-out',
+      colors: {
+        primary: {
+          DEFAULT: '#0052ff',
+          active: '#003ecc',
+          disabled: '#a8b8cc',
+        },
+        ink: '#0a0b0d',
+        body: '#5b616e',
+        muted: {
+          DEFAULT: '#7c828a',
+          soft: '#a8acb3',
+        },
+        hairline: {
+          DEFAULT: '#dee1e6',
+          soft: '#eef0f3',
+        },
+        canvas: '#ffffff',
+        surface: {
+          soft: '#f7f7f7',
+          card: '#ffffff',
+          strong: '#eef0f3',
+          dark: '#0a0b0d',
+          darkElevated: '#16181c',
+        },
+        on: {
+          primary: '#ffffff',
+          dark: '#ffffff',
+          darkSoft: '#a8acb3',
+        },
+        semantic: {
+          up: '#05b169',
+          down: '#cf202f',
+        },
+        accent: {
+          yellow: '#f4b000',
+        },
       },
-      keyframes: {
-        countUp: {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        slideIn: {
-          '0%': { opacity: '0', transform: 'translateX(-10px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' },
-        },
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
+      borderRadius: {
+        none: '0px',
+        xs: '4px',
+        sm: '8px',
+        md: '12px',
+        lg: '16px',
+        xl: '24px',
+        pill: '100px',
+        full: '9999px',
+      },
+      spacing: {
+        xxs: '4px',
+        xs: '8px',
+        sm: '12px',
+        base: '16px',
+        md: '20px',
+        lg: '24px',
+        xl: '32px',
+        xxl: '48px',
+        section: '96px',
       },
     },
   },

@@ -24,6 +24,25 @@ const LaunchCampaignSchema = z.object({
   message: z.string(),
 });
 
+// Helper function to retry Gemini API calls on 503 errors
+async function generateContentWithRetry(genai: GoogleGenAI, model: string, options: any, maxRetries = 3) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await genai.models.generateContent({
+        model,
+        ...options,
+      });
+    } catch (error: any) {
+      if (error.message && error.message.includes('503') && attempt < maxRetries) {
+        console.warn(`[Gemini API] 503 Service Unavailable on attempt ${attempt}. Retrying in ${attempt * 2}s...`);
+        await new Promise(res => setTimeout(res, attempt * 2000));
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
 export async function aiRoutes(fastify: FastifyInstance) {
   const genai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
@@ -33,7 +52,6 @@ export async function aiRoutes(fastify: FastifyInstance) {
     try {
       const { goal } = QueryPersonasSchema.parse(request.body);
       
-      // Fetch all personas from DB
       const personas = await prisma.persona.findMany();
       if (personas.length === 0) {
         return reply.status(400).send({ error: 'No personas defined in DB' });
@@ -47,25 +65,21 @@ export async function aiRoutes(fastify: FastifyInstance) {
       Return ONLY a JSON object with this exact structure:
       { "persona_id": "<matched_uuid>" }`;
 
-      const response = await genai.models.generateContent({
-        model,
+      const response = await generateContentWithRetry(genai, model, {
         contents: [
           {
             role: 'user',
-            parts: [
-              { text: `Personas:\n${personaListStr}\n\nMarketer Goal: "${goal}"` },
-            ],
+            parts: [{ text: `Personas:\n${personaListStr}\n\nMarketer Goal: "${goal}"` }],
           },
         ],
         config: { systemInstruction: systemPrompt, temperature: 0.1 },
       });
 
-      const cleaned = (response.text ?? '').replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+      const cleaned = (response?.text ?? '').replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
       const aiResult = JSON.parse(cleaned);
 
       const matchedPersona = personas.find((p) => p.id === aiResult.persona_id) || personas[0];
 
-      // Count audience
       const count = await prisma.customerPersona.count({
         where: { persona_id: matchedPersona.id },
       });
@@ -75,7 +89,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
         count,
       });
     } catch (err) {
-      console.error(err);
+      console.error('query-personas error:', err);
       return reply.status(500).send({ error: 'Failed to query personas' });
     }
   });
@@ -85,13 +99,11 @@ export async function aiRoutes(fastify: FastifyInstance) {
     try {
       const { persona_id } = RecommendCampaignSchema.parse(request.body);
 
-      // Find best channel
       const channels = await prisma.channelMetric.findMany({
         orderBy: { conversion_rate: 'desc' },
       });
       const bestChannel = channels[0] || { channel: 'WhatsApp', conversion_rate: 5 };
 
-      // Calculate AOV for this persona
       const customerPersonas = await prisma.customerPersona.findMany({
         where: { persona_id },
         include: { customer: true },
@@ -120,7 +132,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
         audienceCount: customerPersonas.length,
       });
     } catch (err) {
-      console.error(err);
+      console.error('recommend-campaign error:', err);
       return reply.status(500).send({ error: 'Failed to recommend campaign' });
     }
   });
@@ -137,8 +149,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
         "variantB": "<message text>"
       }`;
 
-      const response = await genai.models.generateContent({
-        model,
+      const response = await generateContentWithRetry(genai, model, {
         contents: [
           {
             role: 'user',
@@ -148,12 +159,12 @@ export async function aiRoutes(fastify: FastifyInstance) {
         config: { systemInstruction: systemPrompt, temperature: 0.7 },
       });
 
-      const cleaned = (response.text ?? '').replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+      const cleaned = (response?.text ?? '').replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
       const variants = JSON.parse(cleaned);
 
       return reply.send(variants);
     } catch (err) {
-      console.error(err);
+      console.error('draft-messages error:', err);
       return reply.status(500).send({ error: 'Failed to draft messages' });
     }
   });
@@ -163,7 +174,6 @@ export async function aiRoutes(fastify: FastifyInstance) {
     try {
       const { name, persona_id, channel, message } = LaunchCampaignSchema.parse(request.body);
 
-      // Create Campaign
       const campaign = await prisma.campaign.create({
         data: {
           name,
@@ -174,12 +184,10 @@ export async function aiRoutes(fastify: FastifyInstance) {
         },
       });
 
-      // Find all customers in persona
       const customerPersonas = await prisma.customerPersona.findMany({
         where: { persona_id },
       });
 
-      // Create Communications
       const commData = customerPersonas.map((cp) => ({
         campaign_id: campaign.id,
         customer_id: cp.customer_id,
@@ -188,12 +196,10 @@ export async function aiRoutes(fastify: FastifyInstance) {
 
       await prisma.communication.createMany({ data: commData });
 
-      // Fetch created communications to queue them
       const comms = await prisma.communication.findMany({
         where: { campaign_id: campaign.id },
       });
 
-      // Enqueue Jobs
       let queued = 0;
       for (const comm of comms) {
         await queueSendJob(comm.id);
@@ -206,7 +212,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
         queued_count: queued,
       });
     } catch (err) {
-      console.error(err);
+      console.error('launch-campaign error:', err);
       return reply.status(500).send({ error: 'Failed to launch campaign' });
     }
   });

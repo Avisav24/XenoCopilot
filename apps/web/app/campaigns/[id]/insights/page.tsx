@@ -22,16 +22,14 @@ type Insights = {
 };
 
 function KpiCard({ label, value, sub, trend }: { label: string; value: string; sub?: string; trend?: 'up' | 'down' | 'neutral' }) {
-  const trendIcon = trend === 'up' ? '↑' : trend === 'down' ? '↓' : '→';
-  const trendColor = trend === 'up' ? 'text-emerald-500' : trend === 'down' ? 'text-red-500' : 'text-slate-400';
+  const trendColor = trend === 'up' ? 'text-semantic-up' : trend === 'down' ? 'text-semantic-down' : 'text-muted';
   return (
     <div className="stat-card">
-      <div className="flex items-start justify-between">
-        <p className="text-2xl font-bold text-slate-800">{value}</p>
-        <span className={`text-sm font-bold ${trendColor}`}>{trendIcon}</span>
+      <div className="flex items-start justify-between mb-2">
+        <p className="text-[13px] font-semibold text-muted">{label}</p>
       </div>
-      <p className="text-sm font-medium text-slate-600">{label}</p>
-      {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
+      <p className="text-[28px] font-mono-numbers text-ink leading-none">{value}</p>
+      {sub && <p className="text-[13px] text-muted mt-2">{sub}</p>}
     </div>
   );
 }
@@ -42,7 +40,7 @@ export default function InsightsPage({ params }: { params: { id: string } }) {
   const { data: insights, isLoading } = useQuery({
     queryKey: ['campaign-insights', id],
     queryFn: () => getCampaignInsights(id) as Promise<Insights>,
-    refetchInterval: 5000, // keep updating during sim
+    refetchInterval: 5000,
   });
 
   if (isLoading) {
@@ -58,7 +56,7 @@ export default function InsightsPage({ params }: { params: { id: string } }) {
   if (!insights) {
     return (
       <div className="p-8 text-center">
-        <p className="text-slate-500">No insights found.</p>
+        <p className="text-body">No insights found.</p>
       </div>
     );
   }
@@ -75,22 +73,22 @@ export default function InsightsPage({ params }: { params: { id: string } }) {
   return (
     <div className="p-8 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-start justify-between mb-8 border-b border-hairline pb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 mb-1">{insights.campaign_name}</h1>
-          <div className="flex items-center gap-3 text-sm text-slate-500">
-            <span className="font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-md border border-indigo-100">
+          <h1 className="text-[32px] font-display font-normal text-ink mb-3">{insights.campaign_name}</h1>
+          <div className="flex items-center gap-3 text-[14px]">
+            <span className="font-semibold text-ink bg-surface-strong px-3 py-1 rounded">
               {insights.persona}
             </span>
-            <span className="font-medium bg-slate-100 px-2.5 py-0.5 rounded-md">
-              {insights.channel === 'WhatsApp' ? '💬' : insights.channel === 'Email' ? '📧' : '📱'} {insights.channel}
+            <span className="font-medium text-ink bg-surface-strong px-3 py-1 rounded">
+              {insights.channel}
             </span>
           </div>
         </div>
       </div>
 
       {/* ROW 1 — KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <KpiCard
           label="Total Reached"
           value={insights.funnel.sent.toLocaleString()}
@@ -118,47 +116,44 @@ export default function InsightsPage({ params }: { params: { id: string } }) {
       </div>
 
       {/* ROW 2 — Chart and AI Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Funnel Chart */}
-        <div className="card p-6 col-span-2">
-          <h2 className="font-semibold text-slate-700 mb-5">Campaign Funnel</h2>
+        <div className="card p-8 col-span-2">
+          <h2 className="text-[18px] font-semibold text-ink mb-6">Campaign Funnel</h2>
           <ResponsiveContainer width="100%" height={260}>
-            <BarChart data={funnelData} layout="vertical" barSize={20} margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
-              <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-              <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} width={80} />
+            <BarChart data={funnelData} layout="vertical" barSize={24} margin={{ top: 0, right: 30, left: 10, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#eef0f3" />
+              <XAxis type="number" tick={{ fontSize: 13, fill: '#7c828a' }} />
+              <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: '#5b616e' }} width={80} />
               <Tooltip
-                contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                cursor={{ fill: '#f8fafc' }}
+                contentStyle={{ fontSize: 14, borderRadius: 8, border: '1px solid #dee1e6', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.04)' }}
+                cursor={{ fill: '#f7f7f7' }}
               />
-              <Bar dataKey="value" fill="#4f46e5" radius={[0, 6, 6, 0]} />
+              <Bar dataKey="value" fill="#0052ff" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
 
         {/* AI Insight Card */}
-        <div className="card p-6 bg-indigo-50 border-none flex flex-col justify-center">
-          <div className="flex items-start gap-3 mb-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm text-indigo-600 text-xl">
-              ✨
-            </div>
+        <div className="card p-8 border-l-4 border-l-primary flex flex-col justify-center">
+          <div className="flex items-start gap-3 mb-4">
             <div>
-              <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mt-1.5">
+              <p className="text-[13px] font-bold text-primary uppercase tracking-wider">
                 XenoCopilot Insight
               </p>
             </div>
           </div>
-          <p className="text-slate-800 leading-relaxed font-medium">
+          <p className="text-ink text-[16px] leading-[1.5] mb-6">
             {insights.ai_summary}
           </p>
-          <div className="mt-6 pt-4 border-t border-indigo-100/50">
-            <div className="flex justify-between items-center text-xs text-indigo-600/70 font-semibold">
+          <div className="mt-auto pt-6 border-t border-hairline">
+            <div className="flex justify-between items-center text-[13px] font-semibold text-muted">
               <span>Delivery Status</span>
-              <span>{insights.funnel.delivery_rate}</span>
+              <span className="text-ink">{insights.funnel.delivery_rate}</span>
             </div>
-            <div className="flex justify-between items-center text-xs text-indigo-600/70 font-semibold mt-1">
+            <div className="flex justify-between items-center text-[13px] font-semibold text-muted mt-2">
               <span>Conversion Rate</span>
-              <span>{insights.funnel.conversion_rate}</span>
+              <span className="text-ink">{insights.funnel.conversion_rate}</span>
             </div>
           </div>
         </div>

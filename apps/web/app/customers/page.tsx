@@ -9,27 +9,11 @@ type Customer = {
   name: string;
   email: string | null;
   phone: string | null;
-  preferred_channel: string | null;
-  favorite_category: string | null;
-  discount_affinity: boolean;
-  total_orders: number;
-  total_spend: number;
-  last_order_at: string | null;
-};
-
-const CHANNEL_STYLES: Record<string, string> = {
-  email: 'bg-blue-50 text-blue-600',
-  whatsapp: 'bg-emerald-50 text-emerald-600',
-  sms: 'bg-purple-50 text-purple-600',
-};
-const CHANNEL_ICONS: Record<string, string> = { email: '📧', whatsapp: '💬', sms: '📱' };
-
-const CATEGORY_COLORS: Record<string, string> = {
-  dresses: 'bg-pink-50 text-pink-600',
-  tops: 'bg-orange-50 text-orange-600',
-  denim: 'bg-blue-50 text-blue-600',
-  accessories: 'bg-purple-50 text-purple-600',
-  footwear: 'bg-amber-50 text-amber-600',
+  city: string | null;
+  personas: string[];
+  total_spent: number;
+  last_order_date: string | null;
+  signup_date: string;
 };
 
 export default function CustomersPage() {
@@ -76,9 +60,8 @@ export default function CustomersPage() {
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50">
               <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Category</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Channel</th>
-              <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Orders</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">City</th>
+              <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Personas</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Spend</th>
               <th className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">Last Order</th>
             </tr>
@@ -87,21 +70,21 @@ export default function CustomersPage() {
             {isLoading
               ? Array.from({ length: 10 }).map((_, i) => (
                   <tr key={i}>
-                    <td colSpan={6} className="px-5 py-3.5">
+                    <td colSpan={5} className="px-5 py-3.5">
                       <div className="h-6 skeleton rounded w-full" />
                     </td>
                   </tr>
                 ))
               : customers.map((c) => {
                   const initials = c.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
-                  const daysSince = c.last_order_at
-                    ? Math.floor((Date.now() - new Date(c.last_order_at).getTime()) / (1000 * 60 * 60 * 24))
+                  const daysSince = c.last_order_date
+                    ? Math.floor((Date.now() - new Date(c.last_order_date).getTime()) / (1000 * 60 * 60 * 24))
                     : null;
                   return (
                     <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 text-xs font-bold flex-shrink-0">
                             {initials}
                           </div>
                           <div>
@@ -110,23 +93,20 @@ export default function CustomersPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-5 py-3.5">
-                        {c.favorite_category && (
-                          <span className={`status-badge ${CATEGORY_COLORS[c.favorite_category] || 'bg-slate-100 text-slate-600'}`}>
-                            {c.favorite_category}
-                          </span>
-                        )}
+                      <td className="px-5 py-3.5 text-sm text-slate-600">
+                        {c.city || '—'}
                       </td>
                       <td className="px-5 py-3.5">
-                        {c.preferred_channel && (
-                          <span className={`status-badge ${CHANNEL_STYLES[c.preferred_channel] || 'bg-slate-100 text-slate-600'}`}>
-                            {CHANNEL_ICONS[c.preferred_channel]} {c.preferred_channel}
-                          </span>
-                        )}
+                        <div className="flex gap-1 flex-wrap">
+                          {c.personas.map(p => (
+                            <span key={p} className="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded">
+                              {p}
+                            </span>
+                          ))}
+                        </div>
                       </td>
-                      <td className="px-5 py-3.5 text-sm text-slate-600">{c.total_orders}</td>
                       <td className="px-5 py-3.5 text-sm font-medium text-slate-800">
-                        ₹{c.total_spend.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                        ₹{c.total_spent.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                       </td>
                       <td className="px-5 py-3.5 text-sm text-slate-500">
                         {daysSince !== null ? `${daysSince}d ago` : '—'}

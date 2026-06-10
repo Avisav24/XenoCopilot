@@ -1,243 +1,137 @@
 'use client';
 
+import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { getCustomerStats, queryPersonas, recommendCampaign, draftMessages, launchCampaign } from '@/lib/api';
+import { getCustomerStats, getCampaigns } from '@/lib/api';
 
-export default function AIHubPage() {
-  const router = useRouter();
-  const { data: stats, isLoading } = useQuery({
+export default function LandingPage() {
+  const { data: stats } = useQuery({
     queryKey: ['customer-stats'],
     queryFn: getCustomerStats,
   });
 
-  const [goal, setGoal] = useState('');
-  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4>(0);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const { data: campaigns } = useQuery({
+    queryKey: ['campaigns'],
+    queryFn: getCampaigns,
+  });
 
-  // Workflow State
-  const [personaResult, setPersonaResult] = useState<any>(null);
-  const [recResult, setRecResult] = useState<any>(null);
-  const [variants, setVariants] = useState<any>(null);
-  const [selectedVariant, setSelectedVariant] = useState<'variantA' | 'variantB'>('variantA');
-  const [campaignName, setCampaignName] = useState('');
-
-  const handleStartWorkflow = async () => {
-    if (!goal.trim()) return;
-    setIsProcessing(true);
-    setStep(1); // querying persona
-    
-    try {
-      const pRes = await queryPersonas(goal);
-      setPersonaResult(pRes);
-      
-      setStep(2); // recommending
-      const rRes = await recommendCampaign(pRes.persona.id);
-      setRecResult(rRes);
-
-      setStep(3); // drafting
-      const vRes = await draftMessages(pRes.persona.name, rRes.channel);
-      setVariants(vRes);
-      setCampaignName(`${pRes.persona.name} - ${rRes.channel} Campaign`);
-
-      setStep(4); // ready for review
-    } catch (err) {
-      console.error(err);
-      alert('AI workflow failed. Make sure the API is running.');
-      setStep(0);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleLaunch = async () => {
-    if (!campaignName.trim()) return;
-    setIsProcessing(true);
-    try {
-      const res = await launchCampaign({
-        name: campaignName,
-        persona_id: personaResult.persona.id,
-        channel: recResult.channel,
-        message: variants[selectedVariant],
-      });
-      if (res.success) {
-        router.push(`/campaigns/${res.campaign_id}/insights`);
-      }
-    } catch (err) {
-      console.error(err);
-      alert('Failed to launch campaign');
-      setIsProcessing(false);
-    }
-  };
+  const campaignsList = (campaigns as any[]) || [];
 
   return (
-    <div className="p-8 max-w-5xl mx-auto flex flex-col gap-8 h-[calc(100vh-4rem)]">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-slate-800 tracking-tight">AI Persona Intelligence Hub</h1>
-        <p className="text-slate-500 mt-2 text-lg">Describe your goal, and XenoCopilot will automatically find the best audience, recommend channels, and launch the campaign.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 flex-1">
-        {/* Left Column: Discovered Personas */}
-        <div className="col-span-1 flex flex-col gap-4">
-          <h2 className="font-semibold text-slate-700 text-sm uppercase tracking-wider">Top Customer Personas</h2>
-          {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => <div key={i} className="h-20 skeleton rounded-xl" />)}
-            </div>
-          ) : (
-            <div className="space-y-4 overflow-y-auto pr-2 pb-8">
-              {stats?.personas?.map((p: any) => (
-                <div key={p.name} className="card p-5 border-l-4 border-teal-500 hover:shadow-md transition-shadow">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-slate-800">{p.name}</h3>
-                    <span className="bg-teal-50 text-teal-700 text-xs font-bold px-2.5 py-1 rounded-full">
-                      {p.count} shoppers
-                    </span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-teal-500 rounded-full" style={{ width: `${Math.min(100, (p.count / stats.total) * 100)}%` }} />
-                  </div>
-                </div>
-              ))}
-              
-              <div className="card p-5 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white mt-4">
-                <p className="text-sm font-semibold opacity-90 uppercase tracking-wide">Total Revenue</p>
-                <p className="text-3xl font-bold mt-1">₹{(stats?.total * stats?.avg_spend).toLocaleString('en-IN')}</p>
-                <p className="text-sm opacity-80 mt-1">From {stats?.total} active shoppers</p>
-              </div>
-            </div>
-          )}
+    <div className="min-h-screen bg-canvas">
+      {/* Hero Band Dark */}
+      <section className="hero-band-dark min-h-[600px] flex-col md:flex-row relative overflow-hidden">
+        <div className="w-full md:w-1/2 z-10">
+          <h1 className="text-[80px] font-display font-normal leading-[1.0] tracking-[-2px] mb-6">
+            The next generation of marketing.
+          </h1>
+          <p className="text-[18px] text-on-darkSoft max-w-md mb-8 leading-[1.5]">
+            An AI-first campaign platform that connects directly to your customer database. Select a goal, and we handle the rest.
+          </p>
+          <Link href="/chat" className="btn-primary-large inline-flex">
+            Open Copilot
+          </Link>
         </div>
 
-        {/* Right Column: AI Chat & Workflow */}
-        <div className="col-span-2 card flex flex-col bg-slate-50 overflow-hidden border border-slate-200 shadow-sm relative">
-          <div className="p-6 border-b border-slate-200 bg-white">
-            <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-              <span className="text-indigo-600">✨</span> Campaign Copilot
-            </h2>
-          </div>
-
-          <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 relative">
-            
-            {/* Step 0: Input */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-              <label className="block text-sm font-medium text-slate-700 mb-2">What is your goal?</label>
-              <textarea
-                value={goal}
-                onChange={e => setGoal(e.target.value)}
-                placeholder="e.g. Sell our excess inventory of dresses, or Increase repeat purchases from loyalists..."
-                className="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-all"
-                rows={3}
-                disabled={step > 0}
-              />
-              {step === 0 && (
-                <button
-                  onClick={handleStartWorkflow}
-                  disabled={!goal.trim() || isProcessing}
-                  className="mt-3 btn-primary w-full py-3 bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 shadow-lg text-white font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-                >
-                  {isProcessing ? 'Thinking...' : 'Generate Campaign'} 
-                  {!isProcessing && <span>→</span>}
-                </button>
-              )}
+        {/* Product UI Mockup */}
+        <div className="w-full md:w-1/2 mt-12 md:mt-0 relative z-10 flex justify-end pr-8">
+          <div className="product-ui-card-dark w-full max-w-md transform rotate-[-2deg] translate-y-8 relative">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-3 h-3 rounded-full bg-semantic-down" />
+              <div className="w-3 h-3 rounded-full bg-accent-yellow" />
+              <div className="w-3 h-3 rounded-full bg-semantic-up" />
             </div>
-
-            {/* Step 1 & 2: Persona & Recommendation */}
-            {step >= 1 && (
-              <div className={`transition-all duration-500 ${step === 1 ? 'opacity-50 animate-pulse' : 'opacity-100'}`}>
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 mt-1">✨</div>
-                  <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex-1">
-                    {step === 1 ? (
-                      <p className="text-slate-600">Analyzing your goal to find the best persona...</p>
-                    ) : (
-                      <>
-                        <p className="text-slate-800 mb-4">
-                          Based on your goal, I recommend targeting <strong className="text-indigo-600">{personaResult?.persona.name}</strong>.
-                        </p>
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                            <p className="text-xs text-slate-500 uppercase font-semibold">Audience Size</p>
-                            <p className="text-xl font-bold text-slate-800">{personaResult?.count} shoppers</p>
-                          </div>
-                          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                            <p className="text-xs text-slate-500 uppercase font-semibold">Best Channel</p>
-                            <p className="text-xl font-bold text-slate-800">{recResult?.channel}</p>
-                          </div>
-                        </div>
-                        <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-800">
-                          <p className="text-sm font-semibold mb-1">Expected Revenue Impact</p>
-                          <p className="text-2xl font-bold">₹{recResult?.expectedRevenue.toLocaleString('en-IN')}</p>
-                          <p className="text-xs mt-1 opacity-80">Based on historical {recResult?.channel} conversion rates and persona AOV.</p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Drafting & Review */}
-            {step >= 3 && (
-              <div className={`transition-all duration-500 ${step === 3 ? 'opacity-50 animate-pulse' : 'opacity-100'}`}>
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 mt-1">✏️</div>
-                  <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex-1">
-                    {step === 3 ? (
-                      <p className="text-slate-600">Drafting personalized message variants...</p>
-                    ) : (
-                      <>
-                        <div className="mb-4">
-                          <label className="block text-sm font-medium text-slate-700 mb-1">Campaign Name</label>
-                          <input 
-                            value={campaignName}
-                            onChange={e => setCampaignName(e.target.value)}
-                            className="w-full p-2.5 border border-slate-200 rounded-lg text-sm"
-                          />
-                        </div>
-                        <p className="text-sm font-medium text-slate-700 mb-3">Select a Message Variant:</p>
-                        <div className="space-y-3">
-                          <div 
-                            onClick={() => setSelectedVariant('variantA')}
-                            className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedVariant === 'variantA' ? 'border-indigo-500 bg-indigo-50 shadow-sm ring-1 ring-indigo-500' : 'border-slate-200 hover:border-indigo-300'}`}
-                          >
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">Variant A</span>
-                            </div>
-                            <p className="text-sm text-slate-700 whitespace-pre-wrap">{variants?.variantA}</p>
-                          </div>
-                          
-                          <div 
-                            onClick={() => setSelectedVariant('variantB')}
-                            className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedVariant === 'variantB' ? 'border-indigo-500 bg-indigo-50 shadow-sm ring-1 ring-indigo-500' : 'border-slate-200 hover:border-indigo-300'}`}
-                          >
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">Variant B</span>
-                            </div>
-                            <p className="text-sm text-slate-700 whitespace-pre-wrap">{variants?.variantB}</p>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={handleLaunch}
-                          disabled={isProcessing}
-                          className="mt-6 w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                          {isProcessing ? 'Launching...' : `Launch to ${personaResult?.count} Shoppers`}
-                          {!isProcessing && <span>🚀</span>}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+            <p className="text-[13px] text-muted mb-2 font-semibold">Recommended Campaign</p>
+            <p className="text-[32px] font-mono-numbers text-on-dark mb-1">₹145,200</p>
+            <p className="text-[14px] text-semantic-up font-mono-numbers mb-6">+3.4% Est. Conversion</p>
+            <div className="h-px bg-white/10 w-full mb-6" />
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-on-darkSoft text-[14px]">Channel</span>
+              <span className="text-on-dark font-medium text-[14px]">WhatsApp</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-on-darkSoft text-[14px]">Target</span>
+              <span className="bg-primary/20 text-primary px-2 py-1 rounded text-[12px] font-bold">Beauty Loyalists</span>
+            </div>
+          </div>
+          
+          <div className="product-ui-card-dark w-full max-w-sm absolute top-32 -left-12 transform rotate-[4deg] shadow-2xl opacity-90 border border-white/5">
+             <div className="flex items-start gap-4">
+               <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold">A</div>
+               <div>
+                 <p className="text-[14px] font-semibold text-on-dark">Generating Variants</p>
+                 <p className="text-[13px] text-on-darkSoft mt-1">Drafting 2 high-conversion messages...</p>
+                 <div className="w-3/4 h-2 bg-white/10 rounded-full mt-4 overflow-hidden">
+                    <div className="w-1/2 h-full bg-primary rounded-full" />
+                 </div>
+               </div>
+             </div>
           </div>
         </div>
-      </div>
+        
+        {/* Decorative Grid */}
+        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+      </section>
+
+      {/* Feature Band Light */}
+      <section className="bg-canvas px-8 py-section text-ink max-w-[1200px] mx-auto">
+        <h2 className="text-[52px] font-display leading-[1.0] tracking-[-1.3px] mb-16 text-center">
+          Institutional-grade infrastructure.
+        </h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="card p-[32px] hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 rounded-full bg-surface-strong flex items-center justify-center mb-6">
+              <svg className="w-6 h-6 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </div>
+            <h3 className="text-[18px] font-semibold mb-3">Live Audience Syncer</h3>
+            <p className="text-[16px] text-body">
+              Syncs with your active customer base in real-time. Currently tracking <strong className="font-mono-numbers text-ink">{stats?.total || 500}</strong> high-value shoppers.
+            </p>
+          </div>
+          
+          <div className="card p-[32px] hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 rounded-full bg-surface-strong flex items-center justify-center mb-6">
+              <svg className="w-6 h-6 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <h3 className="text-[18px] font-semibold mb-3">Persona Intelligence</h3>
+            <p className="text-[16px] text-body">
+              Stop guessing segments. Our Gemini-powered engine maps business goals to exact historical customer profiles.
+            </p>
+          </div>
+
+          <div className="card p-[32px] hover:shadow-md transition-shadow">
+            <div className="w-12 h-12 rounded-full bg-surface-strong flex items-center justify-center mb-6">
+              <svg className="w-6 h-6 text-ink" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 className="text-[18px] font-semibold mb-3">Deterministic Analytics</h3>
+            <p className="text-[16px] text-body">
+              True conversion attribution. Watch <strong className="font-mono-numbers text-ink">{campaignsList.length}</strong> campaigns flow from Sent to Delivered to Purchased.
+            </p>
+          </div>
+        </div>
+      </section>
+      
+      {/* CTA Band */}
+      <section className="bg-surface-dark text-on-dark py-section px-8 text-center border-t border-white/5">
+        <h2 className="text-[44px] font-display leading-[1.09] tracking-[-1px] mb-8">
+          Take control of your growth.
+        </h2>
+        <div className="flex justify-center gap-4">
+          <Link href="/chat" className="btn-primary-large">
+            Get Started
+          </Link>
+          <Link href="/customers" className="btn-ghost !text-on-dark !border-white/20 hover:!bg-white/10">
+            View Customers
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
