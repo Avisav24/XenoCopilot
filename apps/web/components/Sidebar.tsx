@@ -4,13 +4,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
 import { useState } from 'react';
-import { Sparks, Megaphone, Group, SidebarCollapse, SidebarExpand, Plus } from 'iconoir-react';
+import { Sparkles, Megaphone, Users, PanelLeftClose, PanelLeftOpen, Plus } from 'lucide-react';
 
 const navItems = [
   {
     href: '/chat',
     label: 'Campaign Copilot',
-    icon: <Sparks className="w-[20px] h-[20px]" />,
+    icon: <Sparkles className="w-[20px] h-[20px]" />,
   },
   {
     href: '/campaigns',
@@ -20,7 +20,7 @@ const navItems = [
   {
     href: '/customers',
     label: 'Customers',
-    icon: <Group className="w-[20px] h-[20px]" />,
+    icon: <Users className="w-[20px] h-[20px]" />,
   },
 ];
 
@@ -84,7 +84,7 @@ export function Sidebar() {
             )}
             title={isPinned ? "Close sidebar" : "Keep sidebar open"}
           >
-            {isPinned ? <SidebarCollapse className="w-5 h-5" /> : <SidebarExpand className="w-5 h-5" />}
+            {isPinned ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
           </button>
         </div>
 
