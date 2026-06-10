@@ -18,12 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${interDisplay.variable} ${interSans.variable} ${jetbrainsMono.variable}`}>
       <body className="font-sans bg-surface-soft text-ink">
         <Providers>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1 overflow-auto bg-canvas relative">
-              {children}
-            </main>
-          </div>
+          {children}
         </Providers>
       </body>
     </html>
