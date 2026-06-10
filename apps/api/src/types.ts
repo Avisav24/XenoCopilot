@@ -1,34 +1,33 @@
 // Local type definitions for the API
-// (mirrors packages/shared-types for monorepo compatibility)
 
 export type Channel = 'email' | 'whatsapp' | 'sms';
 export type CampaignStatus = 'draft' | 'sending' | 'sent' | 'completed';
-export type MessageStatus =
+export type CommunicationStatus =
   | 'pending' | 'sent' | 'delivered' | 'failed'
-  | 'opened' | 'read' | 'clicked' | 'converted';
+  | 'opened' | 'clicked' | 'purchased';
 
-export type SegmentOperator = 'gt' | 'lt' | 'eq' | 'gte' | 'lte' | 'in';
-export type SegmentField =
-  | 'last_order_days_ago' | 'total_orders' | 'total_spend'
-  | 'favorite_category' | 'preferred_channel' | 'discount_affinity';
-
-export interface SegmentRule {
-  field: SegmentField;
-  operator: SegmentOperator;
-  value: string | number | boolean | string[];
+export interface PersonaQueryResponse {
+  persona: string;
+  count: number;
 }
 
-export interface MessageVariant {
-  persona_tag: string;
+export interface RecommendationResponse {
   channel: Channel;
-  subject?: string;
-  body: string;
+  expectedRevenue: number;
 }
 
-export interface CampaignPlan {
-  segment_rules: SegmentRule[];
-  rationale: string;
-  message_variants: MessageVariant[];
-  recommended_channels: string;
-  estimated_audience_description: string;
+export interface DraftMessageResponse {
+  variantA: string;
+  variantB: string;
+}
+
+export interface AiWorkflowResponse {
+  persona: string;
+  audience_count: number;
+  channel: Channel;
+  expected_revenue: number;
+  message_variants: {
+    variantA: string;
+    variantB: string;
+  };
 }

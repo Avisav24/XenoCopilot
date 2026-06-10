@@ -9,107 +9,105 @@ app.use(express.json());
 const CRM_API_URL = process.env.CRM_API_URL || 'http://localhost:3001';
 const PORT = process.env.PORT || 3002;
 
-// ── Failure reasons ───────────────────────────────────────
-const FAIL_REASONS = ['Invalid number', 'Opted out', 'Network error'];
-
 // ── Fire and forget: simulate delivery lifecycle ──────────
-async function simulateDelivery(message_id: string): Promise<void> {
+async function simulateDelivery(communicationId: string): Promise<void> {
   const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-  // Random initial delay 2–8 seconds before first callback
-  await delay(2000 + Math.random() * 6000);
+  // Random initial delay 2–5 seconds
+  await delay(2000 + Math.random() * 3000);
 
-  // 10% chance of failure
-  if (Math.random() < 0.10) {
-    await sendReceipt(message_id, 'failed', FAIL_REASONS[Math.floor(Math.random() * FAIL_REASONS.length)]);
+  // 8% chance of failure
+  if (Math.random() < 0.08) {
+    await sendWebhook(communicationId, 'failed');
     return;
   }
 
-  // Delivered
-  await sendReceipt(message_id, 'delivered');
+  // 92% Delivered
+  await sendWebhook(communicationId, 'delivered');
 
-  // 65% chance of opened (after 1–3s)
-  if (Math.random() < 0.65) {
+  // 35% chance of opened
+  if (Math.random() < 0.35) {
     await delay(1000 + Math.random() * 2000);
-    await sendReceipt(message_id, 'opened');
+    await sendWebhook(communicationId, 'opened');
 
-    // 40% of opened → clicked (after 0.5–2s)
-    if (Math.random() < 0.40) {
+    // 20% of opened -> clicked
+    if (Math.random() < 0.20) {
       await delay(500 + Math.random() * 1500);
-      await sendReceipt(message_id, 'clicked');
+      await sendWebhook(communicationId, 'clicked');
 
-      // 20% of clicked → converted (after 2–5s)
-      if (Math.random() < 0.20) {
+      // 5% of clicked -> purchased
+      if (Math.random() < 0.05) {
         await delay(2000 + Math.random() * 3000);
-        await sendReceipt(message_id, 'converted');
+        await sendWebhook(communicationId, 'purchased');
       }
     }
   }
 }
 
-async function sendReceipt(
-  message_id: string,
-  event: 'delivered' | 'failed' | 'opened' | 'clicked' | 'converted',
-  reason?: string
-): Promise<void> {
+async function sendWebhook(communicationId: string, event: string): Promise<void> {
   try {
-    const body: Record<string, unknown> = {
-      message_id,
-      event,
-      timestamp: new Date().toISOString(),
-    };
-    if (reason) body.reason = reason;
-
-    const resp = await fetch(`${CRM_API_URL}/api/receipts`, {
+    const resp = await fetch(`${CRM_API_URL}/api/webhook`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ communicationId, event }),
     });
 
     if (!resp.ok) {
-      console.error(`[sim] Receipt POST failed for ${message_id}: ${resp.status}`);
+      console.error(`[sim] Webhook POST failed for ${communicationId}: ${resp.status}`);
     } else {
-      console.log(`[sim] ${event.toUpperCase()} → ${message_id}`);
+      console.log(`[sim] ${event.toUpperCase()} → ${communicationId}`);
     }
   } catch (err) {
-    console.error(`[sim] Failed to send receipt for ${message_id}:`, err);
+    console.error(`[sim] Failed to send webhook for ${communicationId}:`, err);
   }
 }
 
 // ── Routes ────────────────────────────────────────────────
 
-// GET /health
 app.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', service: 'channel-sim', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'channel-sim' });
 });
 
-// POST /simulate
-interface SimulateBody {
-  message_id: string;
+interface Recipient {
+  communicationId: string;
   channel: string;
-  recipient: string;
-  message_text: string;
+  phoneOrEmail: string;
 }
 
-app.post('/simulate', (req: Request<{}, {}, SimulateBody>, res: Response) => {
-  const { message_id, channel, recipient } = req.body;
+interface SendBody {
+  campaignId: string;
+  recipients: Recipient[];
+}
 
-  if (!message_id || !channel) {
-    return res.status(400).json({ error: 'message_id and channel are required' });
+app.post('/simulate', (req: Request<{}, {}, SendBody>, res: Response) => {
+  const { campaignId, recipients } = req.body;
+
+  if (!campaignId || !recipients || !Array.isArray(recipients)) {
+    return res.status(400).json({ error: 'campaignId and recipients array required' });
   }
 
-  console.log(`[sim] Received: ${channel} → ${recipient} (${message_id})`);
+  console.log(`[sim] Received campaign ${campaignId} with ${recipients.length} recipients`);
 
-  // Accept immediately, fire-and-forget the simulation
-  simulateDelivery(message_id).catch((err) =>
-    console.error(`[sim] Simulation error for ${message_id}:`, err)
-  );
+  // Accept immediately
+  res.json({ accepted: true });
 
-  return res.json({ accepted: true });
+  // Fire-and-forget simulation for each recipient
+  for (const r of recipients) {
+    simulateDelivery(r.communicationId).catch((err) =>
+      console.error(`[sim] Simulation error for ${r.communicationId}:`, err)
+    );
+  }
+});
+
+// Alias /send to /simulate to match user spec precisely if needed
+app.post('/send', (req: Request<{}, {}, SendBody>, res: Response) => {
+  // Reroute to same handler
+  req.url = '/simulate';
+  app.handle(req, res);
 });
 
 // ── Start ─────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`\n📡 Channel Simulator running at http://localhost:${PORT}`);
-  console.log(`   Callbacks → ${CRM_API_URL}/api/receipts\n`);
+  console.log(`   Webhooks → ${CRM_API_URL}/api/webhook\n`);
 });

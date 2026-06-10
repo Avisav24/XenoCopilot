@@ -3,7 +3,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { aiRoutes } from './routes/ai';
 import { campaignRoutes } from './routes/campaigns';
-import { receiptRoutes } from './routes/receipts';
+import { webhookRoutes } from './routes/webhooks';
 import { customerRoutes } from './routes/customers';
 import { prisma } from './lib/prisma';
 
@@ -30,7 +30,7 @@ async function main() {
   // Routes
   await server.register(aiRoutes);
   await server.register(campaignRoutes);
-  await server.register(receiptRoutes);
+  await server.register(webhookRoutes);
   await server.register(customerRoutes);
 
   // Health check

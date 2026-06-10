@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { prisma } from '../lib/prisma';
+import prisma from '../lib/prisma';
 
 export async function customerRoutes(fastify: FastifyInstance) {
   // GET /api/customers
@@ -10,7 +10,7 @@ export async function customerRoutes(fastify: FastifyInstance) {
     const offset = Number(request.query.offset || 0);
     const search = request.query.search;
 
-    const where: Record<string, unknown> = { brand_id: 'drape-co' };
+    const where: Record<string, unknown> = {};
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -21,9 +21,14 @@ export async function customerRoutes(fastify: FastifyInstance) {
     const [customers, total] = await Promise.all([
       prisma.customer.findMany({
         where,
-        orderBy: { total_spend: 'desc' },
+        orderBy: { total_spent: 'desc' },
         take: limit,
         skip: offset,
+        include: {
+          customer_personas: {
+            include: { persona: true }
+          }
+        }
       }),
       prisma.customer.count({ where }),
     ]);
@@ -34,14 +39,11 @@ export async function customerRoutes(fastify: FastifyInstance) {
         name: c.name,
         email: c.email,
         phone: c.phone,
-        preferred_channel: c.preferred_channel,
-        favorite_category: c.favorite_category,
-        discount_affinity: c.discount_affinity,
-        preferred_shopping_day: c.preferred_shopping_day,
-        total_orders: c.total_orders,
-        total_spend: Number(c.total_spend),
-        last_order_at: c.last_order_at?.toISOString() ?? null,
-        created_at: c.created_at.toISOString(),
+        city: c.city,
+        personas: c.customer_personas.map(cp => cp.persona.name),
+        total_spent: Number(c.total_spent),
+        last_order_date: c.last_order_date?.toISOString() ?? null,
+        signup_date: c.signup_date.toISOString(),
       })),
       total,
       limit,
@@ -51,26 +53,27 @@ export async function customerRoutes(fastify: FastifyInstance) {
 
   // GET /api/customers/stats
   fastify.get('/api/customers/stats', async (_request, reply) => {
-    const [total, channels, avgSpend] = await Promise.all([
-      prisma.customer.count({ where: { brand_id: 'drape-co' } }),
-      prisma.customer.groupBy({
-        by: ['preferred_channel'],
-        where: { brand_id: 'drape-co' },
-        _count: { preferred_channel: true },
-      }),
+    const [total, avgSpend] = await Promise.all([
+      prisma.customer.count(),
       prisma.customer.aggregate({
-        where: { brand_id: 'drape-co' },
-        _avg: { total_spend: true },
+        _avg: { total_spent: true },
       }),
     ]);
 
+    // get top personas
+    const personas = await prisma.persona.findMany({
+      include: {
+        _count: { select: { customer_personas: true } }
+      }
+    });
+
     return reply.send({
       total,
-      by_channel: channels.map((c) => ({
-        channel: c.preferred_channel,
-        count: c._count.preferred_channel,
-      })),
-      avg_spend: Math.round(Number(avgSpend._avg.total_spend) || 0),
+      avg_spend: Math.round(Number(avgSpend._avg.total_spent) || 0),
+      personas: personas.map(p => ({
+        name: p.name,
+        count: p._count.customer_personas
+      })).sort((a, b) => b.count - a.count)
     });
   });
 }

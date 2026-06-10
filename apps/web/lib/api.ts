@@ -14,37 +14,35 @@ async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-// ── AI ────────────────────────────────────────────────────
-export const planCampaign = (goal: string) =>
-  fetchAPI('/api/ai/plan-campaign', {
+// ── AI Persona Agent Workflow ─────────────────────────────
+export const queryPersonas = (goal: string) =>
+  fetchAPI<{ persona: { id: string; name: string; description: string }; count: number }>('/api/ai/query-personas', {
     method: 'POST',
     body: JSON.stringify({ goal }),
   });
 
-// ── Campaigns ─────────────────────────────────────────────
-export const getCampaigns = () => fetchAPI('/api/campaigns');
+export const recommendCampaign = (persona_id: string) =>
+  fetchAPI<{ channel: string; expectedRevenue: number; expectedPurchasers: number; audienceCount: number }>('/api/ai/recommend-campaign', {
+    method: 'POST',
+    body: JSON.stringify({ persona_id }),
+  });
 
-export const getCampaign = (id: string) => fetchAPI(`/api/campaigns/${id}`);
+export const draftMessages = (persona_name: string, channel: string) =>
+  fetchAPI<{ variantA: string; variantB: string }>('/api/ai/draft-messages', {
+    method: 'POST',
+    body: JSON.stringify({ persona_name, channel }),
+  });
 
-export const createCampaign = (data: {
-  name: string;
-  goal: string;
-  ai_plan?: unknown;
-  segment_rules?: unknown;
-}) =>
-  fetchAPI('/api/campaigns', {
+export const launchCampaign = (data: { name: string; persona_id: string; channel: string; message: string }) =>
+  fetchAPI<{ success: boolean; campaign_id: string; queued_count: number }>('/api/ai/launch-campaign', {
     method: 'POST',
     body: JSON.stringify(data),
   });
 
-export const sendCampaign = (id: string) =>
-  fetchAPI(`/api/campaigns/${id}/send`, { method: 'POST' });
-
-export const getCampaignMessages = (id: string, limit = 50) =>
-  fetchAPI(`/api/campaigns/${id}/messages?limit=${limit}`);
-
-export const getCampaignInsights = (id: string) =>
-  fetchAPI(`/api/campaigns/${id}/insights`);
+// ── Campaigns ─────────────────────────────────────────────
+export const getCampaigns = () => fetchAPI('/api/campaigns');
+export const getCampaign = (id: string) => fetchAPI(`/api/campaigns/${id}`);
+export const getCampaignInsights = (id: string) => fetchAPI(`/api/campaigns/${id}/insights`);
 
 // ── Customers ─────────────────────────────────────────────
 export const getCustomers = (params?: { limit?: number; offset?: number; search?: string }) => {

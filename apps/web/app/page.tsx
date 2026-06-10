@@ -1,201 +1,242 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
-import { getCampaigns, getCustomerStats } from '@/lib/api';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { getCustomerStats, queryPersonas, recommendCampaign, draftMessages, launchCampaign } from '@/lib/api';
 
-function StatCard({
-  label,
-  value,
-  sub,
-  color = 'teal',
-}: {
-  label: string;
-  value: string | number;
-  sub?: string;
-  color?: 'teal' | 'blue' | 'gold' | 'green';
-}) {
-  const colors = {
-    teal: 'from-teal-500 to-teal-600',
-    blue: 'from-blue-500 to-blue-600',
-    gold: 'from-amber-400 to-amber-500',
-    green: 'from-emerald-500 to-emerald-600',
-  };
-  return (
-    <div className="stat-card">
-      <div className={`w-8 h-1 rounded-full bg-gradient-to-r ${colors[color]} mb-3`} />
-      <p className="text-3xl font-bold text-slate-800">{value}</p>
-      <p className="text-sm font-medium text-slate-600">{label}</p>
-      {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    draft: 'bg-slate-100 text-slate-600',
-    sending: 'bg-blue-100 text-blue-700',
-    sent: 'bg-teal-100 text-teal-700',
-    completed: 'bg-emerald-100 text-emerald-700',
-  };
-  return (
-    <span className={`status-badge ${styles[status] || 'bg-slate-100 text-slate-600'}`}>
-      {status}
-    </span>
-  );
-}
-
-export default function DashboardPage() {
-  const { data: campaigns, isLoading: loadingCampaigns } = useQuery({
-    queryKey: ['campaigns'],
-    queryFn: getCampaigns,
-  });
-
-  const { data: stats, isLoading: loadingStats } = useQuery({
+export default function AIHubPage() {
+  const router = useRouter();
+  const { data: stats, isLoading } = useQuery({
     queryKey: ['customer-stats'],
     queryFn: getCustomerStats,
   });
 
-  const campaignList = (campaigns as { id: string; name: string; status: string; audience_count: number; created_at: string }[]) || [];
-  const statsData = stats as { total: number; avg_spend: number; by_channel: { channel: string; count: number }[] } | undefined;
+  const [goal, setGoal] = useState('');
+  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4>(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Workflow State
+  const [personaResult, setPersonaResult] = useState<any>(null);
+  const [recResult, setRecResult] = useState<any>(null);
+  const [variants, setVariants] = useState<any>(null);
+  const [selectedVariant, setSelectedVariant] = useState<'variantA' | 'variantB'>('variantA');
+  const [campaignName, setCampaignName] = useState('');
+
+  const handleStartWorkflow = async () => {
+    if (!goal.trim()) return;
+    setIsProcessing(true);
+    setStep(1); // querying persona
+    
+    try {
+      const pRes = await queryPersonas(goal);
+      setPersonaResult(pRes);
+      
+      setStep(2); // recommending
+      const rRes = await recommendCampaign(pRes.persona.id);
+      setRecResult(rRes);
+
+      setStep(3); // drafting
+      const vRes = await draftMessages(pRes.persona.name, rRes.channel);
+      setVariants(vRes);
+      setCampaignName(`${pRes.persona.name} - ${rRes.channel} Campaign`);
+
+      setStep(4); // ready for review
+    } catch (err) {
+      console.error(err);
+      alert('AI workflow failed. Make sure the API is running.');
+      setStep(0);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleLaunch = async () => {
+    if (!campaignName.trim()) return;
+    setIsProcessing(true);
+    try {
+      const res = await launchCampaign({
+        name: campaignName,
+        persona_id: personaResult.persona.id,
+        channel: recResult.channel,
+        message: variants[selectedVariant],
+      });
+      if (res.success) {
+        router.push(`/campaigns/${res.campaign_id}/insights`);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to launch campaign');
+      setIsProcessing(false);
+    }
+  };
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-8 max-w-5xl mx-auto flex flex-col gap-8 h-[calc(100vh-4rem)]">
       {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">Campaign Dashboard</h1>
-          <p className="text-slate-500 mt-1">Drape & Co. — AI-powered CRM</p>
-        </div>
-        <Link href="/campaigns/new" id="new-campaign-btn" className="btn-primary flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          New Campaign
-        </Link>
+      <div>
+        <h1 className="text-3xl font-bold text-slate-800 tracking-tight">AI Persona Intelligence Hub</h1>
+        <p className="text-slate-500 mt-2 text-lg">Describe your goal, and XenoCopilot will automatically find the best audience, recommend channels, and launch the campaign.</p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {loadingStats ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="card p-5 h-28 skeleton" />
-          ))
-        ) : (
-          <>
-            <StatCard
-              label="Total Customers"
-              value={statsData?.total?.toLocaleString() || '500'}
-              sub="Drape & Co. shoppers"
-              color="teal"
-            />
-            <StatCard
-              label="Avg. Spend"
-              value={`₹${(statsData?.avg_spend || 0).toLocaleString('en-IN')}`}
-              sub="per customer"
-              color="gold"
-            />
-            <StatCard
-              label="Campaigns"
-              value={campaignList.length}
-              sub="total created"
-              color="blue"
-            />
-            <StatCard
-              label="Email Reach"
-              value={`${statsData?.by_channel?.find((c) => c.channel === 'email')?.count || 0}`}
-              sub="email subscribers"
-              color="green"
-            />
-          </>
-        )}
-      </div>
-
-      {/* Channel Breakdown */}
-      {statsData?.by_channel && (
-        <div className="card p-6 mb-8">
-          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">
-            Audience by Channel
-          </h2>
-          <div className="flex gap-6">
-            {statsData.by_channel.map((ch) => {
-              const icons: Record<string, string> = { email: '📧', whatsapp: '💬', sms: '📱' };
-              const pct = statsData.total ? Math.round((ch.count / statsData.total) * 100) : 0;
-              return (
-                <div key={ch.channel} className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-slate-600 flex items-center gap-1.5">
-                      <span>{icons[ch.channel] || '📨'}</span>
-                      {ch.channel}
-                    </span>
-                    <span className="text-sm font-bold text-slate-800">{pct}%</span>
-                  </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-teal-500 to-teal-400 rounded-full transition-all duration-700"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1">{ch.count.toLocaleString()} customers</p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Recent Campaigns */}
-      <div className="card">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-800">Recent Campaigns</h2>
-          <Link href="/campaigns" className="text-teal-600 text-sm font-medium hover:text-teal-500">
-            View all →
-          </Link>
-        </div>
-        {loadingCampaigns ? (
-          <div className="p-6 space-y-4">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-14 skeleton rounded-lg" />
-            ))}
-          </div>
-        ) : campaignList.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-12 h-12 bg-teal-50 rounded-xl flex items-center justify-center mx-auto mb-3">
-              <svg className="w-6 h-6 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-              </svg>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 flex-1">
+        {/* Left Column: Discovered Personas */}
+        <div className="col-span-1 flex flex-col gap-4">
+          <h2 className="font-semibold text-slate-700 text-sm uppercase tracking-wider">Top Customer Personas</h2>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => <div key={i} className="h-20 skeleton rounded-xl" />)}
             </div>
-            <p className="text-slate-500 font-medium">No campaigns yet</p>
-            <p className="text-slate-400 text-sm mt-1">Create your first AI-powered campaign</p>
-            <Link href="/campaigns/new" className="btn-primary inline-flex mt-4">
-              Create Campaign
-            </Link>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100">
-            {campaignList.slice(0, 5).map((c) => (
-              <Link
-                key={c.id}
-                href={c.status === 'completed' || c.status === 'sending'
-                  ? `/campaigns/${c.id}/insights`
-                  : `/campaigns`}
-                className="flex items-center justify-between px-6 py-4 hover:bg-slate-50 transition-colors"
-              >
-                <div>
-                  <p className="font-medium text-slate-800 text-sm">{c.name}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {c.audience_count > 0 ? `${c.audience_count} recipients` : 'Draft'} ·{' '}
-                    {new Date(c.created_at).toLocaleDateString('en-IN', {
-                      day: 'numeric', month: 'short', year: 'numeric',
-                    })}
-                  </p>
+          ) : (
+            <div className="space-y-4 overflow-y-auto pr-2 pb-8">
+              {stats?.personas?.map((p: any) => (
+                <div key={p.name} className="card p-5 border-l-4 border-teal-500 hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className="font-bold text-slate-800">{p.name}</h3>
+                    <span className="bg-teal-50 text-teal-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                      {p.count} shoppers
+                    </span>
+                  </div>
+                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-teal-500 rounded-full" style={{ width: `${Math.min(100, (p.count / stats.total) * 100)}%` }} />
+                  </div>
                 </div>
-                <StatusBadge status={c.status} />
-              </Link>
-            ))}
+              ))}
+              
+              <div className="card p-5 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white mt-4">
+                <p className="text-sm font-semibold opacity-90 uppercase tracking-wide">Total Revenue</p>
+                <p className="text-3xl font-bold mt-1">₹{(stats?.total * stats?.avg_spend).toLocaleString('en-IN')}</p>
+                <p className="text-sm opacity-80 mt-1">From {stats?.total} active shoppers</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: AI Chat & Workflow */}
+        <div className="col-span-2 card flex flex-col bg-slate-50 overflow-hidden border border-slate-200 shadow-sm relative">
+          <div className="p-6 border-b border-slate-200 bg-white">
+            <h2 className="font-semibold text-slate-800 flex items-center gap-2">
+              <span className="text-indigo-600">✨</span> Campaign Copilot
+            </h2>
           </div>
-        )}
+
+          <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 relative">
+            
+            {/* Step 0: Input */}
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+              <label className="block text-sm font-medium text-slate-700 mb-2">What is your goal?</label>
+              <textarea
+                value={goal}
+                onChange={e => setGoal(e.target.value)}
+                placeholder="e.g. Sell our excess inventory of dresses, or Increase repeat purchases from loyalists..."
+                className="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none resize-none transition-all"
+                rows={3}
+                disabled={step > 0}
+              />
+              {step === 0 && (
+                <button
+                  onClick={handleStartWorkflow}
+                  disabled={!goal.trim() || isProcessing}
+                  className="mt-3 btn-primary w-full py-3 bg-indigo-600 hover:bg-indigo-700 shadow-indigo-200 shadow-lg text-white font-medium flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                >
+                  {isProcessing ? 'Thinking...' : 'Generate Campaign'} 
+                  {!isProcessing && <span>→</span>}
+                </button>
+              )}
+            </div>
+
+            {/* Step 1 & 2: Persona & Recommendation */}
+            {step >= 1 && (
+              <div className={`transition-all duration-500 ${step === 1 ? 'opacity-50 animate-pulse' : 'opacity-100'}`}>
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 mt-1">✨</div>
+                  <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex-1">
+                    {step === 1 ? (
+                      <p className="text-slate-600">Analyzing your goal to find the best persona...</p>
+                    ) : (
+                      <>
+                        <p className="text-slate-800 mb-4">
+                          Based on your goal, I recommend targeting <strong className="text-indigo-600">{personaResult?.persona.name}</strong>.
+                        </p>
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <p className="text-xs text-slate-500 uppercase font-semibold">Audience Size</p>
+                            <p className="text-xl font-bold text-slate-800">{personaResult?.count} shoppers</p>
+                          </div>
+                          <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <p className="text-xs text-slate-500 uppercase font-semibold">Best Channel</p>
+                            <p className="text-xl font-bold text-slate-800">{recResult?.channel}</p>
+                          </div>
+                        </div>
+                        <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 text-emerald-800">
+                          <p className="text-sm font-semibold mb-1">Expected Revenue Impact</p>
+                          <p className="text-2xl font-bold">₹{recResult?.expectedRevenue.toLocaleString('en-IN')}</p>
+                          <p className="text-xs mt-1 opacity-80">Based on historical {recResult?.channel} conversion rates and persona AOV.</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Drafting & Review */}
+            {step >= 3 && (
+              <div className={`transition-all duration-500 ${step === 3 ? 'opacity-50 animate-pulse' : 'opacity-100'}`}>
+                <div className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 mt-1">✏️</div>
+                  <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex-1">
+                    {step === 3 ? (
+                      <p className="text-slate-600">Drafting personalized message variants...</p>
+                    ) : (
+                      <>
+                        <div className="mb-4">
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Campaign Name</label>
+                          <input 
+                            value={campaignName}
+                            onChange={e => setCampaignName(e.target.value)}
+                            className="w-full p-2.5 border border-slate-200 rounded-lg text-sm"
+                          />
+                        </div>
+                        <p className="text-sm font-medium text-slate-700 mb-3">Select a Message Variant:</p>
+                        <div className="space-y-3">
+                          <div 
+                            onClick={() => setSelectedVariant('variantA')}
+                            className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedVariant === 'variantA' ? 'border-indigo-500 bg-indigo-50 shadow-sm ring-1 ring-indigo-500' : 'border-slate-200 hover:border-indigo-300'}`}
+                          >
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">Variant A</span>
+                            </div>
+                            <p className="text-sm text-slate-700 whitespace-pre-wrap">{variants?.variantA}</p>
+                          </div>
+                          
+                          <div 
+                            onClick={() => setSelectedVariant('variantB')}
+                            className={`p-4 rounded-xl border cursor-pointer transition-all ${selectedVariant === 'variantB' ? 'border-indigo-500 bg-indigo-50 shadow-sm ring-1 ring-indigo-500' : 'border-slate-200 hover:border-indigo-300'}`}
+                          >
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">Variant B</span>
+                            </div>
+                            <p className="text-sm text-slate-700 whitespace-pre-wrap">{variants?.variantB}</p>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={handleLaunch}
+                          disabled={isProcessing}
+                          className="mt-6 w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                          {isProcessing ? 'Launching...' : `Launch to ${personaResult?.count} Shoppers`}
+                          {!isProcessing && <span>🚀</span>}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

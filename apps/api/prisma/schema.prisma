@@ -8,78 +8,97 @@ datasource db {
 }
 
 model Customer {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  brand_id              String    @default("drape-co")
-  name                  String
-  email                 String?
-  phone                 String?
-  preferred_channel     String?
-  favorite_category     String?
-  discount_affinity     Boolean   @default(false)
-  preferred_shopping_day String?
-  total_orders          Int       @default(0)
-  total_spend           Decimal   @default(0) @db.Decimal(10, 2)
-  last_order_at         DateTime?
-  created_at            DateTime  @default(now())
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name            String
+  email           String?
+  phone           String?
+  city            String?
+  signup_date     DateTime  @default(now())
+  total_spent     Decimal   @default(0) @db.Decimal(10, 2)
+  last_order_date DateTime?
 
-  orders             Order[]
-  campaign_messages  CampaignMessage[]
+  orders            Order[]
+  customer_personas CustomerPersona[]
+  communications    Communication[]
 
-  @@index([brand_id])
   @@map("customers")
 }
 
 model Order {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  customer_id String   @db.Uuid
-  brand_id    String   @default("drape-co")
-  amount      Decimal  @db.Decimal(10, 2)
-  category    String?
-  channel     String?
-  ordered_at  DateTime @default(now())
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_id   String   @db.Uuid
+  amount        Decimal  @db.Decimal(10, 2)
+  category      String?
+  discount_used Boolean  @default(false)
+  order_date    DateTime @default(now())
 
-  customer Customer @relation(fields: [customer_id], references: [id])
+  customer Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
 
   @@index([customer_id])
   @@map("orders")
 }
 
-model Campaign {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  brand_id       String    @default("drape-co")
-  name           String
-  goal           String
-  ai_plan        Json?
-  segment_rules  Json?
-  status         String    @default("draft")
-  audience_count Int       @default(0)
-  created_at     DateTime  @default(now())
-  sent_at        DateTime?
+model Persona {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique
+  description String?
 
-  messages CampaignMessage[]
+  customer_personas CustomerPersona[]
+  campaigns         Campaign[]
+
+  @@map("personas")
+}
+
+model CustomerPersona {
+  customer_id String @db.Uuid
+  persona_id  String @db.Uuid
+
+  customer Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  persona  Persona  @relation(fields: [persona_id], references: [id], onDelete: Cascade)
+
+  @@id([customer_id, persona_id])
+  @@map("customer_personas")
+}
+
+model Campaign {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String
+  persona_id String   @db.Uuid
+  channel    String?
+  message    String?
+  status     String   @default("draft")
+  created_at DateTime @default(now())
+
+  persona        Persona         @relation(fields: [persona_id], references: [id])
+  communications Communication[]
 
   @@map("campaigns")
 }
 
-model CampaignMessage {
+model Communication {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   campaign_id  String    @db.Uuid
   customer_id  String    @db.Uuid
-  channel      String
-  message_text String
   status       String    @default("pending")
   sent_at      DateTime?
   delivered_at DateTime?
   opened_at    DateTime?
   clicked_at   DateTime?
-  converted_at DateTime?
-  failed_reason String?
-  created_at   DateTime  @default(now())
+  purchased_at DateTime?
 
-  campaign Campaign  @relation(fields: [campaign_id], references: [id])
-  customer Customer  @relation(fields: [customer_id], references: [id])
+  campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
 
   @@index([campaign_id])
   @@index([status])
-  @@map("campaign_messages")
+  @@map("communications")
+}
+
+model ChannelMetric {
+  channel         String  @id
+  ctr             Decimal @db.Decimal(5, 2) // e.g. 12.00 for 12%
+  open_rate       Decimal @db.Decimal(5, 2)
+  conversion_rate Decimal @db.Decimal(5, 2)
+
+  @@map("channel_metrics")
 }
