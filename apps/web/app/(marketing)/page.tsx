@@ -9,12 +9,12 @@ import { useGSAP } from '@gsap/react';
 import { Rocket, Database, Brain, StatsReport } from 'iconoir-react';
 
 export default function LandingPage() {
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['customer-stats'],
     queryFn: getCustomerStats,
   });
 
-  const { data: campaigns } = useQuery({
+  const { data: campaigns, isLoading: campaignsLoading } = useQuery({
     queryKey: ['campaigns'],
     queryFn: getCampaigns,
   });
@@ -193,7 +193,9 @@ export default function LandingPage() {
             </div>
             <h3 className="text-[18px] font-semibold mb-3">Live Audience Syncer</h3>
             <p className="text-[16px] text-body">
-              Syncs with your active customer base in real-time. Currently tracking <strong className="font-mono-numbers text-ink">{stats?.total || 500}</strong> high-value shoppers.
+              Syncs with your active customer base in real-time. Currently tracking {' '}
+              {statsLoading ? <span className="inline-block w-12 h-5 skeleton align-middle" /> : <strong className="font-mono-numbers text-ink">{stats?.total || 500}</strong>}
+              {' '} high-value shoppers.
             </p>
           </div>
           
@@ -213,7 +215,9 @@ export default function LandingPage() {
             </div>
             <h3 className="text-[18px] font-semibold mb-3">Deterministic Analytics</h3>
             <p className="text-[16px] text-body">
-              True conversion attribution. Watch <strong className="font-mono-numbers text-ink">{campaignsList.length}</strong> campaigns flow from Sent to Delivered to Purchased.
+              True conversion attribution. Watch {' '}
+              {campaignsLoading ? <span className="inline-block w-8 h-5 skeleton align-middle" /> : <strong className="font-mono-numbers text-ink">{campaignsList.length}</strong>}
+              {' '} campaigns flow from Sent to Delivered to Purchased.
             </p>
           </div>
         </div>
