@@ -7,7 +7,9 @@ import { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Rocket, Database, Brain, StatsReport } from 'iconoir-react';
-import DarkVeil from '@/components/DarkVeil/DarkVeil';
+import dynamic from 'next/dynamic';
+
+const DarkVeil = dynamic(() => import('@/components/DarkVeil/DarkVeil'), { ssr: false });
 
 export default function LandingPage() {
   const { data: stats, isLoading: statsLoading } = useQuery({
