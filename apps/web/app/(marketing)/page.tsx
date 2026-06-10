@@ -7,6 +7,7 @@ import { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { Rocket, Database, Brain, StatsReport } from 'iconoir-react';
+import DarkVeil from '@/components/DarkVeil/DarkVeil';
 
 export default function LandingPage() {
   const { data: stats, isLoading: statsLoading } = useQuery({
@@ -123,6 +124,9 @@ export default function LandingPage() {
 
       {/* Hero Band Dark */}
       <section className="hero-band-dark min-h-[70vh] flex flex-col md:flex-row relative overflow-hidden items-center pt-20">
+        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
+          <DarkVeil hueShift={210} noiseIntensity={0.08} speed={0.4} scanlineIntensity={0.15} warpAmount={0.3} />
+        </div>
         <div className="w-full md:w-1/2 z-10 pl-8 md:pl-16 lg:pl-24">
           <h1 className="text-[64px] md:text-[80px] font-display font-bold leading-[1.0] tracking-[-2px] mb-6 flex flex-col">
             <span className="hero-title">Meet</span>

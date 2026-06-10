@@ -59,6 +59,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@gsap/react':
+        specifier: ^2.1.2
+        version: 2.1.2(gsap@3.15.0)(react@18.3.1)
       '@tanstack/react-query':
         specifier: ^5.45.1
         version: 5.101.0(react@18.3.1)
@@ -71,12 +74,18 @@ importers:
       framer-motion:
         specifier: ^11.3.2
         version: 11.18.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      gsap:
+        specifier: ^3.15.0
+        version: 3.15.0
       iconoir-react:
         specifier: ^7.11.0
         version: 7.11.0(react@18.3.1)
       next:
         specifier: 14.2.5
         version: 14.2.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      ogl:
+        specifier: ^1.0.11
+        version: 1.0.11
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -331,6 +340,12 @@ packages:
   '@google/genai@0.7.0':
     resolution: {integrity: sha512-r+Fwj/emnXZN5R+4JCxDXboY4AGTmTn7+Wnori5dgyJiStP0P82f9YYL0CVsCnDIumNY2i0UIcZ1zGZdtHJ34w==}
     engines: {node: '>=18.0.0'}
+
+  '@gsap/react@2.1.2':
+    resolution: {integrity: sha512-JqliybO1837UcgH2hVOM4VO+38APk3ECNrsuSM4MuXp+rbf+/2IG2K1YJiqfTcXQHH7XlA0m3ykniFYstfq0Iw==}
+    peerDependencies:
+      gsap: ^3.12.5
+      react: '>=17'
 
   '@ioredis/commands@1.10.0':
     resolution: {integrity: sha512-UmeW7z4LfctwoQ5wkhVzgq8tXkreED2xZGpX+Bg+zA+WJFZCT6c062AfCK/Dfk81xZnnwdhJCUMkitihRaoC2Q==}
@@ -1054,6 +1069,9 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
+  gsap@3.15.0:
+    resolution: {integrity: sha512-dMW4CWBTUK1AEEDeZc1g4xpPGIrSf9fJF960qbTZmN/QwZIWY5wgliS6JWl9/25fpTGJrMRtSjGtOmPnfjZB+A==}
+
   gtoken@7.1.0:
     resolution: {integrity: sha512-pCcEwRi+TKpMlxAQObHDQ56KawURgyAf6jtIY046fJ5tIv3zDe/LEIubckAO8fj6JnAxLdmWkUfNyulQ2iKdEw==}
     engines: {node: '>=14.0.0'}
@@ -1315,6 +1333,9 @@ packages:
 
   obliterator@2.0.5:
     resolution: {integrity: sha512-42CPE9AhahZRsMNslczq0ctAEtqk8Eka26QofnqC346BZdHDySk3LWka23LI7ULIw11NmltpiLagIq8gBozxTw==}
+
+  ogl@1.0.11:
+    resolution: {integrity: sha512-kUpC154AFfxi16pmZUK4jk3J+8zxwTWGPo03EoYA8QPbzikHoaC82n6pNTbd+oEaJonaE8aPWBlX7ad9zrqLsA==}
 
   on-exit-leak-free@2.1.2:
     resolution: {integrity: sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA==}
@@ -1887,6 +1908,11 @@ snapshots:
       - encoding
       - supports-color
       - utf-8-validate
+
+  '@gsap/react@2.1.2(gsap@3.15.0)(react@18.3.1)':
+    dependencies:
+      gsap: 3.15.0
+      react: 18.3.1
 
   '@ioredis/commands@1.10.0': {}
 
@@ -2624,6 +2650,8 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
+  gsap@3.15.0: {}
+
   gtoken@7.1.0:
     dependencies:
       gaxios: 6.7.1
@@ -2876,6 +2904,8 @@ snapshots:
   object-inspect@1.13.4: {}
 
   obliterator@2.0.5: {}
+
+  ogl@1.0.11: {}
 
   on-exit-leak-free@2.1.2: {}
 
