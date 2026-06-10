@@ -42,6 +42,7 @@ export const launchCampaign = (data: { name: string; persona_id: string; channel
 // ── Campaigns ─────────────────────────────────────────────
 export const getCampaigns = () => fetchAPI('/api/campaigns');
 export const getCampaign = (id: string) => fetchAPI(`/api/campaigns/${id}`);
+export const getCampaignMessages = (id: string, limit?: number) => fetchAPI(`/api/campaigns/${id}/messages${limit ? `?limit=${limit}` : ''}`);
 export const getCampaignInsights = (id: string) => fetchAPI(`/api/campaigns/${id}/insights`);
 
 // ── Customers ─────────────────────────────────────────────
