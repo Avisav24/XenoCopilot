@@ -1,0 +1,16 @@
+{
+  "name": "xenocopilot",
+  "version": "1.0.0",
+  "description": "XenoCopilot — AI-powered Mini CRM for campaign management",
+  "author": "Abhinav",
+  "license": "MIT",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "build": "pnpm -r build",
+    "seed": "pnpm --filter @xenocopilot/api seed",
+    "db:migrate": "pnpm --filter @xenocopilot/api db:migrate",
+    "db:generate": "pnpm --filter @xenocopilot/api db:generate"
+  }
+}

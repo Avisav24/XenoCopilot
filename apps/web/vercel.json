@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd ../.. && pnpm --filter @xenocopilot/web build",
+  "outputDirectory": ".next",
+  "installCommand": "pnpm install"
+}

@@ -1,0 +1,35 @@
+{
+  "name": "@xenocopilot/api",
+  "version": "1.0.0",
+  "description": "XenoCopilot CRM API — Fastify backend",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc && prisma generate",
+    "start": "node dist/index.js",
+    "seed": "tsx src/seed.ts",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "worker": "tsx watch src/workers/send.worker.ts"
+  },
+  "dependencies": {
+    "@fastify/cors": "^9.0.1",
+    "@google/genai": "^0.7.0",
+    "@prisma/client": "^5.14.0",
+    "@xenocopilot/shared-types": "workspace:*",
+    "bullmq": "^5.12.5",
+    "dotenv": "^16.4.5",
+    "fastify": "^4.28.1",
+    "ioredis": "^5.4.1",
+    "pino-pretty": "^11.2.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^8.4.1",
+    "@types/node": "^20.14.0",
+    "prisma": "^5.14.0",
+    "tsx": "^4.15.7",
+    "typescript": "^5.4.5"
+  }
+}
