@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCustomers } from '@/lib/api';
-import { Search } from 'lucide-react';
+import { Search } from 'iconoir-react';
 import { clsx } from 'clsx';
 
 type Customer = {

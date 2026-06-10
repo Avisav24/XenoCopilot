@@ -6,7 +6,7 @@ import { getCustomerStats, getCampaigns } from '@/lib/api';
 import { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { Rocket, Database, Brain, BarChart3 } from 'lucide-react';
+import { Rocket, Database, Brain, StatsReport } from 'iconoir-react';
 
 export default function LandingPage() {
   const { data: stats } = useQuery({
@@ -209,7 +209,7 @@ export default function LandingPage() {
 
           <div id="analytics" className="feature-card card p-[32px] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-hairline">
             <div className="w-12 h-12 rounded-full bg-surface-strong flex items-center justify-center mb-6 text-primary">
-              <BarChart3 className="w-6 h-6" />
+              <StatsReport className="w-6 h-6" />
             </div>
             <h3 className="text-[18px] font-semibold mb-3">Deterministic Analytics</h3>
             <p className="text-[16px] text-body">
