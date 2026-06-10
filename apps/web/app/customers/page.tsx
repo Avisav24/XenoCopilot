@@ -69,7 +69,7 @@ export default function CustomersPage() {
           <input
             id="customer-search"
             type="text"
-            placeholder="Search by name, email, or phone..."
+            placeholder="Search by name, email, phone, city, persona, or price..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(0); }}
             className="w-full pl-12 pr-4 py-4 rounded-xl border border-hairline shadow-sm text-[16px] text-ink placeholder-muted-soft focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"

@@ -12,10 +12,19 @@ export async function customerRoutes(fastify: FastifyInstance) {
 
     const where: Record<string, unknown> = {};
     if (search) {
+      const numSearch = !isNaN(Number(search)) && search.trim() !== '' ? Number(search) : undefined;
+
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
+        { phone: { contains: search, mode: 'insensitive' } },
+        { city: { contains: search, mode: 'insensitive' } },
+        { customer_personas: { some: { persona: { name: { contains: search, mode: 'insensitive' } } } } },
       ];
+
+      if (numSearch !== undefined) {
+        where.OR.push({ total_spent: { equals: numSearch } });
+      }
     }
 
     const [customers, total] = await Promise.all([
