@@ -8,35 +8,33 @@ datasource db {
 }
 
 model Customer {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name            String
-  email           String?
-  phone           String?
-  city            String?
-  signup_date     DateTime  @default(now())
-  total_spent       Decimal   @default(0) @db.Decimal(10, 2)
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String
+  email             String?
+  phone             String?
+  city              String?
   last_order_date   DateTime?
-  health_score      Int       @default(100)
+  signup_date       DateTime          @default(now())
+  total_spent       Decimal           @default(0) @db.Decimal(10, 2)
+  health_score      Int               @default(100)
   preferred_channel String?
-
-  orders            Order[]
-  customer_personas CustomerPersona[]
   communications    Communication[]
+  customer_personas CustomerPersona[]
+  orders            Order[]
 
   @@map("customers")
 }
 
 model Order {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  customer_id   String   @db.Uuid
-  amount        Decimal  @db.Decimal(10, 2)
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_id   String    @db.Uuid
+  amount        Decimal   @db.Decimal(10, 2)
   category      String?
-  discount_used Boolean  @default(false)
-  order_date    DateTime @default(now())
-  campaign_id   String?  @db.Uuid
-
-  customer Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
-  campaign Campaign? @relation(fields: [campaign_id], references: [id])
+  discount_used Boolean   @default(false)
+  order_date    DateTime  @default(now())
+  campaign_id   String?   @db.Uuid
+  campaign      Campaign? @relation(fields: [campaign_id], references: [id])
+  customer      Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
 
   @@index([customer_id])
   @@index([campaign_id])
@@ -44,40 +42,37 @@ model Order {
 }
 
 model Persona {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String   @unique
-  description String?
-
-  customer_personas CustomerPersona[]
+  id                String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name              String            @unique
+  description       String?
   campaigns         Campaign[]
+  customer_personas CustomerPersona[]
 
   @@map("personas")
 }
 
 model CustomerPersona {
-  customer_id String @db.Uuid
-  persona_id  String @db.Uuid
-
-  customer Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
-  persona  Persona  @relation(fields: [persona_id], references: [id], onDelete: Cascade)
+  customer_id String   @db.Uuid
+  persona_id  String   @db.Uuid
+  customer    Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  persona     Persona  @relation(fields: [persona_id], references: [id], onDelete: Cascade)
 
   @@id([customer_id, persona_id])
   @@map("customer_personas")
 }
 
 model Campaign {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name       String
-  persona_id String   @db.Uuid
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String
+  status           String          @default("draft")
+  created_at       DateTime        @default(now())
   channel          String?
   message          String?
+  persona_id       String          @db.Uuid
   opportunity_type String?
-  status           String   @default("draft")
-  created_at       DateTime @default(now())
-
-  persona        Persona         @relation(fields: [persona_id], references: [id])
-  communications Communication[]
-  orders         Order[]
+  persona          Persona         @relation(fields: [persona_id], references: [id])
+  communications   Communication[]
+  orders           Order[]
 
   @@map("campaigns")
 }
@@ -92,9 +87,8 @@ model Communication {
   opened_at    DateTime?
   clicked_at   DateTime?
   purchased_at DateTime?
-
-  campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
-  customer Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  campaign     Campaign  @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  customer     Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
 
   @@index([campaign_id])
   @@index([status])
@@ -103,7 +97,7 @@ model Communication {
 
 model ChannelMetric {
   channel         String  @id
-  ctr             Decimal @db.Decimal(5, 2) // e.g. 12.00 for 12%
+  ctr             Decimal @db.Decimal(5, 2)
   open_rate       Decimal @db.Decimal(5, 2)
   conversion_rate Decimal @db.Decimal(5, 2)
 

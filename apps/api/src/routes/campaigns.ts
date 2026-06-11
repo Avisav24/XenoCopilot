@@ -177,13 +177,23 @@ DO focus on business impact, revenue multipliers, and strategic findings.
 Example: "WhatsApp campaigns targeting dormant VIP customers generated 2.3x more attributed revenue than email campaigns during the same period. This indicates a strong preference for direct conversational channels for high-ticket reactivations."
 Do not use markdown formatting.`;
 
-        const resp = await genai.models.generateContent({
-          model,
-          contents: [{ role: 'user', parts: [{ text: prompt }] }],
-          config: { temperature: 0.7 },
+        // Fire and forget AI generation so we don't block the UI
+        Promise.resolve().then(async () => {
+          try {
+            const resp = await genai.models.generateContent({
+              model,
+              contents: [{ role: 'user', parts: [{ text: prompt }] }],
+              config: { temperature: 0.7 },
+            });
+            const text = resp.text?.trim();
+            if (text) {
+              await redis.set(summaryKey, text, 'EX', 3600).catch(() => {});
+            }
+          } catch (aiErr) {
+            console.error('Async AI summary error:', aiErr);
+          }
         });
-        aiSummary = resp.text?.trim() || aiSummary;
-        await redis.set(summaryKey, aiSummary, 'EX', 3600).catch(() => {});
+        aiSummary = 'Campaign performance data is being analyzed...';
       }
     } catch (err) {
       console.error('AI summary error:', err);

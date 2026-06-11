@@ -60,7 +60,12 @@ export default function CommandCenterPage() {
     
     try {
       const selectedP = personas?.find((p: any) => p.id === selectedPersonaId);
-      const audienceCount = selectedP ? selectedP.customerCount : 500;
+      let audienceCount = 500;
+      if (selectedPersonaId === 'all-customers') {
+        audienceCount = 12500; // Mock total audience size
+      } else if (selectedP) {
+        audienceCount = selectedP.customerCount;
+      }
 
       // 1. Fetch simulation
       const sim = await simulateCampaign(audienceCount);
@@ -119,7 +124,12 @@ export default function CommandCenterPage() {
 
   const selectedSim = simData?.find(s => s.channel === selectedChannel);
   const activeVariant = variants.find(v => v.id === selectedVariantId);
-  const audienceSize = personas?.find((p: any) => p.id === selectedPersonaId)?.customerCount || 0;
+  const audienceSize = selectedPersonaId === 'all-customers' 
+    ? 12500 
+    : (personas?.find((p: any) => p.id === selectedPersonaId)?.customerCount || 0);
+  const audienceName = selectedPersonaId === 'all-customers'
+    ? 'All Customers'
+    : personas?.find((p: any) => p.id === selectedPersonaId)?.name;
 
   return (
     <div className="p-10 w-full flex flex-col min-h-screen bg-canvas pb-24" style={{ gap: '24px' }}>
@@ -190,6 +200,7 @@ export default function CommandCenterPage() {
                 disabled={isProcessing || aiReport !== null}
               >
                 <option value="">Select Target Audience...</option>
+                <option value="all-customers">All Customers (12,500 users)</option>
                 {personas?.map((p: any) => (
                   <option key={p.id} value={p.id}>{p.name} ({p.customerCount} users)</option>
                 ))}
@@ -210,7 +221,7 @@ export default function CommandCenterPage() {
                 <button 
                   onClick={() => handleStartWorkflow()}
                   disabled={isProcessing || !goal.trim() || !selectedPersonaId || aiReport !== null} 
-                  className="absolute right-3 bottom-2 w-8 h-8 bg-primary text-white rounded flex items-center justify-center hover:bg-primary-press disabled:opacity-50 transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-primary text-white rounded flex items-center justify-center hover:bg-primary-press disabled:opacity-50 transition-colors"
                 >
                   <Spark height={16} width={16} />
                 </button>
@@ -477,7 +488,7 @@ export default function CommandCenterPage() {
                   <div className="flex flex-col gap-3 border-b border-hairline pb-5">
                      <div className="flex justify-between items-center">
                         <span className="text-[13px] text-muted">Audience</span>
-                        <span className="text-[14px] font-medium text-ink">{audienceSize.toLocaleString()} {personas?.find((p: any) => p.id === selectedPersonaId)?.name}</span>
+                        <span className="text-[14px] font-medium text-ink">{audienceSize.toLocaleString()} {audienceName}</span>
                      </div>
                      <div className="flex justify-between items-center">
                         <span className="text-[13px] text-muted">Channel</span>
