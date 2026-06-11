@@ -24,7 +24,7 @@ const DraftMessagesSchema = z.object({
 
 const LaunchCampaignSchema = z.object({
   name: z.string(),
-  persona_id: z.string().uuid().optional(),
+  persona_id: z.string().optional(),
   individual_id: z.string().uuid().optional(),
   channel: z.string(),
   message: z.string(),
@@ -227,9 +227,10 @@ export async function aiRoutes(fastify: FastifyInstance) {
     try {
       const { name, persona_id, individual_id, channel, message } = LaunchCampaignSchema.parse(request.body);
 
-      // If individual_id is provided, we still need a valid persona_id for the Campaign record.
+      // Check if persona_id is a valid UUID, if not fallback
       let finalPersonaId = persona_id;
-      if (!finalPersonaId && individual_id) {
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(finalPersonaId || '');
+      if (!isUUID) {
         const anyPersona = await prisma.persona.findFirst();
         finalPersonaId = anyPersona?.id;
       }
