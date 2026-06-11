@@ -6,37 +6,33 @@ import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
 import { Spark, Group, Megaphone, StatsReport, User, Settings, Database } from 'iconoir-react';
 
-const navItems = [
+const navGroups = [
   {
-    href: '/opportunities',
-    label: 'Revenue Opportunities',
-    icon: <Spark height={18} width={18} />,
+    label: 'Growth',
+    items: [
+      { href: '/opportunities', label: 'Revenue Opportunities', icon: <Spark height={18} width={18} /> },
+      { href: '/chat', label: 'Campaign Copilot', icon: <Spark height={18} width={18} /> },
+    ]
   },
   {
-    href: '/chat',
-    label: 'Campaign Copilot',
-    icon: <Spark height={18} width={18} />,
+    label: 'Customers',
+    items: [
+      { href: '/intelligence', label: 'Customer Intelligence', icon: <Group height={18} width={18} /> },
+      { href: '/personas', label: 'Personas', icon: <User height={18} width={18} /> },
+    ]
   },
   {
-    href: '/intelligence',
-    label: 'Customer Intelligence',
-    icon: <Group height={18} width={18} />,
+    label: 'Execution',
+    items: [
+      { href: '/engagement', label: 'Campaigns', icon: <Megaphone height={18} width={18} /> },
+    ]
   },
   {
-    href: '/personas',
-    label: 'Personas',
-    icon: <User height={18} width={18} />,
-  },
-  {
-    href: '/engagement',
-    label: 'Campaigns',
-    icon: <Megaphone height={18} width={18} />,
-  },
-  {
-    href: '/revenue',
-    label: 'Revenue Intelligence',
-    icon: <StatsReport height={18} width={18} />,
-  },
+    label: 'Analytics',
+    items: [
+      { href: '/revenue', label: 'Revenue Intelligence', icon: <StatsReport height={18} width={18} /> },
+    ]
+  }
 ];
 
 export function Sidebar() {
@@ -57,26 +53,33 @@ export function Sidebar() {
             </Link>
           </div>
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-              
-              return (
-                <Link 
-                  key={item.href} 
-                  href={item.href}
-                  className={clsx(
-                    'flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] font-medium transition-colors duration-150 mb-1',
-                    isActive ? 'text-primary bg-[#EFF6FF]' : 'text-muted hover:bg-surface-strong hover:text-ink'
-                  )}
-                >
-                  <div className={clsx("flex-shrink-0", isActive ? "text-primary" : "opacity-70")}>
-                    {item.icon}
-                  </div>
-                  <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
-                </Link>
-              );
-            })}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-6">
+            {navGroups.map((group) => (
+              <div key={group.label} className="flex flex-col gap-1">
+                <span className="label-text px-3 mb-1">{group.label}</span>
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                  
+                  return (
+                    <Link 
+                      key={item.href} 
+                      href={item.href}
+                      className={clsx(
+                        'flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] font-medium transition-colors duration-150 mb-1 border border-transparent',
+                        isActive 
+                          ? 'text-primary bg-[#EFF6FF] border-[#DBEAFE]' 
+                          : 'text-muted hover:bg-[#F8FAFC] hover:text-ink'
+                      )}
+                    >
+                      <div className={clsx("flex-shrink-0", isActive ? "text-primary" : "opacity-70")}>
+                        {item.icon}
+                      </div>
+                      <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </nav>
 

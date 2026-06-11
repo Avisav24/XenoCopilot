@@ -102,12 +102,13 @@ export default function IntelligencePage() {
                     <th>Primary Personas</th>
                     <th className="text-right">Lifetime Value</th>
                     <th className="text-right">Last Order</th>
+                    <th>Next Action</th>
                   </tr>
                 </thead>
                 <tbody className="bg-surface-card">
                   {isListLoading
                     ? Array.from({ length: 5 }).map((_, i) => (
-                        <tr key={i}><td colSpan={6} className="px-4 py-4"><div className="h-4 skeleton rounded w-full" /></td></tr>
+                        <tr key={i}><td colSpan={7} className="px-4 py-4"><div className="h-4 skeleton rounded w-full" /></td></tr>
                       ))
                     : customers.map((c: any) => {
                         const daysSince = c.last_order_date
@@ -122,9 +123,14 @@ export default function IntelligencePage() {
                             </td>
                             <td className="text-muted">{c.email}</td>
                             <td>
-                              <span className={`font-mono-numbers font-medium ${c.health_score < 40 ? 'text-semantic-down' : c.health_score > 75 ? 'text-semantic-up' : 'text-ink'}`}>
-                                {c.health_score}
-                              </span>
+                              <div className="flex flex-col">
+                                <span className={`font-mono-numbers font-semibold ${c.health_score < 40 ? 'text-semantic-down' : c.health_score > 75 ? 'text-semantic-up' : 'text-ink'}`}>
+                                  {c.health_score}
+                                </span>
+                                <span className="text-[12px] text-muted">
+                                  {c.health_score > 85 ? 'Very Loyal' : c.health_score > 60 ? 'Active' : c.health_score > 40 ? 'At Risk' : 'Churn Risk'}
+                                </span>
+                              </div>
                             </td>
                             <td>
                               <div className="flex gap-2 flex-wrap items-center">
@@ -144,6 +150,11 @@ export default function IntelligencePage() {
                             </td>
                             <td className="text-muted text-right">
                               {daysSince !== null ? `${daysSince}d ago` : '—'}
+                            </td>
+                            <td>
+                              <span className="status-badge bg-surface-soft border-hairline whitespace-nowrap">
+                                {c.health_score < 40 ? 'Launch Win-Back' : c.health_score > 85 ? 'VIP Early Access' : c.health_score > 60 ? 'Cross-Sell Serum' : 'Monitor'}
+                              </span>
                             </td>
                           </tr>
                         );

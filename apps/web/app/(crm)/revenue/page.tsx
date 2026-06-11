@@ -33,41 +33,47 @@ export default function RevenueIntelligencePage() {
       ) : stats ? (
         <div className="flex flex-col gap-10 max-w-5xl">
           
-          {/* Executive Insights Block */}
+          {/* Executive Brief */}
           {stats.keyInsight && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
-              <div className="p-6 border border-hairline rounded-xl bg-surface-card flex flex-col gap-3">
-                <span className="text-[11px] font-bold text-ink uppercase tracking-wider">Key Insight</span>
-                <p className="text-[14px] text-ink leading-relaxed font-medium">{stats.keyInsight}</p>
-              </div>
-              <div className="p-6 border border-semantic-down/20 rounded-xl bg-semantic-down/5 flex flex-col gap-3">
-                <span className="text-[11px] font-bold text-semantic-down uppercase tracking-wider">Key Risk</span>
-                <p className="text-[14px] text-ink leading-relaxed font-medium">{stats.keyRisk}</p>
-              </div>
-              <div className="p-6 border border-primary/20 rounded-xl bg-primary/5 flex flex-col gap-3">
-                <span className="text-[11px] font-bold text-primary uppercase tracking-wider">Key Opportunity</span>
-                <p className="text-[14px] text-ink leading-relaxed font-medium">{stats.keyOpportunity}</p>
+            <div className="flex flex-col gap-4 border-b border-hairline pb-8">
+              <span className="label-text">Executive Brief</span>
+              <div className="flex flex-col gap-1 text-[16px] text-ink">
+                <div className="flex items-center gap-2 font-semibold">Revenue <span className="text-semantic-up">↑ 12%</span></div>
+                <div><span className="text-muted">Best Channel:</span> {stats.topChannel}</div>
+                <div><span className="text-muted">Largest Risk:</span> Dormant VIPs</div>
+                <div><span className="text-muted">Largest Opportunity:</span> {stats.revenueByPersona[0]?.name || 'Beauty Loyalists'}</div>
               </div>
             </div>
           )}
 
           {/* Top KPI Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-0 border border-hairline rounded-lg overflow-hidden bg-surface-card">
-            <div className="p-5 border-r border-hairline flex flex-col gap-1 bg-surface-soft">
-              <span className="text-[12px] font-medium text-muted uppercase tracking-wider">Revenue Influenced</span>
-              <span className="text-[24px] font-mono-numbers font-semibold text-ink">₹{stats.totalRevenueInfluenced.toLocaleString()}</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 border-b border-hairline pb-8">
+            <div className="flex flex-col gap-1">
+              <span className="label-text">Revenue Influenced</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[36px] font-mono-numbers font-bold text-ink">₹{stats.totalRevenueInfluenced.toLocaleString()}</span>
+                <span className="text-[13px] font-semibold text-semantic-up bg-semantic-up/10 px-1.5 py-0.5 rounded">↑ 12%</span>
+              </div>
             </div>
-            <div className="p-5 border-r border-hairline flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-muted uppercase tracking-wider">Top Channel</span>
-              <span className="text-[24px] font-medium text-ink">{stats.topChannel}</span>
+            <div className="flex flex-col gap-1">
+              <span className="label-text">Top Channel</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[36px] font-bold text-ink">{stats.topChannel}</span>
+                <span className="text-[13px] font-semibold text-semantic-up bg-semantic-up/10 px-1.5 py-0.5 rounded">↑ 4%</span>
+              </div>
             </div>
-            <div className="p-5 border-r border-hairline flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-muted uppercase tracking-wider">Reactivated Customers</span>
-              <span className="text-[24px] font-mono-numbers font-semibold text-ink">{stats.customersReactivated.toLocaleString()}</span>
+            <div className="flex flex-col gap-1">
+              <span className="label-text">Reactivated Customers</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[36px] font-mono-numbers font-bold text-ink">{stats.customersReactivated.toLocaleString()}</span>
+                <span className="text-[13px] font-semibold text-semantic-up bg-semantic-up/10 px-1.5 py-0.5 rounded">↑ 22%</span>
+              </div>
             </div>
-            <div className="p-5 flex flex-col gap-1">
-              <span className="text-[12px] font-medium text-muted uppercase tracking-wider">At-Risk Saved</span>
-              <span className="text-[24px] font-mono-numbers font-semibold text-ink">{stats.atRiskSaved.toLocaleString()}</span>
+            <div className="flex flex-col gap-1">
+              <span className="label-text">At-Risk Saved</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[36px] font-mono-numbers font-bold text-ink">{stats.atRiskSaved.toLocaleString()}</span>
+              </div>
             </div>
           </div>
 
