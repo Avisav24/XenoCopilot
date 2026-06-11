@@ -47,32 +47,32 @@ export default function RevenueIntelligencePage() {
           )}
 
           {/* Top KPI Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 border-b border-hairline pb-8">
-            <div className="flex flex-col gap-1">
+          <div className="flex flex-wrap gap-x-12 gap-y-8 justify-between border-b border-hairline pb-8 w-full">
+            <div className="flex flex-col gap-1 min-w-0 flex-shrink-0">
               <span className="label-text">Revenue Influenced</span>
-              <div className="flex items-center gap-3">
-                <span className="text-[36px] font-mono-numbers font-bold text-ink">₹{stats.totalRevenueInfluenced.toLocaleString()}</span>
+              <div className="flex items-center gap-3 whitespace-nowrap">
+                <span className="text-[36px] font-mono-numbers font-bold text-ink truncate">₹{stats.totalRevenueInfluenced.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
                 <span className="text-[13px] font-semibold text-semantic-up bg-semantic-up/10 px-1.5 py-0.5 rounded">↑ 12%</span>
               </div>
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 min-w-0 flex-shrink-0">
               <span className="label-text">Top Channel</span>
-              <div className="flex items-center gap-3">
-                <span className="text-[36px] font-bold text-ink">{stats.topChannel}</span>
+              <div className="flex items-center gap-3 whitespace-nowrap">
+                <span className="text-[36px] font-bold text-ink truncate">{stats.topChannel}</span>
                 <span className="text-[13px] font-semibold text-semantic-up bg-semantic-up/10 px-1.5 py-0.5 rounded">↑ 4%</span>
               </div>
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 min-w-0 flex-shrink-0">
               <span className="label-text">Reactivated Customers</span>
-              <div className="flex items-center gap-3">
-                <span className="text-[36px] font-mono-numbers font-bold text-ink">{stats.customersReactivated.toLocaleString()}</span>
+              <div className="flex items-center gap-3 whitespace-nowrap">
+                <span className="text-[36px] font-mono-numbers font-bold text-ink truncate">{stats.customersReactivated.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
                 <span className="text-[13px] font-semibold text-semantic-up bg-semantic-up/10 px-1.5 py-0.5 rounded">↑ 22%</span>
               </div>
             </div>
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 min-w-0 flex-shrink-0">
               <span className="label-text">At-Risk Saved</span>
-              <div className="flex items-center gap-3">
-                <span className="text-[36px] font-mono-numbers font-bold text-ink">{stats.atRiskSaved.toLocaleString()}</span>
+              <div className="flex items-center gap-3 whitespace-nowrap">
+                <span className="text-[36px] font-mono-numbers font-bold text-ink truncate">{stats.atRiskSaved.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
               </div>
             </div>
           </div>
@@ -94,7 +94,7 @@ export default function RevenueIntelligencePage() {
                     {stats.revenueByPersona.map((p) => (
                       <tr key={p.name}>
                         <td className="font-medium text-ink">{p.name}</td>
-                        <td className="text-right font-mono-numbers text-ink">₹{p.value.toLocaleString()}</td>
+                        <td className="text-right font-mono-numbers text-ink">₹{p.value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -118,7 +118,7 @@ export default function RevenueIntelligencePage() {
                     {stats.channelIntelligence.map((ch) => (
                       <tr key={ch.channel}>
                         <td className="font-medium text-ink">{ch.channel}</td>
-                        <td className="text-right font-mono-numbers text-ink">₹{ch.revenue.toLocaleString()}</td>
+                        <td className="text-right font-mono-numbers text-ink">₹{ch.revenue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
                         <td className="text-right font-mono-numbers text-ink">{ch.conversion}%</td>
                       </tr>
                     ))}
@@ -145,7 +145,7 @@ export default function RevenueIntelligencePage() {
                       return (
                         <tr key={opp.name}>
                           <td className="font-medium text-ink">{opp.name}</td>
-                          <td className="text-right font-mono-numbers text-ink">₹{opp.value.toLocaleString()}</td>
+                          <td className="text-right font-mono-numbers text-ink">₹{opp.value.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</td>
                           <td>
                             <div className="w-full h-1.5 bg-surface-strong rounded-full overflow-hidden">
                               <div className="h-full bg-primary" style={{ width: `${pct}%` }} />

@@ -510,12 +510,6 @@ Example format:
         }
       }
 
-      // Multiply by 42 to simulate enterprise scale for the demo
-      const scale = 42;
-      vipCount *= scale; vipRev *= scale;
-      dormantCount *= scale; dormantRev *= scale;
-      regularCount *= scale; regularRev *= scale;
-
       const personas = [
         {
           id: 'dyn-vip',

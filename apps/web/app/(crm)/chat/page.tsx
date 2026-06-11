@@ -60,9 +60,9 @@ export default function CommandCenterPage() {
     
     try {
       const selectedP = personas?.find((p: any) => p.id === selectedPersonaId);
-      let audienceCount = 500;
+      let audienceCount = 300;
       if (selectedPersonaId === 'all-customers') {
-        audienceCount = 12500; // Mock total audience size
+        audienceCount = personas ? personas.reduce((acc: number, p: any) => acc + p.customerCount, 0) : 300;
       } else if (selectedP) {
         audienceCount = selectedP.customerCount;
       }
@@ -125,7 +125,7 @@ export default function CommandCenterPage() {
   const selectedSim = simData?.find(s => s.channel === selectedChannel);
   const activeVariant = variants.find(v => v.id === selectedVariantId);
   const audienceSize = selectedPersonaId === 'all-customers' 
-    ? 12500 
+    ? (personas ? personas.reduce((acc: number, p: any) => acc + p.customerCount, 0) : 300)
     : (personas?.find((p: any) => p.id === selectedPersonaId)?.customerCount || 0);
   const audienceName = selectedPersonaId === 'all-customers'
     ? 'All Customers'
