@@ -4,10 +4,9 @@ import { faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient();
 
-const CUSTOMER_COUNT = 500;
-const ORDER_COUNT = 2500;
+const CUSTOMER_COUNT = 300;
+const ORDER_COUNT = 1500;
 
-// Distribution weights
 const CATEGORIES = [
   { name: 'Beauty', weight: 40 },
   { name: 'Apparel', weight: 30 },
@@ -15,9 +14,9 @@ const CATEGORIES = [
   { name: 'Accessories', weight: 10 },
 ];
 
+const CHANNELS = ['WhatsApp', 'Email', 'SMS'];
 const CITIES = ['Mumbai', 'Delhi', 'Bengaluru', 'Hyderabad', 'Chennai', 'Pune'];
 
-// Indian first + last names
 const FIRST_NAMES = [
   'Aisha', 'Priya', 'Divya', 'Neha', 'Ananya', 'Kavya', 'Shreya', 'Riya', 'Pooja', 'Meera',
   'Sanya', 'Tanvi', 'Ishaan', 'Arjun', 'Rohan', 'Vikram', 'Amit', 'Rahul', 'Kiran', 'Sunita',
@@ -52,14 +51,14 @@ function randomDaysAgo(minDays: number, maxDays: number): Date {
 
 function randomOrderCount(): number {
   const rand = Math.random();
-  if (rand < 0.05) return 1;
-  if (rand < 0.30) return 2;
-  if (rand < 0.55) return 3;
-  if (rand < 0.75) return 4;
-  if (rand < 0.88) return 5;
-  if (rand < 0.96) return 6;
-  if (rand < 0.99) return 7;
-  return 8;
+  if (rand < 0.10) return 1;
+  if (rand < 0.40) return 2;
+  if (rand < 0.65) return 3;
+  if (rand < 0.80) return 4;
+  if (rand < 0.90) return 5;
+  if (rand < 0.96) return 8;
+  if (rand < 0.99) return 12;
+  return 15;
 }
 
 async function main() {
@@ -67,36 +66,29 @@ async function main() {
 
   console.log('🧹 Cleaning existing data...');
   await prisma.communication.deleteMany({});
+  await prisma.order.deleteMany({});
   await prisma.campaign.deleteMany({});
   await prisma.customerPersona.deleteMany({});
-  await prisma.order.deleteMany({});
   await prisma.customer.deleteMany({});
   await prisma.persona.deleteMany({});
   await prisma.channelMetric.deleteMany({});
 
-  // ── Seed Personas ─────────────────────────────────────
   console.log('🎭 Seeding personas...');
-  const beautyLoyalists = await prisma.persona.create({
-    data: { name: 'Beauty Loyalists', description: '70%+ purchases from Beauty category' }
-  });
-  const discountHunters = await prisma.persona.create({
-    data: { name: 'Discount Hunters', description: 'Frequently purchase when discount exists' }
-  });
-  const weekendShoppers = await prisma.persona.create({
-    data: { name: 'Weekend Shoppers', description: 'Majority of orders placed Saturday/Sunday' }
-  });
+  const beautyLoyalists = await prisma.persona.create({ data: { name: 'Beauty Loyalist', description: '70%+ purchases from Beauty category' } });
+  const discountHunters = await prisma.persona.create({ data: { name: 'Discount Hunter', description: 'Uses discount in 60%+ of purchases' } });
+  const weekendShoppers = await prisma.persona.create({ data: { name: 'Weekend Shopper', description: '70%+ purchases occur Saturday or Sunday' } });
+  const vipCustomers = await prisma.persona.create({ data: { name: 'VIP Customer', description: 'Top 5% spenders' } });
+  const atRiskCustomers = await prisma.persona.create({ data: { name: 'At Risk Customer', description: 'Health Score below 40' } });
 
-  // ── Seed Channel Metrics ───────────────────────────────
   console.log('📈 Seeding channel metrics...');
   await prisma.channelMetric.createMany({
     data: [
-      { channel: 'WhatsApp', ctr: 12.0, open_rate: 65.0, conversion_rate: 5.0 },
-      { channel: 'Email', ctr: 5.0, open_rate: 35.0, conversion_rate: 2.0 },
-      { channel: 'SMS', ctr: 3.0, open_rate: 20.0, conversion_rate: 1.0 },
+      { channel: 'WhatsApp', ctr: 12.0, open_rate: 65.0, conversion_rate: 2.4 },
+      { channel: 'Email', ctr: 5.0, open_rate: 35.0, conversion_rate: 1.2 },
+      { channel: 'SMS', ctr: 3.0, open_rate: 20.0, conversion_rate: 0.8 },
     ]
   });
 
-  // ── Seed Customers ─────────────────────────────────────
   console.log(`👤 Seeding ${CUSTOMER_COUNT} customers...`);
   const customerData = Array.from({ length: CUSTOMER_COUNT }, () => {
     return {
@@ -107,6 +99,8 @@ async function main() {
       signup_date: randomDaysAgo(300, 700),
       total_spent: 0,
       last_order_date: null,
+      health_score: 100,
+      preferred_channel: CHANNELS[Math.floor(Math.random() * CHANNELS.length)]
     };
   });
 
@@ -115,7 +109,18 @@ async function main() {
   );
   console.log(`  ✅ ${customers.length} customers created`);
 
-  // ── Seed Orders ────────────────────────────────────────
+  // Simulate past campaigns for attribution
+  const pastCampaigns = [
+    { name: 'Diwali Beauty Bonanza', persona_id: beautyLoyalists.id, channel: 'WhatsApp', opportunity_type: 'Cross-Sell Opportunity' },
+    { name: 'Weekend Flash Sale', persona_id: weekendShoppers.id, channel: 'SMS', opportunity_type: 'Discount Conversion' },
+    { name: 'VIP Exclusive Preview', persona_id: vipCustomers.id, channel: 'Email', opportunity_type: 'VIP Retention Opportunity' },
+    { name: 'We miss you - 20% Off', persona_id: atRiskCustomers.id, channel: 'WhatsApp', opportunity_type: 'Dormant Customer Opportunity' },
+  ];
+
+  const dbCampaigns = await Promise.all(
+    pastCampaigns.map(c => prisma.campaign.create({ data: { ...c, status: 'sent', created_at: randomDaysAgo(30, 90) } }))
+  );
+
   console.log(`📦 Seeding ${ORDER_COUNT} orders...`);
   const customerOrderCounts = customers.map((c) => ({
     customer: c,
@@ -135,16 +140,9 @@ async function main() {
     }
   }
 
-  const orderData: Array<{
-    customer_id: string;
-    amount: number;
-    category: string;
-    discount_used: boolean;
-    order_date: Date;
-  }> = [];
-
+  const orderData: any[] = [];
+  
   for (const { customer, count } of customerOrderCounts) {
-    // Determine user's biases to make them fall into personas
     const isBeautyLoyalist = Math.random() < 0.25;
     const isDiscountHunter = Math.random() < 0.20;
     const isWeekendShopper = Math.random() < 0.15;
@@ -156,21 +154,26 @@ async function main() {
       let discount_used = Math.random() < 0.2;
       if (isDiscountHunter && Math.random() < 0.8) discount_used = true;
 
-      // Force weekend dates for weekend shoppers
-      let ordered_at = randomDaysAgo(0, 180);
+      let ordered_at = randomDaysAgo(0, 365);
       if (isWeekendShopper && Math.random() < 0.8) {
-        // adjust to nearest saturday
         const day = ordered_at.getDay();
-        const diff = 6 - day; // diff to saturday
+        const diff = 6 - day; 
         ordered_at = new Date(ordered_at.getTime() + diff * 24 * 60 * 60 * 1000);
+      }
+
+      // Attribute ~40% of orders to a campaign
+      let campaign_id = null;
+      if (Math.random() < 0.40) {
+        campaign_id = dbCampaigns[Math.floor(Math.random() * dbCampaigns.length)].id;
       }
 
       orderData.push({
         customer_id: customer.id,
-        amount: 300 + Math.random() * 7700,
+        amount: 300 + Math.random() * 5700, // Range 300 to 6000
         category,
         discount_used,
         order_date: ordered_at,
+        campaign_id
       });
     }
   }
@@ -182,10 +185,8 @@ async function main() {
   }
   console.log(`  ✅ ${orderData.length} orders created`);
 
-  // ── Compute Personas & Aggregates ────────────────────────
-  console.log('🧠 Computing personas and aggregates...');
+  console.log('🧠 Computing personas, health scores, and aggregates...');
   
-  // Fetch all orders
   const allOrders = await prisma.order.findMany();
   const ordersByCustomer = new Map<string, typeof allOrders>();
   for (const o of allOrders) {
@@ -193,9 +194,12 @@ async function main() {
     ordersByCustomer.get(o.customer_id)!.push(o);
   }
 
-  let beautyCount = 0;
-  let discountCount = 0;
-  let weekendCount = 0;
+  // Pre-calculate to find VIP threshold
+  const customerSpends = customers.map(c => {
+    const orders = ordersByCustomer.get(c.id) || [];
+    return { id: c.id, spent: orders.reduce((sum, o) => sum + Number(o.amount), 0) };
+  }).sort((a, b) => b.spent - a.spent);
+  const vipThreshold = customerSpends[Math.floor(customerSpends.length * 0.05)]?.spent || 10000;
 
   for (const customer of customers) {
     const orders = ordersByCustomer.get(customer.id) || [];
@@ -203,47 +207,60 @@ async function main() {
 
     const totalSpent = orders.reduce((sum, o) => sum + Number(o.amount), 0);
     const maxDate = new Date(Math.max(...orders.map(o => o.order_date.getTime())));
+    
+    const daysSinceLastOrder = Math.floor((Date.now() - maxDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Health Score Logic (0-100)
+    let health = 100;
+    if (daysSinceLastOrder > 30) health -= 20;
+    if (daysSinceLastOrder > 60) health -= 20;
+    if (daysSinceLastOrder > 90) health -= 30; // Churn risk!
+    if (orders.length < 2) health -= 10;
+    if (totalSpent > vipThreshold) health += 20; 
+    health = Math.max(0, Math.min(100, health));
 
     await prisma.customer.update({
       where: { id: customer.id },
       data: {
         total_spent: totalSpent,
         last_order_date: maxDate,
+        health_score: health
       }
     });
 
-    // Rule 1: Beauty Loyalists (>=70% Beauty)
+    // Beauty Loyalist
     const beautyOrders = orders.filter(o => o.category === 'Beauty').length;
     if (beautyOrders / orders.length >= 0.7) {
       await prisma.customerPersona.create({ data: { customer_id: customer.id, persona_id: beautyLoyalists.id } });
-      beautyCount++;
     }
 
-    // Rule 2: Discount Hunters (>=50% discount_used)
+    // Discount Hunter
     const discountOrders = orders.filter(o => o.discount_used).length;
-    if (discountOrders / orders.length >= 0.5) {
+    if (discountOrders / orders.length >= 0.6) {
       await prisma.customerPersona.create({ data: { customer_id: customer.id, persona_id: discountHunters.id } });
-      discountCount++;
     }
 
-    // Rule 3: Weekend Shoppers (>=50% Saturday/Sunday)
+    // Weekend Shopper
     const weekendOrders = orders.filter(o => {
       const day = o.order_date.getDay();
       return day === 0 || day === 6;
     }).length;
-    if (weekendOrders / orders.length >= 0.5) {
+    if (weekendOrders / orders.length >= 0.7) {
       await prisma.customerPersona.create({ data: { customer_id: customer.id, persona_id: weekendShoppers.id } });
-      weekendCount++;
+    }
+
+    // VIP Customer
+    if (totalSpent >= vipThreshold) {
+      await prisma.customerPersona.create({ data: { customer_id: customer.id, persona_id: vipCustomers.id } });
+    }
+
+    // At Risk Customer
+    if (health < 40) {
+      await prisma.customerPersona.create({ data: { customer_id: customer.id, persona_id: atRiskCustomers.id } });
     }
   }
 
   console.log('\n✅ Seed complete!\n');
-  console.log('📊 Summary:');
-  console.log(`   Customers: ${customers.length}`);
-  console.log(`   Orders:    ${orderData.length}`);
-  console.log(`   Beauty Loyalists: ${beautyCount}`);
-  console.log(`   Discount Hunters: ${discountCount}`);
-  console.log(`   Weekend Shoppers: ${weekendCount}`);
 }
 
 main()

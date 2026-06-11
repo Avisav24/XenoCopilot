@@ -14,8 +14,10 @@ model Customer {
   phone           String?
   city            String?
   signup_date     DateTime  @default(now())
-  total_spent     Decimal   @default(0) @db.Decimal(10, 2)
-  last_order_date DateTime?
+  total_spent       Decimal   @default(0) @db.Decimal(10, 2)
+  last_order_date   DateTime?
+  health_score      Int       @default(100)
+  preferred_channel String?
 
   orders            Order[]
   customer_personas CustomerPersona[]
@@ -31,10 +33,13 @@ model Order {
   category      String?
   discount_used Boolean  @default(false)
   order_date    DateTime @default(now())
+  campaign_id   String?  @db.Uuid
 
-  customer Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  customer Customer  @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+  campaign Campaign? @relation(fields: [campaign_id], references: [id])
 
   @@index([customer_id])
+  @@index([campaign_id])
   @@map("orders")
 }
 
@@ -64,13 +69,15 @@ model Campaign {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name       String
   persona_id String   @db.Uuid
-  channel    String?
-  message    String?
-  status     String   @default("draft")
-  created_at DateTime @default(now())
+  channel          String?
+  message          String?
+  opportunity_type String?
+  status           String   @default("draft")
+  created_at       DateTime @default(now())
 
   persona        Persona         @relation(fields: [persona_id], references: [id])
   communications Communication[]
+  orders         Order[]
 
   @@map("campaigns")
 }

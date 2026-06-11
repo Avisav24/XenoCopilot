@@ -8,6 +8,10 @@ const QueryPersonasSchema = z.object({
   goal: z.string(),
 });
 
+const StrategizeSchema = z.object({
+  goal: z.string(),
+});
+
 const RecommendCampaignSchema = z.object({
   persona_id: z.string().uuid(),
 });
@@ -65,18 +69,24 @@ export async function aiRoutes(fastify: FastifyInstance) {
       Return ONLY a JSON object with this exact structure:
       { "persona_id": "<matched_uuid>" }`;
 
-      const response = await generateContentWithRetry(genai, model, {
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: `Personas:\n${personaListStr}\n\nMarketer Goal: "${goal}"` }],
-          },
-        ],
-        config: { systemInstruction: systemPrompt, temperature: 0.1 },
-      });
+      let aiResult;
+      try {
+        const response = await generateContentWithRetry(genai, model, {
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `Personas:\n${personaListStr}\n\nMarketer Goal: "${goal}"` }],
+            },
+          ],
+          config: { systemInstruction: systemPrompt, temperature: 0.1 },
+        });
 
-      const cleaned = (response?.text ?? '').replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
-      const aiResult = JSON.parse(cleaned);
+        const cleaned = (response?.text ?? '').replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+        aiResult = JSON.parse(cleaned);
+      } catch (aiErr) {
+        console.warn('AI query-personas failed, using fallback:', aiErr);
+        aiResult = { persona_id: personas[0].id };
+      }
 
       const matchedPersona = personas.find((p) => p.id === aiResult.persona_id) || personas[0];
 
@@ -149,18 +159,27 @@ export async function aiRoutes(fastify: FastifyInstance) {
         "variantB": "<message text>"
       }`;
 
-      const response = await generateContentWithRetry(genai, model, {
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: `Persona: ${persona_name}, Channel: ${channel}` }],
-          },
-        ],
-        config: { systemInstruction: systemPrompt, temperature: 0.7 },
-      });
+      let variants;
+      try {
+        const response = await generateContentWithRetry(genai, model, {
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `Persona: ${persona_name}, Channel: ${channel}` }],
+            },
+          ],
+          config: { systemInstruction: systemPrompt, temperature: 0.7 },
+        });
 
-      const cleaned = (response?.text ?? '').replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
-      const variants = JSON.parse(cleaned);
+        const cleaned = (response?.text ?? '').replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+        variants = JSON.parse(cleaned);
+      } catch (aiErr) {
+        console.warn('AI draft-messages failed, using fallback:', aiErr);
+        variants = {
+          variantA: `Hi! We noticed you might be interested in our new collection perfectly suited for ${persona_name}. Check it out now!`,
+          variantB: `Exclusive offer for our best ${persona_name} customers. Don't miss out on these specially curated items for you.`
+        };
+      }
 
       return reply.send(variants);
     } catch (err) {
@@ -214,6 +233,121 @@ export async function aiRoutes(fastify: FastifyInstance) {
     } catch (err) {
       console.error('launch-campaign error:', err);
       return reply.status(500).send({ error: 'Failed to launch campaign' });
+    }
+  });
+
+  // ── 5. Strategize (Full Revenue Agent) ────────────────────────
+  fastify.post('/api/ai/strategize', async (request, reply) => {
+    try {
+      const { goal } = StrategizeSchema.parse(request.body);
+
+      const personas = await prisma.persona.findMany();
+      const stats = await prisma.customer.aggregate({
+        _avg: { health_score: true },
+        _count: { id: true }
+      });
+
+      const systemPrompt = `You are XenoCopilot, an AI Revenue Growth Strategist for retail and D2C brands.
+
+Your purpose is NOT to generate generic marketing campaigns.
+
+Your purpose is to identify revenue opportunities, understand customer behavior, explain reasoning, and recommend actions that maximize revenue and customer retention.
+
+Always think like a senior CRM manager responsible for revenue growth.
+
+Before recommending any campaign:
+1. Analyze customer behavior.
+2. Analyze purchase patterns.
+3. Analyze customer personas.
+4. Analyze health scores.
+5. Analyze channel performance.
+6. Explain why the opportunity exists.
+7. Estimate business impact.
+
+Never provide generic recommendations. Always personalize recommendations using actual customer data.
+
+Return ONLY a JSON object with this EXACT structure:
+{
+  "markdownReport": "Your full, massive markdown report responding to the user's goal, matching the format below.",
+  "campaignData": {
+    "name": "Short Campaign Name",
+    "persona_id": "UUID of the targeted persona",
+    "channel": "WhatsApp",
+    "message": "The text of Variant A"
+  }
+}
+
+The markdownReport MUST follow this exact structure:
+## Opportunity
+Name: <opportunity>
+Priority: High | Medium | Low
+Audience: <number>
+Potential Revenue: ₹<amount>
+Confidence: <number>%
+
+---
+## Why This Matters
+Explain: Customer behavior, Revenue potential, Risk of doing nothing.
+
+---
+## Audience Summary
+Describe: Average spend, Purchase frequency, Preferred categories, Health score trends, Dominant personas.
+
+---
+## Channel Recommendation
+Recommended Channel: WhatsApp | Email | SMS
+Reason: Use actual channel performance data.
+
+---
+## Message Strategy
+Explain: Why this message should work, What customer motivation is being targeted, Why this audience is likely to respond.
+
+---
+## Campaign Variants
+Variant A
+Variant B
+Variant C
+
+---
+## Revenue Simulation
+Expected Deliveries: <number>
+Expected Opens: <number>
+Expected Clicks: <number>
+Expected Purchases: <number>
+Expected Revenue: ₹<amount>
+Explain how these estimates were calculated.
+
+---
+## Executive Recommendation
+Summarize in 2-3 sentences. Focus on business outcomes rather than campaign metrics.`;
+
+      const personaListStr = personas
+        .map((p) => `ID: ${p.id} | Name: ${p.name} | Desc: ${p.description}`)
+        .join('\n');
+
+      let aiResult;
+      try {
+        const response = await generateContentWithRetry(genai, model, {
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: `Available Personas:\n${personaListStr}\n\nOverall DB Health Avg: ${Math.round(stats._avg.health_score || 0)}\n\nMarketer Goal: "${goal}"\n\nGenerate the strategy.` }],
+            },
+          ],
+          config: { systemInstruction: systemPrompt, temperature: 0.2 },
+        });
+
+        const cleaned = (response?.text ?? '').replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+        aiResult = JSON.parse(cleaned);
+      } catch (aiErr) {
+        console.error('AI strategize failed:', aiErr);
+        return reply.status(500).send({ error: 'AI failed to generate strategy' });
+      }
+
+      return reply.send(aiResult);
+    } catch (err) {
+      console.error('strategize error:', err);
+      return reply.status(500).send({ error: 'Failed to strategize' });
     }
   });
 }
