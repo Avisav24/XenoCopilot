@@ -37,16 +37,6 @@ const navItems = [
     label: 'Revenue Intelligence',
     icon: <StatsReport height={18} width={18} />,
   },
-  {
-    href: '/channels',
-    label: 'Channels',
-    icon: <Database height={18} width={18} />,
-  },
-  {
-    href: '/settings',
-    label: 'Settings',
-    icon: <Settings height={18} width={18} />,
-  },
 ];
 
 export function Sidebar() {
