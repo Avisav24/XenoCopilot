@@ -38,7 +38,11 @@ export const launchCampaign = (data: { name: string; persona_id: string; channel
     method: 'POST',
     body: JSON.stringify(data),
   });
-
+export const strategizeCampaign = (goal: string) =>
+  fetchAPI<{ markdownReport: string; campaignData: any }>('/api/ai/strategize', {
+    method: 'POST',
+    body: JSON.stringify({ goal }),
+  });
 // ── Campaigns ─────────────────────────────────────────────
 export const getCampaigns = () => fetchAPI('/api/campaigns');
 export const getCampaign = (id: string) => fetchAPI(`/api/campaigns/${id}`);
@@ -54,4 +58,30 @@ export const getCustomers = (params?: { limit?: number; offset?: number; search?
   return fetchAPI(`/api/customers?${qs}`);
 };
 
-export const getCustomerStats = () => fetchAPI('/api/customers/stats');
+export const getCustomer = (id: string) => fetchAPI<any>(`/api/customers/${id}`);
+
+export const getCustomerStats = () => fetchAPI<{
+  total: number;
+  active: number;
+  atRisk: number;
+  vip: number;
+  dormant: number;
+  avgLTV: number;
+  avgAOV: number;
+  healthDist: Record<string, number>;
+  topPersonas: { name: string; count: number }[];
+  topRevenuePersonas: { name: string; revenue: number }[];
+}>('/api/customers/stats');
+
+// ── Revenue ───────────────────────────────────────────────
+export const getRevenueStats = () => fetchAPI<{
+  totalRevenueInfluenced: number;
+  customersReactivated: number;
+  atRiskSaved: number;
+  topPersona: string;
+  topChannel: string;
+  revenueByCampaign: { name: string; value: number }[];
+  revenueByPersona: { name: string; value: number }[];
+  revenueByOpportunity: { name: string; value: number }[];
+  channelIntelligence: { channel: string; revenue: number; ctr: number; conversion: number }[];
+}>('/api/revenue/stats');

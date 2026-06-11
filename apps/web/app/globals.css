@@ -5,81 +5,86 @@
 @layer base {
   body {
     @apply bg-canvas text-ink;
-    font-family: var(--font-coinbase-sans), system-ui, sans-serif;
+    font-family: var(--font-sohne), system-ui, sans-serif;
   }
 }
 
 @layer components {
-  /* Coinbase Component Overrides */
+  /* Stripe Component Overrides */
   .sidebar {
-    @apply bg-surface-dark text-on-dark min-h-screen w-[240px] flex-shrink-0;
+    @apply bg-canvas text-ink min-h-screen w-[240px] flex-shrink-0 border-r border-hairline;
   }
 
   .card {
-    @apply bg-surface-card rounded-xl border border-hairline shadow-sm;
+    @apply bg-surface-card rounded-[8px] border border-hairline shadow-card transition-shadow duration-300;
+  }
+  
+  .card:hover {
+    @apply shadow-card-hover border-hairline-input;
   }
 
-  /* Coinbase Primary Pill CTA */
+  /* Stripe Primary Pill CTA */
   .btn-primary {
-    @apply bg-primary text-on-primary px-5 py-3 rounded-pill font-semibold text-[16px] leading-none tracking-normal
-           hover:bg-primary-active transition-colors duration-200 
-           disabled:bg-primary-disabled disabled:cursor-not-allowed
+    @apply bg-primary text-on-primary px-5 py-3 rounded-[8px] font-semibold text-[15px] leading-none tracking-normal
+           hover:bg-primary-press shadow-card transition-all duration-200 
+           disabled:opacity-50 disabled:cursor-not-allowed
            flex items-center justify-center;
   }
 
   .btn-primary-large {
-    @apply btn-primary px-8 py-4 h-[56px];
+    @apply btn-primary px-8 py-4 h-[56px] text-[16px];
   }
 
   /* Secondary / Ghost */
   .btn-ghost {
-    @apply bg-transparent text-ink px-5 py-3 rounded-pill font-semibold text-[16px] border border-hairline
-           hover:bg-surface-strong transition-colors duration-200;
+    @apply bg-transparent text-primary px-5 py-3 rounded-[8px] font-semibold text-[15px] border border-hairline
+           hover:bg-primary-bgSubduedHover hover:text-primary-press hover:border-transparent transition-all duration-200;
   }
 
   .status-badge {
-    @apply bg-surface-strong text-ink rounded-pill px-3 py-1 text-[12px] font-semibold;
+    @apply bg-surface-strong text-ink rounded-[8px] px-3 py-1 text-[12px] font-semibold;
   }
 
   .input-field {
-    @apply w-full px-4 py-[14px] h-[48px] rounded-md border border-hairline 
-           bg-canvas text-ink placeholder-muted-soft
+    @apply w-full px-4 py-[14px] h-[48px] rounded-[8px] border border-hairline 
+           bg-canvas text-ink placeholder-muted-soft shadow-sm
            focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
            transition-all duration-200;
   }
 
   .skeleton {
-    @apply bg-surface-strong rounded-md animate-pulse;
+    @apply bg-surface-strong rounded-[8px] animate-pulse;
   }
 
   .stat-card {
-    @apply bg-canvas rounded-xl border border-hairline p-6 flex flex-col gap-1;
+    @apply bg-canvas rounded-[8px] border border-hairline p-6 flex flex-col gap-1 shadow-card;
   }
   
   .hero-band-dark {
-    @apply bg-surface-dark text-on-dark w-full px-8 py-section flex items-center justify-between;
+    @apply bg-brand-dark text-on-dark w-full px-8 py-section flex items-center justify-between;
   }
   
   .product-ui-card-dark {
-    @apply bg-surface-darkElevated text-on-dark rounded-xl p-8 shadow-2xl;
+    @apply bg-surface-darkElevated text-on-dark rounded-[8px] p-8 shadow-2xl;
   }
 }
 
 @layer utilities {
+  /* Note: In Stripe, the sidebar items often have softer hover states on a light background */
   .nav-item {
-    @apply flex items-center gap-3 px-4 py-[10px] rounded-md text-[14px] font-medium
-           text-on-darkSoft hover:text-on-dark hover:bg-white/5
+    @apply flex items-center gap-3 px-4 py-[10px] rounded-[8px] text-[14px] font-medium
+           text-muted hover:text-ink hover:bg-surface-soft
            transition-colors duration-200 cursor-pointer;
   }
 
   .nav-item-active {
-    @apply text-on-dark bg-white/10;
+    @apply text-primary bg-primary/5 font-bold;
   }
   
   .font-display {
-    font-family: var(--font-coinbase-display), sans-serif;
+    font-family: var(--font-sohne), sans-serif;
   }
   .font-mono-numbers {
-    font-family: var(--font-coinbase-mono), monospace;
+    font-family: var(--font-sohne-mono), monospace;
   }
 }

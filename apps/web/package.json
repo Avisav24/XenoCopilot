@@ -11,19 +11,22 @@
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
+    "@phosphor-icons/react": "^2.1.10",
     "@tanstack/react-query": "^5.45.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
     "framer-motion": "^11.3.2",
     "gsap": "^3.15.0",
-    "iconoir-react": "^7.11.0",
     "next": "14.2.5",
     "ogl": "^1.0.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "recharts": "^2.12.7"
+    "react-markdown": "^10.1.0",
+    "recharts": "^2.12.7",
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.20",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

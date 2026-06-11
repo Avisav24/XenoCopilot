@@ -8,69 +8,88 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        display: ['var(--font-coinbase-display)'],
-        sans: ['var(--font-coinbase-sans)'],
-        mono: ['var(--font-coinbase-mono)'],
+        display: ['var(--font-sohne)', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['var(--font-sohne)', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['var(--font-sohne-mono)', 'monospace'],
       },
       colors: {
         primary: {
-          DEFAULT: '#0052ff',
-          active: '#003ecc',
-          disabled: '#a8b8cc',
+          DEFAULT: '#533afd',
+          deep: '#4434d4',
+          press: '#2e2b8c',
+          soft: '#665efd',
+          bgSubduedHover: '#b9b9f9',
         },
-        ink: '#0a0b0d',
-        body: '#5b616e',
+        brand: {
+          dark: '#1c1e54',
+        },
+        ink: {
+          DEFAULT: '#0d253d',
+          secondary: '#273951',
+        },
         muted: {
-          DEFAULT: '#7c828a',
-          soft: '#a8acb3',
+          DEFAULT: '#64748d',
+          soft: '#61718a',
         },
         hairline: {
-          DEFAULT: '#dee1e6',
-          soft: '#eef0f3',
+          DEFAULT: '#e3e8ee',
+          input: '#a8c3de',
         },
-        canvas: '#ffffff',
+        canvas: {
+          DEFAULT: '#ffffff',
+          soft: '#f6f9fc',
+          cream: '#f5e9d4',
+        },
         surface: {
-          soft: '#f7f7f7',
+          soft: '#f6f9fc',
           card: '#ffffff',
-          strong: '#eef0f3',
-          dark: '#0a0b0d',
-          darkElevated: '#16181c',
+          strong: '#e3e8ee',
+          dark: '#1c1e54',
+          darkElevated: '#0d253d',
         },
         on: {
           primary: '#ffffff',
           dark: '#ffffff',
-          darkSoft: '#a8acb3',
+          darkSoft: '#64748d',
         },
         semantic: {
           up: '#05b169',
-          down: '#cf202f',
+          down: '#ea2261', // mapped from ruby
         },
         accent: {
-          yellow: '#f4b000',
+          yellow: '#9b6829', // mapped from lemon
+          pink: '#f96bee',   // mapped from magenta
         },
+        shadow: {
+          blue: '#003770',
+        }
       },
       borderRadius: {
         none: '0px',
-        xs: '2px',
-        sm: '2px',
-        md: '2px',
-        lg: '2px',
-        xl: '2px',
-        pill: '2px',
-        full: '2px',
+        xs: '8px',
+        sm: '8px',
+        md: '8px',
+        lg: '8px',
+        xl: '8px',
+        '2xl': '8px',
+        pill: '8px',
+        full: '9999px',
       },
       spacing: {
-        xxs: '4px',
-        xs: '8px',
-        sm: '12px',
-        base: '16px',
-        md: '20px',
-        lg: '24px',
-        xl: '32px',
-        xxl: '48px',
-        section: '96px',
+        xxs: '2px',
+        xs: '4px',
+        sm: '8px',
+        md: '12px',
+        lg: '16px',
+        xl: '24px',
+        xxl: '32px',
+        huge: '64px',
       },
+      boxShadow: {
+        card: '0 2px 5px -1px rgba(50, 50, 93, 0.25), 0 1px 3px -1px rgba(0, 0, 0, 0.3)',
+        'card-hover': '0 13px 27px -5px rgba(50, 50, 93, 0.25), 0 8px 16px -8px rgba(0, 0, 0, 0.3), 0 -6px 16px -6px rgba(0, 0, 0, 0.025)',
+      }
     },
   },
-  plugins: [],
+  plugins: [require('@tailwindcss/typography')],
 };

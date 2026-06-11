@@ -1,9 +1,13 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCustomerStats, queryPersonas, recommendCampaign, draftMessages, launchCampaign } from '@/lib/api';
+import { getCustomerStats, strategizeCampaign, launchCampaign } from '@/lib/api';
+import { Sun, Moon, Clock, Heart, WarningCircle, Sparkle, User, PaperPlaneRight } from '@phosphor-icons/react';
+import Loader from '@/components/Loader';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function AIHubPage() {
   const router = useRouter();
@@ -13,56 +17,51 @@ export default function AIHubPage() {
   });
 
   const [goal, setGoal] = useState('');
-  const [step, setStep] = useState<0 | 1 | 2 | 3 | 4>(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [report, setReport] = useState<string | null>(null);
+  const [campaignData, setCampaignData] = useState<any>(null);
+  const [greeting, setGreeting] = useState('Welcome back');
+  const [GreetingIcon, setGreetingIcon] = useState<any>(Sun);
 
-  // Workflow State
-  const [personaResult, setPersonaResult] = useState<any>(null);
-  const [recResult, setRecResult] = useState<any>(null);
-  const [variants, setVariants] = useState<any>(null);
-  const [selectedVariant, setSelectedVariant] = useState<'variantA' | 'variantB'>('variantA');
-  const [campaignName, setCampaignName] = useState('');
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) {
+      setGreeting('Good morning');
+      setGreetingIcon(() => Sun);
+    } else if (hour < 18) {
+      setGreeting('Good afternoon');
+      setGreetingIcon(() => Sun);
+    } else {
+      setGreeting('Good evening');
+      setGreetingIcon(() => Moon);
+    }
+  }, []);
 
   const handleStartWorkflow = async () => {
     if (!goal.trim()) return;
     setIsProcessing(true);
-    setStep(1);
+    setReport(null);
+    setCampaignData(null);
     
     try {
-      const pRes = await queryPersonas(goal);
-      setPersonaResult(pRes);
-      
-      setStep(2);
-      const rRes = await recommendCampaign(pRes.persona.id);
-      setRecResult(rRes);
-
-      setStep(3);
-      const vRes = await draftMessages(pRes.persona.name, rRes.channel);
-      setVariants(vRes);
-      setCampaignName(`${pRes.persona.name} - ${rRes.channel} Campaign`);
-
-      setStep(4);
+      const res = await strategizeCampaign(goal);
+      setReport(res.markdownReport);
+      setCampaignData(res.campaignData);
     } catch (err) {
       console.error(err);
-      alert('AI workflow failed.');
-      setStep(0);
+      alert('AI Strategist failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleLaunch = async () => {
-    if (!campaignName.trim()) return;
+    if (!campaignData) return;
     setIsProcessing(true);
     try {
-      const res = await launchCampaign({
-        name: campaignName,
-        persona_id: personaResult.persona.id,
-        channel: recResult.channel,
-        message: variants[selectedVariant],
-      });
+      const res = await launchCampaign(campaignData);
       if (res.success) {
-        router.push(`/campaigns/${res.campaign_id}/insights`);
+        router.push(`/engagement/${res.campaign_id}`);
       }
     } catch (err) {
       console.error(err);
@@ -71,166 +70,201 @@ export default function AIHubPage() {
     }
   };
 
+  const handleCardClick = (presetGoal: string) => {
+    setGoal(presetGoal);
+  };
+
   return (
-    <div className="p-8 max-w-5xl mx-auto flex flex-col gap-8 h-[calc(100vh-4rem)]">
+    <div className="p-6 max-w-6xl mx-auto flex flex-col gap-6 h-[calc(100vh-2rem)]">
       {/* Header */}
-      <div>
-        <h1 className="text-[44px] leading-[1.09] tracking-[-1px] font-display text-ink mb-4">Intelligence Hub</h1>
-        <p className="text-body text-[16px] max-w-xl">Describe your goal, and XenoCopilot will automatically find the best audience, recommend channels, and launch the campaign.</p>
+      <div className="flex items-center justify-center gap-3 mt-2 mb-0 shrink-0">
+        <GreetingIcon size={54} className="text-[#d48166]" />
+        <h1 className="text-[32px] md:text-[36px] leading-[1.09] tracking-[-1px] font-display text-ink text-center">
+          {greeting}, Abhinav
+        </h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 flex-1">
-        {/* Left Column: Discovered Personas */}
-        <div className="col-span-1 flex flex-col gap-4">
-          <h2 className="text-[18px] font-semibold text-ink">Top Personas</h2>
-          {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => <div key={i} className="h-20 skeleton" />)}
-            </div>
-          ) : (
-            <div className="space-y-4 overflow-y-auto pr-2 pb-8">
-              {stats?.personas?.map((p: any) => (
-                <div key={p.name} className="card p-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-semibold text-ink">{p.name}</h3>
-                    <span className="badge-pill font-mono-numbers">
-                      {p.count}
-                    </span>
-                  </div>
-                  <div className="h-1 w-full bg-surface-strong rounded-full overflow-hidden">
-                    <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(100, (p.count / stats.total) * 100)}%` }} />
-                  </div>
+      {/* 3 STATS Cards - Made smaller and compact */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
+          <div 
+            className="card p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border border-hairline flex flex-col cursor-pointer bg-canvas"
+            onClick={() => handleCardClick('Launch Win-Back Campaign for Dormant Customers')}
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-[#0052ff]/10 flex items-center justify-center">
+                  <Clock size={24} className="text-[#0052ff]" />
                 </div>
-              ))}
-              
-              <div className="card p-6 bg-surface-darkElevated text-on-dark border-none mt-4">
-                <p className="text-[13px] text-on-darkSoft font-semibold mb-2 uppercase tracking-wide">Total Revenue</p>
-                <p className="text-[32px] font-mono-numbers mb-1 leading-none">₹{(stats?.total * stats?.avg_spend).toLocaleString('en-IN')}</p>
-                <p className="text-[13px] text-on-darkSoft font-medium">From {stats?.total} active shoppers</p>
+                <h3 className="text-[14px] font-semibold text-ink">Dormant Customers</h3>
               </div>
+              <span className="bg-[#0052ff]/10 text-[#0052ff] px-2 py-0.5 rounded-[8px] text-[9px] font-bold tracking-wider">ACTION</span>
             </div>
+            <p className="text-[12px] text-body mb-3">428 customers inactive for 45+ days.</p>
+            <div className="mt-auto pt-2 border-t border-hairline/50 flex justify-between items-end">
+              <p className="text-[10px] text-muted font-semibold uppercase tracking-wider">Recovery</p>
+              <p className="text-[16px] font-mono-numbers text-semantic-up leading-none">₹17,200</p>
+            </div>
+          </div>
+          
+          <div 
+            className="card p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border border-hairline flex flex-col cursor-pointer bg-canvas"
+            onClick={() => handleCardClick('Launch Exclusive VIP Campaign for Retention')}
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Heart size={24} className="text-primary" />
+                </div>
+                <h3 className="text-[14px] font-semibold text-ink">VIP Retention</h3>
+              </div>
+              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-[8px] text-[9px] font-bold tracking-wider">ACTION</span>
+            </div>
+            <p className="text-[12px] text-body mb-3">98 high-value customers slipping.</p>
+            <div className="mt-auto pt-2 border-t border-hairline/50 flex justify-between items-end">
+              <p className="text-[10px] text-muted font-semibold uppercase tracking-wider">Revenue</p>
+              <p className="text-[16px] font-mono-numbers text-semantic-up leading-none">₹12,500</p>
+            </div>
+          </div>
+
+          <div 
+            className="card p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border border-hairline flex flex-col bg-canvas cursor-pointer" 
+            onClick={() => handleCardClick('Analyze churn risk for Rahul Sharma')}
+          >
+             <div className="flex justify-between items-start mb-2">
+               <div className="flex items-center gap-2">
+                 <div className="w-10 h-10 rounded-full bg-semantic-down/10 flex items-center justify-center">
+                   <WarningCircle size={24} className="text-semantic-down" />
+                 </div>
+                 <h3 className="text-[14px] font-semibold text-ink">Rahul Sharma</h3>
+               </div>
+               <span className="bg-semantic-down/10 text-semantic-down px-2 py-0.5 rounded-[8px] text-[9px] font-bold tracking-wider">HEALTH</span>
+             </div>
+             <p className="text-[12px] text-body mb-3">High churn probability. Last purchase 90 days ago.</p>
+             <div className="mt-auto pt-2 border-t border-hairline/50 flex justify-between items-end">
+               <p className="text-[10px] text-muted font-semibold uppercase tracking-wider">Score</p>
+               <div className="flex items-end gap-1">
+                 <span className="text-[16px] font-mono-numbers text-semantic-down leading-none">32</span>
+                 <span className="text-[10px] text-muted font-semibold">/100</span>
+               </div>
+             </div>
+          </div>
+      </div>
+
+      {/* Chatbot Interface - Takes up remaining space */}
+      <div className="card flex flex-col bg-canvas border border-hairline overflow-hidden flex-1 shadow-sm">
+        {/* Chat Header */}
+        <div className="p-3 border-b border-hairline bg-surface-soft flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shrink-0 shadow-sm">
+              <Sparkle size={54} />
+            </div>
+            <div>
+              <h2 className="text-[14px] font-bold text-ink leading-tight">Revenue Growth Strategist</h2>
+              <p className="text-[11px] text-primary font-medium flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> Online
+              </p>
+            </div>
+          </div>
+          {(report || isProcessing) && (
+            <button 
+              onClick={() => { setReport(null); setCampaignData(null); setGoal(''); setIsProcessing(false); }} 
+              className="text-[12px] text-muted hover:text-ink font-semibold px-3 py-1.5 rounded-md hover:bg-surface-strong transition-colors"
+            >
+              Reset Chat
+            </button>
           )}
         </div>
 
-        {/* Right Column: AI Chat & Workflow */}
-        <div className="col-span-2 card flex flex-col bg-surface-soft border-hairline overflow-hidden relative">
-          <div className="p-6 border-b border-hairline bg-canvas">
-            <h2 className="text-[18px] font-semibold text-ink">Campaign Copilot</h2>
-          </div>
-
-          <div className="flex-1 p-8 overflow-y-auto flex flex-col gap-8 relative">
-            
-            {/* Step 0: Input */}
-            <div className="bg-canvas p-6 rounded-xl border border-hairline">
-              <label className="block text-[14px] font-semibold text-ink mb-3">What is your goal?</label>
-              <textarea
-                value={goal}
-                onChange={e => setGoal(e.target.value)}
-                placeholder="e.g. Sell our excess inventory of dresses..."
-                className="input-field h-auto resize-none mb-4"
-                rows={3}
-                disabled={step > 0}
-              />
-              {step === 0 && (
-                <button
-                  onClick={handleStartWorkflow}
-                  disabled={!goal.trim() || isProcessing}
-                  className="btn-primary w-full"
-                >
-                  {isProcessing ? 'Thinking...' : 'Generate Campaign'}
-                </button>
-              )}
+        {/* Messages Area */}
+        <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 relative bg-canvas">
+          
+          {(!report && !isProcessing) && (
+            <div className="flex gap-3 max-w-[85%]">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
+                <Sparkle size={54} />
+              </div>
+              <div className="bg-surface-soft p-4 rounded-2xl rounded-tl-sm border border-hairline shadow-sm text-[14px] text-ink">
+                Hi Abhinav! I'm ready to help you grow your revenue. What's your campaign goal today? You can select a suggestion above or type your own below.
+              </div>
             </div>
+          )}
 
-            {/* Step 1 & 2: Persona & Recommendation */}
-            {step >= 1 && (
-              <div className={`transition-all duration-500 ${step === 1 ? 'opacity-50 animate-pulse' : 'opacity-100'}`}>
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-surface-strong text-ink flex items-center justify-center shrink-0 mt-1 font-bold">A</div>
-                  <div className="bg-canvas p-6 rounded-xl border border-hairline flex-1">
-                    {step === 1 ? (
-                      <p className="text-body text-[14px]">Analyzing your goal to find the best persona...</p>
-                    ) : (
-                      <>
-                        <p className="text-ink text-[16px] mb-6">
-                          Based on your goal, I recommend targeting <strong className="text-primary">{personaResult?.persona.name}</strong>.
-                        </p>
-                        <div className="grid grid-cols-2 gap-4 mb-6">
-                          <div className="p-4 bg-surface-soft rounded-lg border border-hairline-soft">
-                            <p className="text-[13px] text-muted font-semibold mb-1">Audience Size</p>
-                            <p className="text-[20px] font-mono-numbers text-ink">{personaResult?.count} shoppers</p>
-                          </div>
-                          <div className="p-4 bg-surface-soft rounded-lg border border-hairline-soft">
-                            <p className="text-[13px] text-muted font-semibold mb-1">Best Channel</p>
-                            <p className="text-[20px] font-semibold text-ink">{recResult?.channel}</p>
-                          </div>
-                        </div>
-                        <div className="p-5 border border-hairline rounded-lg">
-                          <p className="text-[13px] text-muted font-semibold mb-2">Expected Revenue Impact</p>
-                          <p className="text-[28px] font-mono-numbers text-semantic-up leading-none mb-2">₹{recResult?.expectedRevenue.toLocaleString('en-IN')}</p>
-                          <p className="text-[13px] text-muted">Based on historical {recResult?.channel} conversion rates and persona AOV.</p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
+          {(isProcessing || report) && (
+            <div className="flex gap-3 max-w-[85%] ml-auto justify-end">
+              <div className="bg-ink text-canvas p-4 rounded-2xl rounded-tr-sm shadow-sm text-[14px] whitespace-pre-wrap">
+                {goal}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Step 3: Drafting & Review */}
-            {step >= 3 && (
-              <div className={`transition-all duration-500 ${step === 3 ? 'opacity-50 animate-pulse' : 'opacity-100'}`}>
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded-full bg-surface-strong text-ink flex items-center justify-center shrink-0 mt-1 font-bold">A</div>
-                  <div className="bg-canvas p-6 rounded-xl border border-hairline flex-1">
-                    {step === 3 ? (
-                      <p className="text-body text-[14px]">Drafting personalized message variants...</p>
-                    ) : (
-                      <>
-                        <div className="mb-6">
-                          <label className="block text-[14px] font-semibold text-ink mb-2">Campaign Name</label>
-                          <input 
-                            value={campaignName}
-                            onChange={e => setCampaignName(e.target.value)}
-                            className="input-field"
-                          />
-                        </div>
-                        <p className="text-[14px] font-semibold text-ink mb-3">Select a Message Variant:</p>
-                        <div className="space-y-4">
-                          <div 
-                            onClick={() => setSelectedVariant('variantA')}
-                            className={`p-5 rounded-xl border cursor-pointer transition-all ${selectedVariant === 'variantA' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-hairline hover:border-muted-soft'}`}
-                          >
-                            <div className="flex justify-between items-center mb-3">
-                              <span className="text-[13px] font-bold text-primary">Variant A</span>
-                            </div>
-                            <p className="text-[14px] text-ink whitespace-pre-wrap leading-[1.5]">{variants?.variantA}</p>
-                          </div>
-                          
-                          <div 
-                            onClick={() => setSelectedVariant('variantB')}
-                            className={`p-5 rounded-xl border cursor-pointer transition-all ${selectedVariant === 'variantB' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-hairline hover:border-muted-soft'}`}
-                          >
-                            <div className="flex justify-between items-center mb-3">
-                              <span className="text-[13px] font-bold text-primary">Variant B</span>
-                            </div>
-                            <p className="text-[14px] text-ink whitespace-pre-wrap leading-[1.5]">{variants?.variantB}</p>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={handleLaunch}
-                          disabled={isProcessing}
-                          className="mt-8 btn-primary w-full"
-                        >
-                          {isProcessing ? 'Launching...' : `Launch to ${personaResult?.count} Shoppers`}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
+          {isProcessing && (
+            <div className="flex gap-3 max-w-[85%]">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
+                <Sparkle size={54} />
               </div>
-            )}
+              <div className="bg-surface-soft p-4 rounded-2xl rounded-tl-sm border border-hairline shadow-sm w-full flex items-center justify-center py-8">
+                <Loader text="Analyzing Customers & Strategizing" />
+              </div>
+            </div>
+          )}
+
+          {report && !isProcessing && (
+            <div className="flex gap-3 max-w-full md:max-w-[85%]">
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
+                <Sparkle size={54} />
+              </div>
+              <div className="bg-surface-soft p-6 rounded-2xl rounded-tl-sm border border-hairline shadow-sm w-full">
+                <div className="prose prose-sm prose-blue max-w-none text-ink">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {report}
+                  </ReactMarkdown>
+                </div>
+
+                {campaignData && (
+                  <div className="mt-8 pt-6 border-t border-hairline">
+                    <button
+                      onClick={handleLaunch}
+                      disabled={isProcessing}
+                      className="btn-primary w-full py-3 text-[14px] flex justify-center items-center gap-2 shadow-sm"
+                    >
+                      {isProcessing ? 'Launching...' : `Approve & Launch: ${campaignData.name}`}
+                      {!isProcessing && <PaperPlaneRight size={54} />}
+                    </button>
+                    <p className="text-[11px] text-muted text-center mt-3">
+                      This will queue messages via {campaignData.channel}.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* Input Box Bottom */}
+        <div className="p-4 bg-canvas border-t border-hairline shrink-0">
+          <div className="relative max-w-4xl mx-auto flex items-end gap-2">
+            <textarea
+              value={goal}
+              onChange={e => setGoal(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleStartWorkflow();
+                }
+              }}
+              placeholder="Ask Copilot to create a campaign..."
+              className="input-field w-full resize-none bg-surface-soft border-transparent hover:border-hairline focus:bg-canvas text-[14px] py-3 pl-4 pr-12 rounded-2xl min-h-[50px] max-h-[150px]"
+              rows={1}
+              disabled={isProcessing || report !== null}
+            />
+            <button 
+              onClick={handleStartWorkflow}
+              disabled={isProcessing || !goal.trim() || report !== null} 
+              className="absolute right-2 bottom-2 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-active disabled:opacity-50 disabled:bg-surface-strong transition-colors"
+            >
+              <PaperPlaneRight size={54} />
+            </button>
           </div>
         </div>
       </div>

@@ -219,16 +219,38 @@ export async function aiRoutes(fastify: FastifyInstance) {
         where: { campaign_id: campaign.id },
       });
 
-      let queued = 0;
-      for (const comm of comms) {
-        await queueSendJob(comm.id);
-        queued++;
+      // Collect recipients for channel simulator
+      const recipients = comms.map((comm) => ({
+        communicationId: comm.id,
+        channel: channel,
+        phoneOrEmail: 'customer@example.com', // mock email
+      }));
+
+      // Call channel simulator directly
+      try {
+        const simUrl = process.env.CHANNEL_SIM_URL || 'http://localhost:3002';
+        const simResp = await fetch(`${simUrl}/simulate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            campaignId: campaign.id,
+            recipients,
+          }),
+        });
+
+        if (!simResp.ok) {
+          console.error(`Failed to push to channel simulator: ${simResp.status}`);
+        } else {
+          console.log(`Pushed ${recipients.length} communications to simulator`);
+        }
+      } catch (simErr) {
+        console.error('Channel simulator is down or unreachable', simErr);
       }
 
       return reply.send({
         success: true,
         campaign_id: campaign.id,
-        queued_count: queued,
+        queued_count: comms.length,
       });
     } catch (err) {
       console.error('launch-campaign error:', err);

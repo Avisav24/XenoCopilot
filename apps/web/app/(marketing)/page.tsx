@@ -1,248 +1,163 @@
 'use client';
 
-import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
-import { getCustomerStats, getCampaigns } from '@/lib/api';
-import { useRef } from 'react';
-import gsap from 'gsap';
-import { useGSAP } from '@gsap/react';
-import { Rocket, Database, Brain, StatsReport } from 'iconoir-react';
-import dynamic from 'next/dynamic';
+import { getCustomerStats, getRevenueStats } from '@/lib/api';
+import { Sparkle, ArrowRight, Pulse, WarningCircle, User, ArrowsClockwise } from '@phosphor-icons/react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
-const DarkVeil = dynamic(() => import('@/components/DarkVeil/DarkVeil'), { ssr: false });
-
-export default function LandingPage() {
-  const { data: stats, isLoading: statsLoading } = useQuery({
+export default function OpportunitiesPage() {
+  const router = useRouter();
+  
+  const { data: stats, isLoading } = useQuery({
     queryKey: ['customer-stats'],
     queryFn: getCustomerStats,
   });
 
-  const { data: campaigns, isLoading: campaignsLoading } = useQuery({
-    queryKey: ['campaigns'],
-    queryFn: getCampaigns,
+  const { data: revenue } = useQuery({
+    queryKey: ['revenue-stats'],
+    queryFn: getRevenueStats,
   });
 
-  const campaignsList = (campaigns as any[]) || [];
-  
-  const container = useRef<HTMLDivElement>(null);
+  if (isLoading) {
+    return <div className="p-8 h-[calc(100vh-4rem)] flex items-center justify-center">Analyzing Customer Base for Opportunities...</div>;
+  }
 
-  useGSAP(() => {
-    // Hero Text Animations
-    gsap.from('.hero-title', { 
-      y: 40, 
-      opacity: 0, 
-      duration: 1, 
-      stagger: 0.15, 
-      ease: 'power3.out',
-      delay: 0.2
-    });
-    
-    gsap.from('.hero-subtitle', { 
-      y: 20, 
-      opacity: 0, 
-      duration: 1, 
-      delay: 0.6, 
-      ease: 'power3.out' 
-    });
-    
-    gsap.from('.hero-btn', { 
-      y: 20, 
-      opacity: 0, 
-      duration: 1, 
-      delay: 0.8, 
-      ease: 'power3.out' 
-    });
+  // Create dynamic opportunities based on stats
+  const opportunities = [];
 
-    // Decorative floating cards
-    gsap.from('.hero-card-1', {
-      x: 50,
-      opacity: 0,
-      duration: 1.2,
-      delay: 0.4,
-      ease: 'power3.out'
-    });
+  if (stats && revenue) {
+    // Opportunity 1: At-Risk VIPs
+    if (stats.atRisk > 0) {
+      opportunities.push({
+        id: 'risk-vips',
+        title: 'Save At-Risk Customers',
+        description: `${stats.atRisk} customers are showing severe drop-off in engagement. Historically, engaging this cohort yields an average order value of ₹${stats.avgAOV}.`,
+        impact: `₹${(stats.atRisk * stats.avgAOV).toLocaleString()}`,
+        tag: 'Urgent',
+        tagColor: 'bg-semantic-down/10 text-semantic-down',
+        icon: <WarningCircle size={54} className="text-semantic-down" />,
+        action: 'Draft Win-Back Campaign'
+      });
+    }
 
-    gsap.from('.hero-card-2', {
-      x: -30,
-      y: 50,
-      opacity: 0,
-      duration: 1.2,
-      delay: 0.6,
-      ease: 'power3.out'
-    });
+    // Opportunity 2: Dormant Reactivation
+    if (stats.dormant > 0) {
+      opportunities.push({
+        id: 'dormant-reactivation',
+        title: 'Reactivate Dormant Buyers',
+        description: `${stats.dormant} customers haven't purchased in 90+ days. Based on previous behavior, targeted SMS campaigns can recover ~12% of these users.`,
+        impact: `₹${Math.round(stats.dormant * 0.12 * stats.avgLTV).toLocaleString()}`,
+        tag: 'Growth',
+        tagColor: 'bg-primary/10 text-primary',
+        icon: <ArrowsClockwise size={54} className="text-primary" />,
+        action: 'Generate Offers'
+      });
+    }
 
-    // Continuous floating
-    gsap.to('.hero-card-1', { 
-      y: '-=15', 
-      duration: 2, 
-      yoyo: true, 
-      repeat: -1, 
-      ease: 'sine.inOut',
-      delay: 1.6
-    });
-    
-    gsap.to('.hero-card-2', { 
-      y: '+=10', 
-      duration: 2.5, 
-      yoyo: true, 
-      repeat: -1, 
-      ease: 'sine.inOut', 
-      delay: 1.8 
-    });
-
-    // Features Section Stagger
-    gsap.from('.feature-card', {
-      y: 40,
-      opacity: 0,
-      duration: 0.8,
-      stagger: 0.2,
-      ease: 'power2.out',
-      delay: 1.2
-    });
-
-  }, { scope: container });
+    // Opportunity 3: Top Persona Upsell
+    if (revenue.topPersona !== 'Unknown') {
+      const topP = revenue.topPersona;
+      opportunities.push({
+        id: 'persona-upsell',
+        title: `Upsell ${topP}s`,
+        description: `${topP}s are your highest revenue drivers. They are 3x more likely to convert on WhatsApp early access campaigns.`,
+        impact: `₹${Math.round(stats.vip * stats.avgAOV * 0.4).toLocaleString()}`,
+        tag: 'High Intent',
+        tagColor: 'bg-emerald-500/10 text-emerald-600',
+        icon: <User size={54} className="text-emerald-600" />,
+        action: 'Launch Exclusive Drop'
+      });
+    }
+  }
 
   return (
-    <div ref={container} className="min-h-screen bg-canvas overflow-x-hidden">
-      {/* Navbar */}
-      <nav className="absolute top-0 left-0 right-0 z-50 px-8 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-            <Rocket className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-bold text-[18px] text-white tracking-tight">XenoCopilot</span>
-        </div>
-        <div className="hidden md:flex items-center gap-8 text-[14px] font-medium text-white/80">
-          <a href="#features" className="hover:text-white transition-colors">Features</a>
-          <a href="#infrastructure" className="hover:text-white transition-colors">Infrastructure</a>
-          <a href="#analytics" className="hover:text-white transition-colors">Analytics</a>
-        </div>
-        <div>
-          <Link href="/chat" className="btn-primary px-5 py-2 hover:-translate-y-0.5 transition-transform">
-            Go to CRM
-          </Link>
-        </div>
-      </nav>
-
-      {/* Hero Band Dark */}
-      <section className="hero-band-dark min-h-[70vh] flex flex-col md:flex-row relative overflow-hidden items-center pt-20">
-        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
-          <DarkVeil hueShift={210} noiseIntensity={0.08} speed={0.4} scanlineIntensity={0.15} warpAmount={0.3} />
-        </div>
-        <div className="w-full md:w-1/2 z-10 pl-8 md:pl-16 lg:pl-24">
-          <h1 className="text-[64px] md:text-[80px] font-display font-bold leading-[1.0] tracking-[-2px] mb-6 flex flex-col">
-            <span className="hero-title">Meet</span>
-            <span className="hero-title bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">XenoCopilot.</span>
-          </h1>
-          <p className="hero-subtitle text-[18px] text-on-darkSoft max-w-md mb-8 leading-[1.5]">
-            An AI-first campaign platform that connects directly to your customer database. Select a goal, and we handle the rest.
-          </p>
-          <div className="hero-btn">
-            <Link href="/chat" className="btn-primary-large inline-flex shadow-lg hover:shadow-primary/20 transition-all hover:-translate-y-1">
-              Start Building
-            </Link>
-          </div>
-        </div>
-
-        {/* Product UI Mockup */}
-        <div className="w-full md:w-1/2 mt-12 md:mt-0 relative z-10 flex justify-end pr-8 md:pr-16">
-          <div className="hero-card-1 product-ui-card-dark w-full max-w-md transform rotate-[-2deg] translate-y-8 relative shadow-2xl">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-3 h-3 rounded-full bg-semantic-down" />
-              <div className="w-3 h-3 rounded-full bg-accent-yellow" />
-              <div className="w-3 h-3 rounded-full bg-semantic-up" />
-            </div>
-            <p className="text-[13px] text-muted mb-2 font-semibold">Recommended Campaign</p>
-            <p className="text-[32px] font-mono-numbers text-on-dark mb-1">₹145,200</p>
-            <p className="text-[14px] text-semantic-up font-mono-numbers mb-6">+3.4% Est. Conversion</p>
-            <div className="h-px bg-white/10 w-full mb-6" />
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-on-darkSoft text-[14px]">Channel</span>
-              <span className="text-on-dark font-medium text-[14px]">WhatsApp</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-on-darkSoft text-[14px]">Target</span>
-              <span className="bg-primary/20 text-primary px-2 py-1 rounded text-[12px] font-bold">Beauty Loyalists</span>
-            </div>
-          </div>
-          
-          <div className="hero-card-2 product-ui-card-dark w-full max-w-sm absolute top-32 -left-4 md:-left-12 transform rotate-[4deg] shadow-2xl opacity-90 border border-white/5 backdrop-blur-md">
-             <div className="flex items-start gap-4">
-               <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center font-bold text-white shadow-inner">A</div>
-               <div>
-                 <p className="text-[14px] font-semibold text-on-dark">Generating Variants</p>
-                 <p className="text-[13px] text-on-darkSoft mt-1">Drafting 2 high-conversion messages...</p>
-                 <div className="w-3/4 h-2 bg-white/10 rounded-full mt-4 overflow-hidden">
-                    <div className="w-1/2 h-full bg-primary rounded-full relative overflow-hidden">
-                      <div className="absolute inset-0 bg-white/20 animate-pulse" />
-                    </div>
-                 </div>
-               </div>
-             </div>
-          </div>
-        </div>
-        
-        {/* Decorative Grid */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
-      </section>
-
-      {/* Feature Band Light */}
-      <section id="features" className="features-section bg-canvas px-8 py-section text-ink max-w-[1200px] mx-auto">
-        <h2 className="text-[40px] md:text-[52px] font-display leading-[1.0] tracking-[-1.3px] mb-16 text-center">
-          Institutional-grade infrastructure.
-        </h2>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div id="infrastructure" className="feature-card card p-[32px] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-hairline">
-            <div className="w-12 h-12 rounded-full bg-surface-strong flex items-center justify-center mb-6 text-primary">
-              <Database className="w-6 h-6" />
-            </div>
-            <h3 className="text-[18px] font-semibold mb-3">Live Audience Syncer</h3>
-            <p className="text-[16px] text-body">
-              Syncs with your active customer base in real-time. Currently tracking {' '}
-              {statsLoading ? <span className="inline-block w-12 h-5 skeleton align-middle" /> : <strong className="font-mono-numbers text-ink">{stats?.total || 500}</strong>}
-              {' '} high-value shoppers.
-            </p>
-          </div>
-          
-          <div className="feature-card card p-[32px] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-hairline">
-            <div className="w-12 h-12 rounded-full bg-surface-strong flex items-center justify-center mb-6 text-primary">
-              <Brain className="w-6 h-6" />
-            </div>
-            <h3 className="text-[18px] font-semibold mb-3">Persona Intelligence</h3>
-            <p className="text-[16px] text-body">
-              Stop guessing segments. Our Gemini-powered engine maps business goals to exact historical customer profiles.
-            </p>
-          </div>
-
-          <div id="analytics" className="feature-card card p-[32px] hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-hairline">
-            <div className="w-12 h-12 rounded-full bg-surface-strong flex items-center justify-center mb-6 text-primary">
-              <StatsReport className="w-6 h-6" />
-            </div>
-            <h3 className="text-[18px] font-semibold mb-3">Deterministic Analytics</h3>
-            <p className="text-[16px] text-body">
-              True conversion attribution. Watch {' '}
-              {campaignsLoading ? <span className="inline-block w-8 h-5 skeleton align-middle" /> : <strong className="font-mono-numbers text-ink">{campaignsList.length}</strong>}
-              {' '} campaigns flow from Sent to Delivered to Purchased.
-            </p>
-          </div>
-        </div>
-      </section>
+    <div className="p-8 max-w-5xl mx-auto flex flex-col gap-8 h-[calc(100vh-4rem)] overflow-y-auto pb-20">
       
-      {/* CTA Band */}
-      <section className="bg-surface-dark text-on-dark py-section px-8 text-center border-t border-white/5 relative overflow-hidden">
-        <div className="absolute inset-0 bg-primary/5 pointer-events-none" />
-        <div className="relative z-10">
-          <h2 className="text-[36px] md:text-[44px] font-display leading-[1.09] tracking-[-1px] mb-8">
-            Take control of your growth.
-          </h2>
-          <div className="flex justify-center gap-4">
-            <Link href="/chat" className="btn-primary-large hover:-translate-y-1 transition-transform shadow-lg">
-              Go to CRM
-            </Link>
+      {/* Header */}
+      <div className="flex flex-col gap-2">
+        <h1 className="text-[32px] font-display font-normal text-ink">Good morning.</h1>
+        <p className="text-[16px] text-muted max-w-2xl">
+          The Copilot engine has analyzed your customer database. Here are the top revenue opportunities identified today.
+        </p>
+      </div>
+
+      {/* Opportunities List */}
+      <div className="flex flex-col gap-6 mt-4">
+        {opportunities.map((opp, idx) => (
+          <div key={opp.id} className="card p-6 bg-canvas border border-hairline hover:border-primary/30 transition-all flex flex-col md:flex-row gap-6 items-start justify-between group cursor-pointer" onClick={() => router.push('/chat')}>
+            
+            <div className="flex gap-5">
+              <div className="w-12 h-12 rounded-full bg-surface-strong flex items-center justify-center flex-shrink-0">
+                {opp.icon}
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-[20px] font-semibold text-ink leading-none">{opp.title}</h2>
+                  <span className={`px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${opp.tagColor}`}>
+                    {opp.tag}
+                  </span>
+                </div>
+                <p className="text-[14px] text-muted max-w-xl leading-relaxed">
+                  {opp.description}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-end gap-3 flex-shrink-0">
+              <div className="flex flex-col items-end">
+                <span className="text-[11px] font-bold text-muted uppercase tracking-wider mb-1">Potential Revenue</span>
+                <span className="text-[24px] font-mono-numbers font-bold text-ink leading-none group-hover:text-primary transition-colors">{opp.impact}</span>
+              </div>
+              <button className="flex items-center gap-2 text-[13px] font-bold text-primary group-hover:bg-primary group-hover:text-white px-4 py-2 rounded-lg transition-all">
+                {opp.action} <ArrowRight size={54} />
+              </button>
+            </div>
+
+          </div>
+        ))}
+
+        {opportunities.length === 0 && (
+          <div className="p-10 border border-hairline rounded-xl bg-canvas text-center flex flex-col items-center justify-center gap-4">
+            <Sparkle size={54} className="text-muted" />
+            <p className="text-[14px] text-muted">No immediate opportunities detected. The engine is still learning from recent data.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Snapshot */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <div className="card p-6 border-hairline bg-surface-soft">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-[14px] font-bold text-ink uppercase tracking-wider">Customer Health Snapshot</h3>
+            <Link href="/intelligence" className="text-[12px] text-primary font-bold hover:underline">View Intelligence →</Link>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[28px] font-mono-numbers text-ink">{stats?.total.toLocaleString()}</p>
+              <p className="text-[13px] text-muted">Total Active Profiles</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[28px] font-mono-numbers text-semantic-down">{stats?.atRisk.toLocaleString()}</p>
+              <p className="text-[13px] text-muted">Profiles At Risk</p>
+            </div>
           </div>
         </div>
-      </section>
+
+        <div className="card p-6 border-hairline bg-surface-soft">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-[14px] font-bold text-ink uppercase tracking-wider">Revenue Snapshot</h3>
+            <Link href="/revenue" className="text-[12px] text-primary font-bold hover:underline">View Executive Dash →</Link>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[28px] font-mono-numbers text-ink">₹{revenue?.totalRevenueInfluenced.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || 0}</p>
+              <p className="text-[13px] text-muted">Total Revenue Influenced</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 }
