@@ -1,52 +1,81 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCustomerStats, strategizeCampaign, launchCampaign } from '@/lib/api';
-import { Sun, Moon, Clock, Heart, WarningCircle, Sparkle, User, PaperPlaneRight } from '@phosphor-icons/react';
-import Loader from '@/components/Loader';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { 
+  strategizeCampaign, 
+  launchCampaign,
+  getDynamicSuggestions,
+  getDynamicPersonas,
+  simulateCampaign
+} from '@/lib/api';
 
-export default function AIHubPage() {
+import { Spark, Check, Send, User, WarningTriangle, ShieldCheck, Xmark } from 'iconoir-react';
+import { clsx } from 'clsx';
+
+export default function CommandCenterPage() {
   const router = useRouter();
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['customer-stats'],
-    queryFn: getCustomerStats,
+  
+  const { data: suggestions, isLoading: isLoadingSuggestions } = useQuery({
+    queryKey: ['dynamic-suggestions'],
+    queryFn: getDynamicSuggestions,
+  });
+
+  const { data: personas } = useQuery({
+    queryKey: ['dynamic-personas'],
+    queryFn: getDynamicPersonas,
   });
 
   const [goal, setGoal] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [report, setReport] = useState<string | null>(null);
-  const [campaignData, setCampaignData] = useState<any>(null);
-  const [greeting, setGreeting] = useState('Welcome back');
-  const [GreetingIcon, setGreetingIcon] = useState<any>(Sun);
+  const [aiReport, setAiReport] = useState<any | null>(null);
+  
+  const [variants, setVariants] = useState<any[]>([]);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
+  const [previewVariant, setPreviewVariant] = useState<any | null>(null);
+  
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string>('');
+  
+  // Simulation State
+  const [simData, setSimData] = useState<any[] | null>(null);
+  const [selectedChannel, setSelectedChannel] = useState<string>('');
 
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) {
-      setGreeting('Good morning');
-      setGreetingIcon(() => Sun);
-    } else if (hour < 18) {
-      setGreeting('Good afternoon');
-      setGreetingIcon(() => Sun);
-    } else {
-      setGreeting('Good evening');
-      setGreetingIcon(() => Moon);
+  const handleStartWorkflow = async (presetGoal?: string) => {
+    const targetGoal = presetGoal || goal;
+    if (!targetGoal.trim()) return;
+    if (!selectedPersonaId) {
+      alert('Please select a target persona first.');
+      return;
     }
-  }, []);
+    
+    if (!presetGoal) setGoal(targetGoal);
 
-  const handleStartWorkflow = async () => {
-    if (!goal.trim()) return;
     setIsProcessing(true);
-    setReport(null);
-    setCampaignData(null);
+    setAiReport(null);
+    setVariants([]);
+    setSelectedVariantId(null);
+    setSimData(null);
+    setSelectedChannel('');
     
     try {
-      const res = await strategizeCampaign(goal);
-      setReport(res.markdownReport);
-      setCampaignData(res.campaignData);
+      const selectedP = personas?.find((p: any) => p.id === selectedPersonaId);
+      const audienceCount = selectedP ? selectedP.customerCount : 500;
+
+      // 1. Fetch simulation
+      const sim = await simulateCampaign(audienceCount);
+      setSimData(sim);
+      if (sim && sim.length > 0) {
+        setSelectedChannel(sim[0].channel); // Best channel usually first
+      }
+
+      // 2. Fetch strategy & variants
+      const res = await strategizeCampaign(targetGoal);
+      setAiReport(res);
+      if (res.variants && res.variants.length > 0) {
+        setVariants(res.variants);
+        setSelectedVariantId(res.variants[0].id);
+      }
     } catch (err) {
       console.error(err);
       alert('AI Strategist failed. Please try again.');
@@ -56,10 +85,19 @@ export default function AIHubPage() {
   };
 
   const handleLaunch = async () => {
-    if (!campaignData) return;
+    const selectedVariant = variants.find(v => v.id === selectedVariantId);
+    if (!selectedVariant || !selectedChannel || !selectedPersonaId) return;
+
     setIsProcessing(true);
     try {
-      const res = await launchCampaign(campaignData);
+      const payload: any = {
+        name: selectedVariant.name,
+        channel: selectedChannel,
+        message: selectedVariant.message,
+        persona_id: selectedPersonaId
+      };
+
+      const res = await launchCampaign(payload);
       if (res.success) {
         router.push(`/engagement/${res.campaign_id}`);
       }
@@ -70,204 +108,441 @@ export default function AIHubPage() {
     }
   };
 
-  const handleCardClick = (presetGoal: string) => {
-    setGoal(presetGoal);
+  const resetSession = () => {
+    setAiReport(null);
+    setVariants([]);
+    setSimData(null);
+    setSelectedVariantId(null);
+    setGoal('');
+    setIsProcessing(false);
   };
 
+  const selectedSim = simData?.find(s => s.channel === selectedChannel);
+  const activeVariant = variants.find(v => v.id === selectedVariantId);
+  const audienceSize = personas?.find((p: any) => p.id === selectedPersonaId)?.customerCount || 0;
+
   return (
-    <div className="p-6 max-w-6xl mx-auto flex flex-col gap-6 h-[calc(100vh-2rem)]">
-      {/* Header */}
-      <div className="flex items-center justify-center gap-3 mt-2 mb-0 shrink-0">
-        <GreetingIcon size={54} className="text-[#d48166]" />
-        <h1 className="text-[32px] md:text-[36px] leading-[1.09] tracking-[-1px] font-display text-ink text-center">
-          {greeting}, Abhinav
-        </h1>
-      </div>
-
-      {/* 3 STATS Cards - Made smaller and compact */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0">
-          <div 
-            className="card p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border border-hairline flex flex-col cursor-pointer bg-canvas"
-            onClick={() => handleCardClick('Launch Win-Back Campaign for Dormant Customers')}
-          >
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-[#0052ff]/10 flex items-center justify-center">
-                  <Clock size={24} className="text-[#0052ff]" />
-                </div>
-                <h3 className="text-[14px] font-semibold text-ink">Dormant Customers</h3>
-              </div>
-              <span className="bg-[#0052ff]/10 text-[#0052ff] px-2 py-0.5 rounded-[8px] text-[9px] font-bold tracking-wider">ACTION</span>
+    <div className="p-10 w-full flex flex-col min-h-screen bg-canvas pb-24" style={{ gap: '24px' }}>
+      
+      {/* Full Message Modal */}
+      {previewVariant && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/20 backdrop-blur-sm p-4">
+          <div className="bg-surface-card rounded-xl border border-hairline shadow-lg w-full max-w-lg flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-hairline bg-surface-soft">
+              <h3 className="text-[18px] font-semibold text-ink">{previewVariant.name}</h3>
+              <button onClick={() => setPreviewVariant(null)} className="p-1 hover:bg-hairline rounded transition-colors text-muted hover:text-ink">
+                <Xmark height={20} width={20} />
+              </button>
             </div>
-            <p className="text-[12px] text-body mb-3">428 customers inactive for 45+ days.</p>
-            <div className="mt-auto pt-2 border-t border-hairline/50 flex justify-between items-end">
-              <p className="text-[10px] text-muted font-semibold uppercase tracking-wider">Recovery</p>
-              <p className="text-[16px] font-mono-numbers text-semantic-up leading-none">₹17,200</p>
-            </div>
-          </div>
-          
-          <div 
-            className="card p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border border-hairline flex flex-col cursor-pointer bg-canvas"
-            onClick={() => handleCardClick('Launch Exclusive VIP Campaign for Retention')}
-          >
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Heart size={24} className="text-primary" />
-                </div>
-                <h3 className="text-[14px] font-semibold text-ink">VIP Retention</h3>
-              </div>
-              <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-[8px] text-[9px] font-bold tracking-wider">ACTION</span>
-            </div>
-            <p className="text-[12px] text-body mb-3">98 high-value customers slipping.</p>
-            <div className="mt-auto pt-2 border-t border-hairline/50 flex justify-between items-end">
-              <p className="text-[10px] text-muted font-semibold uppercase tracking-wider">Revenue</p>
-              <p className="text-[16px] font-mono-numbers text-semantic-up leading-none">₹12,500</p>
-            </div>
-          </div>
-
-          <div 
-            className="card p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border border-hairline flex flex-col bg-canvas cursor-pointer" 
-            onClick={() => handleCardClick('Analyze churn risk for Rahul Sharma')}
-          >
-             <div className="flex justify-between items-start mb-2">
-               <div className="flex items-center gap-2">
-                 <div className="w-10 h-10 rounded-full bg-semantic-down/10 flex items-center justify-center">
-                   <WarningCircle size={24} className="text-semantic-down" />
-                 </div>
-                 <h3 className="text-[14px] font-semibold text-ink">Rahul Sharma</h3>
-               </div>
-               <span className="bg-semantic-down/10 text-semantic-down px-2 py-0.5 rounded-[8px] text-[9px] font-bold tracking-wider">HEALTH</span>
-             </div>
-             <p className="text-[12px] text-body mb-3">High churn probability. Last purchase 90 days ago.</p>
-             <div className="mt-auto pt-2 border-t border-hairline/50 flex justify-between items-end">
-               <p className="text-[10px] text-muted font-semibold uppercase tracking-wider">Score</p>
-               <div className="flex items-end gap-1">
-                 <span className="text-[16px] font-mono-numbers text-semantic-down leading-none">32</span>
-                 <span className="text-[10px] text-muted font-semibold">/100</span>
-               </div>
-             </div>
-          </div>
-      </div>
-
-      {/* Chatbot Interface - Takes up remaining space */}
-      <div className="card flex flex-col bg-canvas border border-hairline overflow-hidden flex-1 shadow-sm">
-        {/* Chat Header */}
-        <div className="p-3 border-b border-hairline bg-surface-soft flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shrink-0 shadow-sm">
-              <Sparkle size={54} />
-            </div>
-            <div>
-              <h2 className="text-[14px] font-bold text-ink leading-tight">Revenue Growth Strategist</h2>
-              <p className="text-[11px] text-primary font-medium flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> Online
+            <div className="p-6">
+              <p className="text-[15px] text-ink leading-relaxed whitespace-pre-wrap font-medium">
+                {previewVariant.message}
               </p>
             </div>
+            <div className="p-4 border-t border-hairline bg-surface-soft flex justify-end">
+               <button 
+                 onClick={() => {
+                   setSelectedVariantId(previewVariant.id);
+                   setPreviewVariant(null);
+                 }}
+                 className="btn-primary"
+               >
+                 Select This Variant
+               </button>
+            </div>
           </div>
-          {(report || isProcessing) && (
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex flex-col border-b border-hairline pb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[36px] tracking-tight">Campaign Copilot</h1>
+            <p className="text-[15px] text-muted max-w-2xl leading-relaxed mt-1">
+              Business command center for campaign strategy and revenue forecasting.
+            </p>
+          </div>
+          {(aiReport || isProcessing) && (
             <button 
-              onClick={() => { setReport(null); setCampaignData(null); setGoal(''); setIsProcessing(false); }} 
-              className="text-[12px] text-muted hover:text-ink font-semibold px-3 py-1.5 rounded-md hover:bg-surface-strong transition-colors"
+              onClick={resetSession} 
+              className="btn-ghost"
             >
-              Reset Chat
+              Reset Session
             </button>
           )}
-        </div>
-
-        {/* Messages Area */}
-        <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-6 relative bg-canvas">
-          
-          {(!report && !isProcessing) && (
-            <div className="flex gap-3 max-w-[85%]">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
-                <Sparkle size={54} />
-              </div>
-              <div className="bg-surface-soft p-4 rounded-2xl rounded-tl-sm border border-hairline shadow-sm text-[14px] text-ink">
-                Hi Abhinav! I'm ready to help you grow your revenue. What's your campaign goal today? You can select a suggestion above or type your own below.
-              </div>
-            </div>
-          )}
-
-          {(isProcessing || report) && (
-            <div className="flex gap-3 max-w-[85%] ml-auto justify-end">
-              <div className="bg-ink text-canvas p-4 rounded-2xl rounded-tr-sm shadow-sm text-[14px] whitespace-pre-wrap">
-                {goal}
-              </div>
-            </div>
-          )}
-
-          {isProcessing && (
-            <div className="flex gap-3 max-w-[85%]">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
-                <Sparkle size={54} />
-              </div>
-              <div className="bg-surface-soft p-4 rounded-2xl rounded-tl-sm border border-hairline shadow-sm w-full flex items-center justify-center py-8">
-                <Loader text="Analyzing Customers & Strategizing" />
-              </div>
-            </div>
-          )}
-
-          {report && !isProcessing && (
-            <div className="flex gap-3 max-w-full md:max-w-[85%]">
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
-                <Sparkle size={54} />
-              </div>
-              <div className="bg-surface-soft p-6 rounded-2xl rounded-tl-sm border border-hairline shadow-sm w-full">
-                <div className="prose prose-sm prose-blue max-w-none text-ink">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {report}
-                  </ReactMarkdown>
-                </div>
-
-                {campaignData && (
-                  <div className="mt-8 pt-6 border-t border-hairline">
-                    <button
-                      onClick={handleLaunch}
-                      disabled={isProcessing}
-                      className="btn-primary w-full py-3 text-[14px] flex justify-center items-center gap-2 shadow-sm"
-                    >
-                      {isProcessing ? 'Launching...' : `Approve & Launch: ${campaignData.name}`}
-                      {!isProcessing && <PaperPlaneRight size={54} />}
-                    </button>
-                    <p className="text-[11px] text-muted text-center mt-3">
-                      This will queue messages via {campaignData.channel}.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-        </div>
-
-        {/* Input Box Bottom */}
-        <div className="p-4 bg-canvas border-t border-hairline shrink-0">
-          <div className="relative max-w-4xl mx-auto flex items-end gap-2">
-            <textarea
-              value={goal}
-              onChange={e => setGoal(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleStartWorkflow();
-                }
-              }}
-              placeholder="Ask Copilot to create a campaign..."
-              className="input-field w-full resize-none bg-surface-soft border-transparent hover:border-hairline focus:bg-canvas text-[14px] py-3 pl-4 pr-12 rounded-2xl min-h-[50px] max-h-[150px]"
-              rows={1}
-              disabled={isProcessing || report !== null}
-            />
-            <button 
-              onClick={handleStartWorkflow}
-              disabled={isProcessing || !goal.trim() || report !== null} 
-              className="absolute right-2 bottom-2 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary-active disabled:opacity-50 disabled:bg-surface-strong transition-colors"
-            >
-              <PaperPlaneRight size={54} />
-            </button>
-          </div>
         </div>
       </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 w-full max-w-[1400px]">
+        
+        {/* Left Column: Input & AI Analysis */}
+        <div className="xl:col-span-2 flex flex-col gap-8">
+          
+          {/* Goal Input Section */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-[18px] font-semibold text-ink">Objective & Audience</h2>
+            <div className="flex flex-col md:flex-row gap-4">
+              <select 
+                className="input-field bg-surface-card md:w-1/3 text-[15px]"
+                value={selectedPersonaId}
+                onChange={(e) => setSelectedPersonaId(e.target.value)}
+                disabled={isProcessing || aiReport !== null}
+              >
+                <option value="">Select Target Audience...</option>
+                {personas?.map((p: any) => (
+                  <option key={p.id} value={p.id}>{p.name} ({p.customerCount} users)</option>
+                ))}
+              </select>
+
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  value={goal}
+                  onChange={e => setGoal(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') handleStartWorkflow();
+                  }}
+                  placeholder="e.g. Recover dormant spenders with an aggressive win-back..."
+                  className="input-field bg-surface-card w-full py-3 pr-14 text-[15px]"
+                  disabled={isProcessing || aiReport !== null}
+                />
+                <button 
+                  onClick={() => handleStartWorkflow()}
+                  disabled={isProcessing || !goal.trim() || !selectedPersonaId || aiReport !== null} 
+                  className="absolute right-3 bottom-2 w-8 h-8 bg-primary text-white rounded flex items-center justify-center hover:bg-primary-press disabled:opacity-50 transition-colors"
+                >
+                  <Spark height={16} width={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Suggested Goals */}
+            {!aiReport && !isProcessing && (
+              <div className="flex gap-2 flex-wrap mt-1">
+                {isLoadingSuggestions ? (
+                  <span className="text-[13px] text-muted">Analyzing metrics...</span>
+                ) : suggestions?.map((sug: string, idx: number) => (
+                  <button 
+                    key={idx}
+                    onClick={() => handleStartWorkflow(sug)}
+                    disabled={!selectedPersonaId}
+                    className="text-[13px] font-medium text-ink bg-surface-card border border-hairline px-3 py-1.5 rounded-md hover:border-primary transition-colors text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {sug}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* AI Processing State */}
+          {isProcessing && (
+            <div className="card p-8 flex items-center justify-center border-dashed bg-surface-soft mt-8">
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <span className="text-[15px] font-medium text-ink">Simulating revenue impact and drafting message variants...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Structured Output */}
+          {aiReport && !isProcessing && (
+            <div className="flex flex-col gap-10">
+              
+              {/* Opportunity Analysis */}
+              <div className="flex flex-col gap-4">
+                <h2 className="text-[18px] font-semibold text-ink">Opportunity Analysis</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                   <div className="p-4 bg-surface-card border border-hairline rounded-lg flex flex-col gap-1">
+                      <span className="text-[13px] font-medium text-muted uppercase tracking-wider">Opportunity Score</span>
+                      <span className="text-[28px] font-mono-numbers font-semibold text-ink">{aiReport.opportunityAnalysis?.score || 0}</span>
+                   </div>
+                   <div className="p-4 bg-surface-card border border-hairline rounded-lg flex flex-col gap-1">
+                      <span className="text-[13px] font-medium text-muted uppercase tracking-wider">Potential Revenue</span>
+                      <span className="text-[28px] font-mono-numbers font-semibold text-semantic-up">₹{aiReport.opportunityAnalysis?.potentialRevenue?.toLocaleString() || 0}</span>
+                   </div>
+                   <div className="p-4 bg-surface-card border border-hairline rounded-lg flex flex-col gap-1">
+                      <span className="text-[13px] font-medium text-muted uppercase tracking-wider">Revenue At Risk</span>
+                      <span className="text-[28px] font-mono-numbers font-semibold text-semantic-down">₹{aiReport.opportunityAnalysis?.revenueAtRisk?.toLocaleString() || 0}</span>
+                   </div>
+                   <div className="p-4 bg-surface-card border border-hairline rounded-lg flex flex-col gap-1">
+                      <span className="text-[13px] font-medium text-muted uppercase tracking-wider">Audience Size</span>
+                      <span className="text-[28px] font-mono-numbers font-medium text-ink">{audienceSize.toLocaleString()}</span>
+                   </div>
+                   <div className="p-4 bg-surface-card border border-hairline rounded-lg flex flex-col gap-1">
+                      <span className="text-[13px] font-medium text-muted uppercase tracking-wider">Hist. Conversion</span>
+                      <span className="text-[28px] font-mono-numbers font-medium text-ink">{aiReport.opportunityAnalysis?.historicalConversion || 0}%</span>
+                   </div>
+                   <div className="p-4 bg-surface-card border border-hairline rounded-lg flex flex-col gap-1">
+                      <span className="text-[13px] font-medium text-muted uppercase tracking-wider">AI Confidence</span>
+                      <span className="text-[28px] font-mono-numbers font-medium text-ink">{aiReport.opportunityAnalysis?.confidence || 0}%</span>
+                   </div>
+                </div>
+              </div>
+
+              {/* AI Recommendation */}
+              {aiReport.aiRecommendation && (
+                <div className="flex flex-col gap-4">
+                  <h2 className="text-[18px] font-semibold text-ink flex items-center gap-2">
+                     <Spark height={20} width={20} className="text-primary" /> AI Recommendation
+                  </h2>
+                  <div className="p-5 bg-surface-soft border border-hairline rounded-xl flex flex-col gap-4">
+                     <div>
+                        <span className="text-[13px] font-semibold text-muted uppercase tracking-wider mb-2 block">Recommended Variant</span>
+                        <span className="text-[16px] font-semibold text-ink">{variants.find(v => v.id === aiReport.aiRecommendation.recommendedVariantId)?.name || 'Emotional Reconnection'}</span>
+                     </div>
+                     <div className="flex flex-col gap-2">
+                        <span className="text-[13px] font-semibold text-muted uppercase tracking-wider">Why</span>
+                        <ul className="flex flex-col gap-1.5">
+                           {aiReport.aiRecommendation.why?.slice(0, 3).map((w: string, idx: number) => (
+                             <li key={idx} className="flex items-start gap-2 text-[14px] text-ink">
+                               <span className="text-primary mt-1 text-[18px] leading-none">•</span> {w}
+                             </li>
+                           ))}
+                        </ul>
+                     </div>
+                     <div className="grid grid-cols-3 gap-4 border-t border-hairline pt-4 mt-2">
+                        <div className="flex flex-col gap-1">
+                           <span className="text-[13px] text-muted">Revenue</span>
+                           <span className="text-[20px] font-mono-numbers font-semibold text-semantic-up">₹{aiReport.aiRecommendation.expectedOutcome?.revenue?.toLocaleString() || 0}</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                           <span className="text-[13px] text-muted">Purchases</span>
+                           <span className="text-[20px] font-mono-numbers font-medium text-ink">{aiReport.aiRecommendation.expectedOutcome?.purchases || 0}</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                           <span className="text-[13px] text-muted">Conversion</span>
+                           <span className="text-[20px] font-mono-numbers font-medium text-ink">{aiReport.aiRecommendation.expectedOutcome?.conversion || 0}%</span>
+                        </div>
+                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Message Variants */}
+              <div className="flex flex-col gap-4">
+                <h2 className="text-[18px] font-semibold text-ink">Message Variants</h2>
+                <div className="flex flex-col gap-4">
+                  {variants.map((variant) => (
+                    <div 
+                      key={variant.id}
+                      className={clsx(
+                        "p-4 rounded-xl border transition-all duration-200 flex flex-col lg:flex-row gap-6 relative",
+                        selectedVariantId === variant.id 
+                          ? "border-primary bg-primary/5 shadow-[0_0_0_1px_rgba(37,99,235,0.2)]" 
+                          : "border-hairline bg-surface-card hover:border-primary/50"
+                      )}
+                    >
+                      <div className="flex-1 flex flex-col gap-4">
+                         <div className="flex items-center justify-between">
+                            <h4 className="text-[16px] font-semibold text-ink">{variant.name}</h4>
+                            {selectedVariantId === variant.id && (
+                              <span className="bg-primary text-white text-[11px] font-bold px-2 py-0.5 rounded shadow flex items-center gap-1">
+                                <Check height={12} width={12} /> Selected
+                              </span>
+                            )}
+                         </div>
+
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1">
+                               <span className="text-[12px] font-medium text-muted uppercase tracking-wider">Expected Revenue</span>
+                               <span className="text-[20px] font-mono-numbers font-semibold text-semantic-up">₹{variant.expectedRevenue?.toLocaleString() || 0}</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 border-l border-hairline pl-4">
+                               <div className="flex flex-col gap-1">
+                                  <span className="text-[12px] text-muted">Open Rate</span>
+                                  <span className="text-[14px] font-mono-numbers font-medium text-ink">{variant.openRate || 0}%</span>
+                               </div>
+                               <div className="flex flex-col gap-1">
+                                  <span className="text-[12px] text-muted">Purchase Rate</span>
+                                  <span className="text-[14px] font-mono-numbers font-medium text-ink">{variant.purchaseRate || 0}%</span>
+                               </div>
+                               <div className="flex flex-col gap-1">
+                                  <span className="text-[12px] text-muted">Confidence</span>
+                                  <span className="text-[14px] font-mono-numbers font-medium text-ink">{variant.confidence || 0}%</span>
+                               </div>
+                            </div>
+                         </div>
+
+                         <div className="flex flex-col gap-2 mt-2">
+                            {variant.strengths && variant.strengths.length > 0 && (
+                               <div className="flex gap-2 items-start text-[13px]">
+                                 <span className="font-semibold text-ink w-20">Strengths</span>
+                                 <ul className="flex flex-wrap gap-x-4 gap-y-1 text-muted">
+                                    {variant.strengths.map((s: string, i: number) => <li key={i}>• {s}</li>)}
+                                 </ul>
+                               </div>
+                            )}
+                            {variant.risks && variant.risks.length > 0 && (
+                               <div className="flex gap-2 items-start text-[13px]">
+                                 <span className="font-semibold text-ink w-20">Risks</span>
+                                 <ul className="flex flex-wrap gap-x-4 gap-y-1 text-semantic-warning">
+                                    {variant.risks.map((s: string, i: number) => <li key={i}>• {s}</li>)}
+                                 </ul>
+                               </div>
+                            )}
+                         </div>
+                      </div>
+
+                      <div className="w-full lg:w-[280px] bg-surface-soft border border-hairline p-4 rounded-lg flex flex-col justify-between gap-4">
+                         <div className="flex flex-col gap-2">
+                           <span className="text-[12px] font-semibold text-muted uppercase tracking-wider">Preview</span>
+                           <p className="text-[14px] text-ink leading-relaxed line-clamp-3 italic">"{variant.message}"</p>
+                         </div>
+                         <div className="flex items-center gap-2 mt-2">
+                           <button onClick={() => setPreviewVariant(variant)} className="btn-ghost flex-1 text-[13px]">View Full</button>
+                           <button onClick={() => setSelectedVariantId(variant.id)} className={clsx("flex-1 text-[13px]", selectedVariantId === variant.id ? "btn-primary opacity-50 cursor-not-allowed" : "btn-primary")}>
+                             {selectedVariantId === variant.id ? 'Selected' : 'Use Variant'}
+                           </button>
+                         </div>
+                      </div>
+
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Channel Decision Engine */}
+              <div className="flex flex-col gap-4">
+                <h2 className="text-[18px] font-semibold text-ink">Channel Investment Comparison</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {simData?.map((sim: any, idx: number) => (
+                    <div 
+                      key={sim.channel}
+                      onClick={() => setSelectedChannel(sim.channel)}
+                      className={clsx(
+                        "cursor-pointer p-4 rounded-xl border transition-all duration-200 flex flex-col gap-4 relative",
+                        selectedChannel === sim.channel 
+                          ? "border-primary bg-primary/5 shadow-[0_0_0_1px_rgba(37,99,235,0.2)]" 
+                          : "border-hairline bg-surface-card hover:border-primary/50"
+                      )}
+                    >
+                      {idx === 0 && selectedChannel !== sim.channel && (
+                        <span className="absolute -top-2.5 right-4 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">Recommended</span>
+                      )}
+                      {selectedChannel === sim.channel && (
+                        <div className="absolute top-4 right-4 text-primary">
+                          <Check height={16} width={16} />
+                        </div>
+                      )}
+                      <h3 className="text-[16px] font-semibold text-ink flex items-center gap-2">
+                         {sim.channel}
+                      </h3>
+                      
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[12px] font-medium text-muted uppercase tracking-wider">Expected Revenue</span>
+                        <span className="text-[24px] font-mono-numbers font-semibold text-semantic-up">
+                          ₹{sim.expectedRevenue.toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-2 pt-2 border-t border-hairline">
+                        <div className="flex justify-between items-center text-[13px]">
+                           <span className="text-muted">Conversion</span>
+                           <span className="font-mono-numbers font-medium text-ink">{sim.conversion}%</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[13px]">
+                           <span className="text-muted">Audience Match</span>
+                           <span className="font-medium text-ink">{idx === 0 ? 'High' : idx === 1 ? 'Medium' : 'Low'}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-[13px]">
+                           <span className="text-muted">Confidence</span>
+                           <span className="font-mono-numbers font-medium text-ink">{sim.confidence}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+        </div>
+
+        {/* Right Column: Execution & Approval */}
+        <div className="xl:col-span-1 flex flex-col gap-8">
+          
+          {aiReport && !isProcessing && (
+            <div className="flex flex-col gap-6 sticky top-8">
+              
+              {/* Executive Summary Approval Panel */}
+              <div className="flex flex-col gap-4">
+                <h2 className="text-[18px] font-semibold text-ink">Approval Panel</h2>
+                <div className="card p-5 flex flex-col bg-surface-card border-2 border-primary/20 shadow-sm">
+                  
+                  <h3 className="text-[16px] font-semibold text-ink mb-4 border-b border-hairline pb-4">Campaign Summary</h3>
+
+                  <div className="flex flex-col gap-3 border-b border-hairline pb-5">
+                     <div className="flex justify-between items-center">
+                        <span className="text-[13px] text-muted">Audience</span>
+                        <span className="text-[14px] font-medium text-ink">{audienceSize.toLocaleString()} {personas?.find((p: any) => p.id === selectedPersonaId)?.name}</span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                        <span className="text-[13px] text-muted">Channel</span>
+                        <span className="text-[14px] font-medium text-ink">{selectedChannel}</span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                        <span className="text-[13px] text-muted">Variant</span>
+                        <span className="text-[14px] font-medium text-ink truncate max-w-[150px]" title={activeVariant?.name}>{activeVariant?.name || 'None Selected'}</span>
+                     </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 py-5 border-b border-hairline">
+                     <div className="flex justify-between items-center">
+                        <span className="text-[13px] text-muted">Expected Revenue</span>
+                        <span className="text-[16px] font-mono-numbers font-bold text-semantic-up">₹{selectedSim?.expectedRevenue?.toLocaleString() || 0}</span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                        <span className="text-[13px] text-muted">Opportunity Score</span>
+                        <span className="text-[14px] font-mono-numbers font-medium text-ink">{aiReport.opportunityAnalysis?.score || 0}</span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                        <span className="text-[13px] text-muted">Confidence</span>
+                        <span className="text-[14px] font-mono-numbers font-medium text-ink">{activeVariant?.confidence || selectedSim?.confidence || 0}%</span>
+                     </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 py-5">
+                     <div className="flex justify-between items-center">
+                        <span className="text-[13px] text-muted">Launch Risk</span>
+                        <span className="text-[13px] font-medium text-semantic-up px-2 py-0.5 bg-semantic-up/10 rounded">Low</span>
+                     </div>
+                     <div className="flex justify-between items-center">
+                        <span className="text-[13px] text-muted">Estimated Duration</span>
+                        <span className="text-[14px] font-medium text-ink">7 Days</span>
+                     </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2 mt-4">
+                     <button
+                       onClick={handleLaunch}
+                       disabled={isProcessing || !selectedVariantId || !selectedChannel}
+                       className="btn-primary w-full py-4 text-[15px] font-bold"
+                     >
+                       Approve & Launch Campaign
+                     </button>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          {!aiReport && !isProcessing && (
+            <div className="card p-6 bg-surface-soft border-dashed flex flex-col items-center justify-center text-center gap-3 h-full min-h-[300px]">
+              <Spark height={24} width={24} className="text-muted" />
+              <p className="text-[14px] text-muted leading-relaxed max-w-sm">
+                Define an objective and select an audience to generate strategy, message variants, and revenue forecasts.
+              </p>
+            </div>
+          )}
+          
+        </div>
+      </div>
+      
     </div>
   );
 }

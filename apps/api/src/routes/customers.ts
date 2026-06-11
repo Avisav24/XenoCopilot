@@ -9,7 +9,7 @@ export async function customerRoutes(fastify: FastifyInstance) {
     const offset = Number(request.query.offset || 0);
     const search = request.query.search;
 
-    const where: Record<string, unknown> = {};
+    const where: any = {};
     if (search) {
       const numSearch = !isNaN(Number(search)) && search.trim() !== '' ? Number(search) : undefined;
 
@@ -78,6 +78,13 @@ export async function customerRoutes(fastify: FastifyInstance) {
       total_spent: Number(customer.total_spent),
       orders: customer.orders.map(o => ({ ...o, amount: Number(o.amount) }))
     });
+  });
+
+  fastify.get('/api/personas', async (_request, reply) => {
+    const personas = await prisma.persona.findMany({
+      orderBy: { name: 'asc' }
+    });
+    return reply.send(personas);
   });
 
   fastify.get('/api/customers/stats', async (_request, reply) => {

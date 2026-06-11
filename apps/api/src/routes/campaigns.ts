@@ -99,18 +99,62 @@ export async function campaignRoutes(fastify: FastifyInstance) {
     let totalRevenue = 0;
     const purchasedComms = communications.filter((m) => STATUS_PRIORITY[m.status] >= STATUS_PRIORITY.purchased);
     
-    // To estimate revenue, we multiply purchased count by average order value.
-    // Let's get actual orders for purchased customers.
-    for (const comm of purchasedComms) {
-      const orders = await prisma.order.aggregate({
-        where: { customer_id: comm.customer_id },
+    if (purchasedComms.length > 0) {
+      const customerIds = purchasedComms.map((c) => c.customer_id);
+      
+      // Perform a single query to get order aggregates for all converted customers (fixes N+1 query performance issue)
+      const orderAggregates = await prisma.order.groupBy({
+        by: ['customer_id'],
+        where: { customer_id: { in: customerIds } },
         _sum: { amount: true },
         _count: { id: true }
       });
-      const aov = orders._count.id > 0 ? Number(orders._sum.amount) / orders._count.id : 1500;
-      totalRevenue += aov;
+      
+      const orderMap = new Map(orderAggregates.map(o => [o.customer_id, o]));
+      
+      for (const comm of purchasedComms) {
+        const orderData = orderMap.get(comm.customer_id);
+        const aov = (orderData && orderData._count.id > 0) 
+            ? Number(orderData._sum.amount) / orderData._count.id 
+            : 1500;
+        totalRevenue += aov;
+      }
     }
-    const estimatedRevenue = Math.round(totalRevenue);
+    const actualRevenue = Math.round(totalRevenue);
+    
+    // Revenue Attribution Engine
+    const predictedRevenue = Math.round(total * 0.02 * 1500); // Mock baseline prediction
+    const difference = actualRevenue - predictedRevenue;
+    const performanceVsPrediction = predictedRevenue > 0 ? ((difference / predictedRevenue) * 100).toFixed(1) : '0';
+    
+    // Aggregate revenue by persona for this campaign
+    const revenueSources: Record<string, number> = {};
+    if (purchasedComms.length > 0) {
+      // Fetch personas for converted customers
+      const convertedIds = purchasedComms.map(c => c.customer_id);
+      const convertedPersonas = await prisma.customerPersona.findMany({
+        where: { customer_id: { in: convertedIds } },
+        include: { persona: true }
+      });
+      
+      const orderAggregates = await prisma.order.groupBy({
+        by: ['customer_id'],
+        where: { customer_id: { in: convertedIds } },
+        _sum: { amount: true },
+        _count: { id: true }
+      });
+      const orderMap = new Map(orderAggregates.map(o => [o.customer_id, o]));
+      
+      for (const comm of purchasedComms) {
+        const orderData = orderMap.get(comm.customer_id);
+        const aov = (orderData && orderData._count.id > 0) ? Number(orderData._sum.amount) / orderData._count.id : 1500;
+        
+        // Find persona for this customer
+        const cps = convertedPersonas.filter(cp => cp.customer_id === comm.customer_id);
+        const pName = cps.length > 0 ? cps[0].persona.name : 'Unknown';
+        revenueSources[pName] = (revenueSources[pName] || 0) + aov;
+      }
+    }
 
     // AI summary — check cache, else generate
     let aiSummary = 'Campaign performance data is being analyzed.';
@@ -125,9 +169,13 @@ export async function campaignRoutes(fastify: FastifyInstance) {
         const prompt = `Campaign: "${campaign.name}" targeting ${campaign.persona.name}.
 Results: ${sent} sent, ${delivered} delivered (${formatRate(delivered, sent)}), ${opened} opened (${formatRate(opened, delivered)}), ${clicked} clicked (${formatRate(clicked, opened)}), ${purchased} purchased (${formatRate(purchased, sent)}).
 Channel: ${campaign.channel}
-Estimated revenue: ${formatRupees(estimatedRevenue)}.
+Estimated revenue: ${formatRupees(actualRevenue)}.
 
-Write exactly 2 sentences of marketing insight: what worked and why. Do not use markdown formatting.`;
+You are a Senior Growth Strategist reporting to executives. Write exactly 2 sentences of high-level insight.
+Do NOT simply list metrics (e.g. "open rate increased").
+DO focus on business impact, revenue multipliers, and strategic findings.
+Example: "WhatsApp campaigns targeting dormant VIP customers generated 2.3x more attributed revenue than email campaigns during the same period. This indicates a strong preference for direct conversational channels for high-ticket reactivations."
+Do not use markdown formatting.`;
 
         const resp = await genai.models.generateContent({
           model,
@@ -159,7 +207,11 @@ Write exactly 2 sentences of marketing insight: what worked and why. Do not use 
         click_rate: formatRate(clicked, opened),
         conversion_rate: formatRate(purchased, sent),
       },
-      estimated_revenue: formatRupees(estimatedRevenue),
+      actual_revenue: formatRupees(actualRevenue),
+      predicted_revenue: formatRupees(predictedRevenue),
+      revenue_difference: difference > 0 ? `+${formatRupees(difference)}` : formatRupees(difference),
+      performance_pct: performanceVsPrediction,
+      revenue_sources: Object.entries(revenueSources).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value),
       ai_summary: aiSummary,
     };
 

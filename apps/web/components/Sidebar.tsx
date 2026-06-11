@@ -3,117 +3,65 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
-import { useState } from 'react';
-import { Sparkle, Megaphone, Users, CaretDoubleLeft, CaretDoubleRight, Plus, ChartBar } from '@phosphor-icons/react';
+import { Spark, Group, Megaphone, StatsReport, User, Settings, Database } from 'iconoir-react';
 
 const navItems = [
   {
-    href: '/',
-    label: 'Opportunities',
-    icon: <Sparkle size={24} />,
-  },
-  {
-    href: '/intelligence',
-    label: 'Customer Intelligence',
-    icon: <Users size={24} />,
-  },
-  {
-    href: '/revenue',
-    label: 'Revenue',
-    icon: <Megaphone size={24} />,
-  },
-  {
-    href: '/engagement',
-    label: 'Engagement',
-    icon: <ChartBar size={24} />,
+    href: '/opportunities',
+    label: 'Revenue Opportunities',
+    icon: <Spark height={18} width={18} />,
   },
   {
     href: '/chat',
     label: 'Campaign Copilot',
-    icon: <Sparkle size={24} />,
+    icon: <Spark height={18} width={18} />,
+  },
+  {
+    href: '/intelligence',
+    label: 'Customer Intelligence',
+    icon: <Group height={18} width={18} />,
+  },
+  {
+    href: '/personas',
+    label: 'Personas',
+    icon: <User height={18} width={18} />,
+  },
+  {
+    href: '/engagement',
+    label: 'Campaigns',
+    icon: <Megaphone height={18} width={18} />,
+  },
+  {
+    href: '/revenue',
+    label: 'Revenue Intelligence',
+    icon: <StatsReport height={18} width={18} />,
+  },
+  {
+    href: '/channels',
+    label: 'Channels',
+    icon: <Database height={18} width={18} />,
+  },
+  {
+    href: '/settings',
+    label: 'Settings',
+    icon: <Settings height={18} width={18} />,
   },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const [isHovered, setIsHovered] = useState(false);
-  const [isPinned, setIsPinned] = useState(true);
-
-  const isExpanded = isPinned || isHovered;
 
   return (
     <>
-      {/* Invisible spacer to reserve width when pinned */}
-      <div 
-        className={clsx(
-          "flex-shrink-0 transition-all duration-300 ease-in-out hidden md:block",
-          isPinned ? "w-[240px]" : "w-[72px]"
-        )} 
-      />
-
-      {/* The actual sidebar */}
-      <aside 
-        className={clsx(
-          "sidebar fixed top-0 left-0 h-full z-40 transition-all duration-300 ease-in-out flex flex-col justify-between",
-          isExpanded ? "w-[240px]" : "w-[72px]"
-        )}
-        onMouseEnter={() => !isPinned && setIsHovered(true)}
-        onMouseLeave={() => !isPinned && setIsHovered(false)}
-      >
-        <nav className="flex flex-col gap-2 p-4 pt-6 relative flex-1">
-          {/* Top Header Row */}
-          <div className={clsx("flex items-center h-[60px] mb-4 mt-2", isExpanded ? "px-4 justify-between" : "px-0 justify-center")}>
-            {isExpanded ? (
-              <Link href="/" className="flex items-center gap-2 group w-full px-2 py-1.5 rounded-lg hover:bg-surface-soft transition-colors flex-1 mr-2">
-                <span 
-                  className="text-[24px] font-normal tracking-tight whitespace-nowrap overflow-hidden text-ellipsis font-display text-ink"
-                  style={{
-                    background: 'linear-gradient(90deg, #533afd 0%, #f96bee 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    display: 'inline-block'
-                  }}
-                >
-                  XenoCopilot
-                </span>
-              </Link>
-            ) : (
-              <Link href="/" className="flex justify-center items-center h-full w-full">
-                <div 
-                  className="w-8 h-8 rounded-full"
-                  style={{
-                    background: 'linear-gradient(135deg, #533afd 0%, #f96bee 100%)',
-                  }}
-                />
-              </Link>
-            )}
-
-            <button 
-              onClick={() => {
-                setIsPinned(!isPinned);
-                setIsHovered(false); // Reset hover state when toggling
-              }}
-              className={clsx(
-                "text-muted hover:text-ink w-6 h-6 flex items-center justify-center rounded-md hover:bg-surface-soft transition-colors flex-shrink-0",
-                !isExpanded && "absolute opacity-0 pointer-events-none" // Hide toggle button if completely collapsed
-              )}
-              title={isPinned ? "Close sidebar" : "Keep sidebar open"}
-            >
-              {isPinned ? <CaretDoubleLeft size={24} /> : <CaretDoubleRight size={24} />}
-            </button>
-          </div>
-
-          <div className={clsx("mb-6 mt-2", isExpanded ? "px-2" : "flex justify-center")}>
-            <Link 
-              href="/chat"
-              className={clsx(
-                "btn-primary flex items-center justify-center transition-all shadow-sm hover:shadow-card",
-                isExpanded ? "w-full gap-2 px-4 py-2" : "w-10 h-10 rounded-full px-0"
-              )}
-              title="New Campaign Copilot"
-            >
-              <Plus size={24} className="flex-shrink-0" />
-              {isExpanded && <span className="whitespace-nowrap overflow-hidden">New Campaign</span>}
+      <div className="flex-shrink-0 w-[260px] hidden md:block" />
+      <aside className="sidebar fixed top-0 left-0 h-full z-40 flex flex-col justify-between bg-canvas border-r border-hairline w-[260px]">
+        
+        <nav className="flex flex-col gap-1 p-4 pt-6 flex-1">
+          <div className="flex items-center px-3 mb-8 mt-2">
+            <Link href="/" className="flex items-center gap-0 w-full">
+              <span className="text-[28px] font-semibold text-primary tracking-tight">
+                XenoCopilot
+              </span>
             </Link>
           </div>
 
@@ -126,34 +74,30 @@ export function Sidebar() {
                   key={item.href} 
                   href={item.href}
                   className={clsx(
-                    'flex items-center gap-3 py-[10px] rounded-lg text-[14px] font-medium transition-colors duration-200 cursor-pointer mb-1',
-                    isActive ? 'text-primary bg-primary/10 font-bold' : 'text-muted hover:text-ink hover:bg-surface-soft',
-                    isExpanded ? 'px-3' : 'justify-center w-10 h-10 mx-auto px-0'
+                    'flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] font-medium transition-colors duration-150 mb-1',
+                    isActive ? 'text-primary bg-[#EFF6FF]' : 'text-muted hover:bg-surface-strong hover:text-ink'
                   )}
-                  title={!isExpanded ? item.label : undefined}
                 >
-                  <div className="flex-shrink-0">
+                  <div className={clsx("flex-shrink-0", isActive ? "text-primary" : "opacity-70")}>
                     {item.icon}
                   </div>
-                  {isExpanded && <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>}
+                  <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
                 </Link>
               );
             })}
           </div>
         </nav>
 
-        {/* Footer */}
-        <div className={clsx("mb-4 border-t border-hairline pt-4 w-full", isExpanded ? "px-4" : "px-0 flex justify-center")}>
-          <div className={clsx("flex items-center gap-3", isExpanded ? "px-2 hover:bg-surface-soft py-2 rounded-lg cursor-pointer transition-colors w-full" : "justify-center")}>
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[12px] font-bold border border-primary/20 flex-shrink-0">
-              A
+        {/* Workspace Switcher / User Profile */}
+        <div className="p-4 border-t border-hairline w-full">
+          <div className="flex items-center gap-3 px-3 py-2 hover:bg-surface-strong rounded-lg cursor-pointer transition-colors w-full">
+            <div className="w-6 h-6 rounded-md bg-surface-strong flex items-center justify-center text-ink text-[10px] font-bold border border-hairline flex-shrink-0">
+              D
             </div>
-            {isExpanded && (
-              <div className="overflow-hidden whitespace-nowrap flex-1">
-                <p className="text-ink text-[14px] font-semibold leading-tight">Abhinav</p>
-                <p className="text-muted text-[13px]">Drape & Co.</p>
-              </div>
-            )}
+            <div className="overflow-hidden whitespace-nowrap flex-1">
+              <p className="text-ink text-[13px] font-semibold leading-tight">Drape & Co.</p>
+              <p className="text-muted text-[11px] font-medium">Free Plan</p>
+            </div>
           </div>
         </div>
       </aside>

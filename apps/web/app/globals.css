@@ -5,86 +5,122 @@
 @layer base {
   body {
     @apply bg-canvas text-ink;
-    font-family: var(--font-sohne), system-ui, sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1 {
+    @apply text-[36px] font-display font-semibold tracking-tight;
+  }
+  h2 {
+    @apply text-[24px] font-semibold tracking-tight;
+  }
+  h3 {
+    @apply text-[18px] font-semibold;
+  }
+  p, span {
+    @apply text-[14px];
+  }
+  .label-text {
+    @apply text-[12px] font-medium text-muted uppercase tracking-wider;
   }
 }
 
 @layer components {
-  /* Stripe Component Overrides */
+  /* Enterprise Sidebar */
   .sidebar {
-    @apply bg-canvas text-ink min-h-screen w-[240px] flex-shrink-0 border-r border-hairline;
+    @apply bg-canvas text-ink min-h-screen w-[260px] flex-shrink-0 border-r border-hairline;
   }
 
+  /* Dense Cards */
   .card {
-    @apply bg-surface-card rounded-[8px] border border-hairline shadow-card transition-shadow duration-300;
+    @apply bg-surface-card rounded-xl border border-hairline transition-colors duration-200;
   }
   
   .card:hover {
-    @apply shadow-card-hover border-hairline-input;
+    @apply border-hairline-input;
   }
 
-  /* Stripe Primary Pill CTA */
+  /* Enterprise Primary CTA */
   .btn-primary {
-    @apply bg-primary text-on-primary px-5 py-3 rounded-[8px] font-semibold text-[15px] leading-none tracking-normal
-           hover:bg-primary-press shadow-card transition-all duration-200 
+    @apply bg-primary text-on-primary px-4 py-2 rounded-lg font-medium text-[14px] leading-none tracking-normal
+           hover:bg-primary-press transition-colors duration-200 
            disabled:opacity-50 disabled:cursor-not-allowed
            flex items-center justify-center;
   }
 
   .btn-primary-large {
-    @apply btn-primary px-8 py-4 h-[56px] text-[16px];
+    @apply btn-primary px-6 py-3 h-[48px] text-[15px];
   }
 
   /* Secondary / Ghost */
   .btn-ghost {
-    @apply bg-transparent text-primary px-5 py-3 rounded-[8px] font-semibold text-[15px] border border-hairline
-           hover:bg-primary-bgSubduedHover hover:text-primary-press hover:border-transparent transition-all duration-200;
+    @apply bg-surface-card text-ink px-4 py-2 rounded-lg font-medium text-[14px] border border-hairline
+           hover:bg-surface-strong transition-colors duration-200;
+  }
+
+  /* Persona Badge */
+  .badge-persona {
+    @apply inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-hairline bg-surface-soft text-[12px] font-medium text-ink;
   }
 
   .status-badge {
-    @apply bg-surface-strong text-ink rounded-[8px] px-3 py-1 text-[12px] font-semibold;
+    @apply bg-surface-strong text-ink rounded-md px-2 py-1 text-[12px] font-medium border border-hairline;
   }
 
   .input-field {
-    @apply w-full px-4 py-[14px] h-[48px] rounded-[8px] border border-hairline 
-           bg-canvas text-ink placeholder-muted-soft shadow-sm
-           focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent
-           transition-all duration-200;
+    @apply w-full px-3 py-2 h-[40px] rounded-lg border border-hairline 
+           bg-surface-card text-ink placeholder-muted
+           focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary
+           transition-colors duration-200;
   }
 
   .skeleton {
-    @apply bg-surface-strong rounded-[8px] animate-pulse;
+    @apply bg-surface-strong rounded-md animate-pulse;
   }
 
-  .stat-card {
-    @apply bg-canvas rounded-[8px] border border-hairline p-6 flex flex-col gap-1 shadow-card;
+  /* Enterprise Tables */
+  .table-container {
+    @apply w-full overflow-x-auto rounded-xl border border-hairline bg-surface-card;
   }
   
-  .hero-band-dark {
-    @apply bg-brand-dark text-on-dark w-full px-8 py-section flex items-center justify-between;
+  .table-enterprise {
+    @apply w-full text-left border-collapse;
+  }
+
+  .table-enterprise th {
+    @apply px-4 py-3 text-[12px] font-medium text-muted border-b border-hairline bg-surface-soft whitespace-nowrap;
+  }
+
+  .table-enterprise td {
+    @apply px-4 py-3 text-[14px] text-ink border-b border-hairline whitespace-nowrap;
+  }
+
+  .table-enterprise tr:hover td {
+    @apply bg-surface-soft/50;
   }
   
-  .product-ui-card-dark {
-    @apply bg-surface-darkElevated text-on-dark rounded-[8px] p-8 shadow-2xl;
+  .table-enterprise tr:last-child td {
+    @apply border-b-0;
   }
 }
 
 @layer utilities {
-  /* Note: In Stripe, the sidebar items often have softer hover states on a light background */
   .nav-item {
-    @apply flex items-center gap-3 px-4 py-[10px] rounded-[8px] text-[14px] font-medium
-           text-muted hover:text-ink hover:bg-surface-soft
-           transition-colors duration-200 cursor-pointer;
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] font-medium
+           text-muted hover:text-ink hover:bg-surface-strong
+           transition-colors duration-150 cursor-pointer;
   }
 
   .nav-item-active {
-    @apply text-primary bg-primary/5 font-bold;
+    @apply text-primary bg-primary-soft font-medium;
   }
   
   .font-display {
-    font-family: var(--font-sohne), sans-serif;
+    font-family: 'Inter', sans-serif;
   }
   .font-mono-numbers {
-    font-family: var(--font-sohne-mono), monospace;
+    font-variant-numeric: tabular-nums;
   }
 }

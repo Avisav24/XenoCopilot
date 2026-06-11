@@ -39,15 +39,65 @@ export const launchCampaign = (data: { name: string; persona_id: string; channel
     body: JSON.stringify(data),
   });
 export const strategizeCampaign = (goal: string) =>
-  fetchAPI<{ markdownReport: string; campaignData: any }>('/api/ai/strategize', {
+  fetchAPI<{ 
+    opportunityAnalysis: { score: number; potentialRevenue: number; audienceSize: number; historicalConversion: number; confidence: number; revenueAtRisk: number; };
+    aiRecommendation: { recommendedVariantId: string; why: string[]; expectedOutcome: { revenue: number; purchases: number; conversion: number; }; };
+    variants: { id: string; name: string; message: string; expectedRevenue: number; openRate: number; purchaseRate: number; confidence: number; strengths: string[]; risks: string[]; }[] 
+  }>('/api/ai/strategize', {
     method: 'POST',
     body: JSON.stringify({ goal }),
   });
+export const getDynamicSuggestions = () => fetchAPI<string[]>('/api/ai/suggestions');
+
+export const getDynamicPersonas = () => fetchAPI<{
+  id: string;
+  name: string;
+  customerCount: number;
+  revenueContribution: number;
+  avgLTV: number;
+  avgAOV: number;
+  churnRisk: string;
+  bestChannel: string;
+  bestCampaignType: string;
+  revenueOpportunity: number;
+  monthlyTrend: string;
+  recommendedAction: string;
+  expectedImpact: number;
+  aiSummary: string;
+}[]>('/api/ai/dynamic-personas');
+
+export const getOpportunities = () => fetchAPI<{
+  id: string;
+  title: string;
+  potentialRevenue: number;
+  audience: number;
+  confidence: number;
+  score: number;
+  reasoning: string[];
+  aiExplanation: string;
+  recommendedAction: string;
+  revenueAtRisk: number;
+  urgency: string;
+  actionScenario: { description: string; value: number };
+  noActionScenario: { description: string; value: number; churnImpact: string };
+}[]>('/api/ai/opportunities');
+
+export const getNextBestAction = (customer_id: string) => 
+  fetchAPI<{ action: string; confidence: number; expectedRevenue: number; revenueAtRisk: number; reasoning: string[] }>('/api/ai/next-best-action', {
+    method: 'POST',
+    body: JSON.stringify({ customer_id }),
+  });
+
+export const simulateCampaign = (audience_size: number) => 
+  fetchAPI<any[]>('/api/ai/simulate-campaign', {
+    method: 'POST',
+    body: JSON.stringify({ audience_size }),
+  });
 // ── Campaigns ─────────────────────────────────────────────
-export const getCampaigns = () => fetchAPI('/api/campaigns');
-export const getCampaign = (id: string) => fetchAPI(`/api/campaigns/${id}`);
-export const getCampaignMessages = (id: string, limit?: number) => fetchAPI(`/api/campaigns/${id}/messages${limit ? `?limit=${limit}` : ''}`);
-export const getCampaignInsights = (id: string) => fetchAPI(`/api/campaigns/${id}/insights`);
+export const getCampaigns = () => fetchAPI<any[]>('/api/campaigns');
+export const getCampaign = (id: string) => fetchAPI<any>(`/api/campaigns/${id}`);
+export const getCampaignMessages = (id: string, limit?: number) => fetchAPI<any[]>(`/api/campaigns/${id}/messages${limit ? `?limit=${limit}` : ''}`);
+export const getCampaignInsights = (id: string) => fetchAPI<any>(`/api/campaigns/${id}/insights`);
 
 // ── Customers ─────────────────────────────────────────────
 export const getCustomers = (params?: { limit?: number; offset?: number; search?: string }) => {
@@ -59,6 +109,8 @@ export const getCustomers = (params?: { limit?: number; offset?: number; search?
 };
 
 export const getCustomer = (id: string) => fetchAPI<any>(`/api/customers/${id}`);
+
+export const getPersonas = () => fetchAPI<any[]>('/api/personas');
 
 export const getCustomerStats = () => fetchAPI<{
   total: number;
@@ -84,4 +136,7 @@ export const getRevenueStats = () => fetchAPI<{
   revenueByPersona: { name: string; value: number }[];
   revenueByOpportunity: { name: string; value: number }[];
   channelIntelligence: { channel: string; revenue: number; ctr: number; conversion: number }[];
+  keyInsight?: string;
+  keyRisk?: string;
+  keyOpportunity?: string;
 }>('/api/revenue/stats');
