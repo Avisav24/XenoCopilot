@@ -150,6 +150,15 @@ function CampaignStudioContent() {
     }
   };
 
+  const handleReset = () => {
+    setGoal('');
+    setSubmittedGoal(false);
+    setStrategyResult(null);
+    setSelectedChannel('WhatsApp');
+    setActiveVariant('A');
+    hasAutoSubmitted.current = false;
+  };
+
   return (
     <div className="flex w-full min-h-screen bg-slate-50 justify-center">
       <div className="w-full max-w-[1300px] px-8 py-8 flex flex-col gap-6">
@@ -243,23 +252,31 @@ function CampaignStudioContent() {
             <div className="col-span-8 flex flex-col gap-8 pb-12">
 
               {/* Command Bar Intent */}
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 flex gap-8 items-center shadow-sm">
-                 <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
-                    <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Goal</span>
-                    <span className="text-[14px] font-bold text-slate-900 line-clamp-1">{goal}</span>
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 flex items-center shadow-sm justify-between">
+                 <div className="flex gap-8 items-center">
+                   <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
+                      <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Goal</span>
+                      <span className="text-[14px] font-bold text-slate-900 line-clamp-1">{goal}</span>
+                   </div>
+                   <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
+                      <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Detected Audience</span>
+                      <span className="text-[14px] font-medium text-slate-800">{strategyResult?.persona?.name || 'Loading...'}</span>
+                   </div>
+                   <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
+                      <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Matched Customers</span>
+                      <span className="text-[14px] font-bold text-slate-900 font-mono-numbers">{strategyResult?.count || 0}</span>
+                   </div>
+                   <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Recommended Channel</span>
+                      <span className="text-[14px] font-medium text-slate-800">{strategyResult?.channel || '...'}</span>
+                   </div>
                  </div>
-                 <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
-                    <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Detected Audience</span>
-                    <span className="text-[14px] font-medium text-slate-800">{strategyResult?.persona?.name || 'Loading...'}</span>
-                 </div>
-                 <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
-                    <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Matched Customers</span>
-                    <span className="text-[14px] font-bold text-slate-900 font-mono-numbers">{strategyResult?.count || 0}</span>
-                 </div>
-                 <div className="flex flex-col gap-1">
-                    <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Recommended Channel</span>
-                    <span className="text-[14px] font-medium text-slate-800">{strategyResult?.channel || '...'}</span>
-                 </div>
+                 <button 
+                   onClick={handleReset} 
+                   className="bg-blue-100/70 hover:bg-blue-200 text-blue-700 font-bold px-3 py-1.5 rounded-lg text-[12px] transition-colors flex items-center gap-1.5 shadow-sm ml-4 whitespace-nowrap"
+                 >
+                   <Xmark height={14} width={14} /> Reset Session
+                 </button>
               </div>
 
               {/* Strategy Summary */}
