@@ -1,10 +1,11 @@
 import { fetchAPI } from './core';
 
-export const getCustomers = (params?: { limit?: number; offset?: number; search?: string }) => {
+export const getCustomers = (params?: { limit?: number; offset?: number; search?: string; persona?: string }) => {
   const qs = new URLSearchParams();
   if (params?.limit) qs.set('limit', String(params.limit));
   if (params?.offset) qs.set('offset', String(params.offset));
   if (params?.search) qs.set('search', params.search);
+  if (params?.persona) qs.set('persona', params.persona);
   return fetchAPI(`/api/customers?${qs}`);
 };
 

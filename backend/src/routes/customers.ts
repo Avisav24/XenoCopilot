@@ -8,6 +8,7 @@ export async function customerRoutes(fastify: FastifyInstance) {
     const limit = Math.min(Number(request.query.limit || 50), 200);
     const offset = Number(request.query.offset || 0);
     const search = request.query.search;
+    const personaFilter = (request.query as any).persona;
 
     const where: any = {};
     if (search) {
@@ -24,6 +25,10 @@ export async function customerRoutes(fastify: FastifyInstance) {
       if (numSearch !== undefined) {
         where.OR.push({ total_spent: { equals: numSearch } });
       }
+    }
+
+    if (personaFilter) {
+      where.customer_personas = { some: { persona: { name: personaFilter } } };
     }
 
     const [customers, total] = await Promise.all([

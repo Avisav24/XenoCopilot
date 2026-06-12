@@ -28,6 +28,7 @@ function getDotColor(persona: string) {
 export default function IntelligencePage() {
   const router = useRouter();
   const [search, setSearch] = useState('');
+  const [selectedPersona, setSelectedPersona] = useState<string>('');
   const [page, setPage] = useState(0);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'directory' | 'audience'>('directory');
@@ -62,8 +63,8 @@ export default function IntelligencePage() {
   });
 
   const { data: listData, isLoading: isListLoading } = useQuery({
-    queryKey: ['customers', search, page],
-    queryFn: () => getCustomers({ limit: LIMIT, offset: page * LIMIT, search: search || undefined }) as any,
+    queryKey: ['customers', search, selectedPersona, page],
+    queryFn: () => getCustomers({ limit: LIMIT, offset: page * LIMIT, search: search || undefined, persona: selectedPersona || undefined }) as any,
   });
 
   const { data: personas } = useQuery({
@@ -545,15 +546,27 @@ export default function IntelligencePage() {
                  <span className="text-[14px] font-semibold text-ink">Customer Opportunity Queue</span>
                  <span className="text-[12px] text-ink-muted">Showing {stats.total} customers • 85 require action • Potential recoverable revenue: <span className="font-medium text-primary">₹94,500</span></span>
                </div>
-               <div className="relative w-64">
-                 <Search height={16} width={16} className="text-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
-                 <input
-                   type="text"
-                   placeholder="Search customers..."
-                   value={search}
-                   onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-                   className="input-field pl-9 h-8 text-[13px]"
-                 />
+               <div className="flex gap-3 items-center">
+                 <select
+                   value={selectedPersona}
+                   onChange={(e) => { setSelectedPersona(e.target.value); setPage(0); }}
+                   className="input-field h-8 text-[13px] w-48"
+                 >
+                   <option value="">All Personas</option>
+                   {personas?.map((p: any) => (
+                     <option key={p.id} value={p.name}>{p.name}</option>
+                   ))}
+                 </select>
+                 <div className="relative w-64">
+                   <Search height={16} width={16} className="text-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                   <input
+                     type="text"
+                     placeholder="Search customers..."
+                     value={search}
+                     onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+                     className="input-field pl-9 h-8 text-[13px]"
+                   />
+                 </div>
                </div>
             </div>
 
