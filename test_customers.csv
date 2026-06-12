@@ -1,0 +1,12 @@
+customer_id,name,email,phone,city,gender,signup_date
+C001,Rahul Sharma,rahul@example.com,9876543210,Mumbai,M,2023-01-15T10:00:00Z
+C002,Priya Patel,priya@example.com,9876543211,Delhi,F,2023-02-20T11:00:00Z
+C003,Amit Kumar,amit@example.com,9876543212,Bangalore,M,2023-03-05T12:00:00Z
+C004,Neha Singh,neha@example.com,,Mumbai,F,2023-04-10T13:00:00Z
+C005,Vikram Reddy,vikram@example.com,9876543214,Hyderabad,M,2023-05-15T14:00:00Z
+C006,Anjali Desai,,9876543215,Pune,F,2023-06-20T15:00:00Z
+C007,Sanjay Gupta,sanjay@example.com,9876543216,Delhi,M,2023-07-25T16:00:00Z
+C008,Kavita Joshi,kavita@example.com,9876543217,Mumbai,F,2023-08-30T17:00:00Z
+C009,Arjun Nair,arjun@example.com,9876543218,Chennai,M,2023-09-05T18:00:00Z
+C010,Pooja Verma,pooja@example.com,9876543219,Bangalore,F,2023-10-10T19:00:00Z
+CERR,Bad Row,bad,,,,,

@@ -50,17 +50,17 @@ export default function CampaignStudioPage() {
         channel: recRes.channel,
         expectedRevenue: recRes.expectedRevenue,
         expectedPurchasers: recRes.expectedPurchasers,
-        variants: msgRes.variants || [
-          { version: 'A', text: "Your favorite products are back in stock." },
-          { version: 'B', text: "Special offer inside for our best customers." }
+        variants: [
+          { version: 'A', text: msgRes.variantA || "Your favorite products are back in stock." },
+          { version: 'B', text: msgRes.variantB || "Special offer inside for our best customers." }
         ]
       });
       setSelectedChannel(recRes.channel);
       setActiveVariant('A');
       setSubmittedGoal(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to generate campaign strategy. Check console for details.');
+      alert(`Failed to generate campaign strategy: ${err.message || 'Unknown error'}`);
     } finally {
       setIsGenerating(false);
     }
@@ -648,11 +648,11 @@ export default function CampaignStudioPage() {
                 <div className="flex flex-col p-5 gap-4 flex-1 overflow-y-auto">
                   {[
                     { label: 'Status',           value: 'Draft',                badge: true },
-                    { label: 'Target Audience',  value: 'Beauty Loyalists' },
+                    { label: 'Target Audience',  value: strategyResult?.persona?.name || '...' },
                     { label: 'Selected Channel', value: selectedChannel },
-                    { label: 'Predicted Revenue', value: revenueByChannel[selectedChannel], mono: true },
-                    { label: 'Conversion Rate',  value: convByChannel[selectedChannel], mono: true },
-                    { label: 'Confidence',       value: confByChannel[selectedChannel], mono: true },
+                    { label: 'Predicted Revenue', value: `₹${strategyResult?.expectedRevenue?.toLocaleString('en-IN') || 0}`, mono: true },
+                    { label: 'Conversion Rate',  value: `${strategyResult ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100).toFixed(1) : 0}%`, mono: true },
+                    { label: 'Audience Match',   value: 'High', mono: true },
                     { label: 'Launch Risk',      value: 'Low', risk: true },
                     { label: 'Schedule',         value: 'Immediate' },
                     { label: 'Active Variant',   value: `Variant ${activeVariant}` },

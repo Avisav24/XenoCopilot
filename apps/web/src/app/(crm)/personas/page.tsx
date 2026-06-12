@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getDynamicPersonas } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { Spark, ArrowUp, ArrowDown, Xmark, Group, Filter, GraphUp, WarningTriangle, User, DataTransferBoth, FastArrowRight, Sparkles } from 'iconoir-react';
+import { Spark, ArrowUp, ArrowDown, Xmark, Group, Filter, GraphUp, WarningTriangle, User, DataTransferBoth, FastArrowRight, Sparks } from 'iconoir-react';
 import { useState } from 'react';
 import { clsx } from 'clsx';
 
@@ -97,7 +97,7 @@ export default function PersonasPage() {
                     </div>
                     <div className="flex justify-between items-center p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
                       <span className="text-[13px] font-semibold text-slate-600">Best Channel</span>
-                      <span className="font-bold text-slate-900 text-[14px]">{selectedPersona.bestChannels?.[0] || 'Email'}</span>
+                      <span className="font-bold text-slate-900 text-[14px]">{selectedPersona.bestChannels?.[0]?.channel || 'Email'}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors bg-blue-50/50">
                       <span className="text-[13px] font-semibold text-blue-800">Best Campaign Type</span>
@@ -110,7 +110,7 @@ export default function PersonasPage() {
                   <span className="text-[13px] font-bold text-slate-900 uppercase">Business Summary</span>
                   <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl">
                      <p className="text-[14px] text-slate-700 leading-relaxed font-medium">
-                        This audience represents a high-value cohort contributing significantly to overall LTV. They are highly responsive to {selectedPersona.bestChannels?.[0] || 'Email'} campaigns, specifically reacting well to exclusivity triggers rather than raw discounts.
+                        This audience represents a high-value cohort contributing significantly to overall LTV. They are highly responsive to {selectedPersona.bestChannels?.[0]?.channel || 'Email'} campaigns, specifically reacting well to exclusivity triggers rather than raw discounts.
                      </p>
                   </div>
                </div>
