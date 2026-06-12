@@ -273,9 +273,12 @@ function CampaignStudioContent() {
                  </p>
                  
                  <div className="mt-3">
-                   <button className="bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold px-5 py-2.5 rounded-lg transition-colors shadow-sm">
-                     Open Audience
-                   </button>
+                    <button 
+                      onClick={() => router.push('/personas')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold px-5 py-2.5 rounded-lg transition-colors shadow-sm"
+                    >
+                      Open Audience
+                    </button>
                  </div>
               </div>
 
@@ -526,7 +529,7 @@ function CampaignStudioContent() {
                           {[
                             { icon: '🚚', label: 'Free Shipping' },
                             { icon: '✅', label: '100% Authentic' },
-                            { icon: '↩️', label: 'Easy Returns' },
+                            { icon: 'â†©ï¸', label: 'Easy Returns' },
                           ].map(b => (
                             <div key={b.label} className="flex flex-col items-center gap-1">
                               <span className="text-[18px]">{b.icon}</span>
@@ -552,7 +555,7 @@ function CampaignStudioContent() {
                         <div className="flex justify-between items-center px-4 py-2">
                           <span className="text-[11px] font-bold text-white">9:41</span>
                           <div className="flex items-center gap-1">
-                            <span className="text-white text-[10px]">●●●</span>
+                            <span className="text-white text-[10px]">â—â—â—</span>
                             <span className="text-[11px] text-white">WiFi</span>
                             <span className="text-[11px] text-white">🔋</span>
                           </div>
@@ -694,7 +697,8 @@ function CampaignStudioContent() {
 
             </div>
 
-            {/* �              <div
+            <div className="col-span-4">
+              <div
                 className="bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden"
                 style={{ position: 'sticky', top: '24px' }}
               >
@@ -710,8 +714,6 @@ function CampaignStudioContent() {
                     { label: 'Target Audience',  value: strategyResult?.persona?.name || '...' },
                     { label: 'Selected Channel', value: selectedChannel },
                     { label: 'Schedule',         value: 'Immediate' },
-                    { label: 'Variant',          value: `Variant ${activeVariant}` },
-                  ].map(row => (diate' },
                     { label: 'Variant',          value: `Variant ${activeVariant}` },
                   ].map(row => (
                     <div key={row.label} className="flex justify-between items-center border-b border-slate-50 pb-3 last:border-0 last:pb-0">
@@ -729,7 +731,7 @@ function CampaignStudioContent() {
                   ))}
                 </div>
 
-                {/* ── Bottom Actions — pinned to bottom ── */}
+                {/* Bottom Actions - pinned to bottom */}
                 <div className="p-4 border-t border-slate-200 bg-slate-50 flex flex-col gap-2.5 flex-shrink-0">
                   <div className="flex gap-2">
                     <button className="flex-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold py-2.5 rounded-lg text-[12px] transition-colors shadow-sm">
@@ -779,3 +781,4 @@ export default function CampaignStudioPage() {
     </Suspense>
   );
 }
+

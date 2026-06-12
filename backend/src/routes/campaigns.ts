@@ -199,6 +199,39 @@ Do not use markdown formatting.`;
       console.error('AI summary error:', err);
     }
 
+    // Generate Recent Events
+    const rawEvents: Array<{ time: Date, type: string, customer: string, revenue?: number }> = [];
+    let orderMapForEvents = new Map<string, any>();
+    if (purchasedComms.length > 0) {
+      const orderAgg = await prisma.order.groupBy({
+        by: ['customer_id'],
+        where: { customer_id: { in: purchasedComms.map(c => c.customer_id) } },
+        _sum: { amount: true },
+        _count: { id: true }
+      });
+      orderMapForEvents = new Map(orderAgg.map(o => [o.customer_id, o]));
+    }
+
+    for (const comm of communications) {
+      if (comm.sent_at) rawEvents.push({ time: comm.sent_at, type: 'Sent to', customer: comm.customer.name });
+      if (comm.delivered_at) rawEvents.push({ time: comm.delivered_at, type: 'Delivered to', customer: comm.customer.name });
+      if (comm.opened_at) rawEvents.push({ time: comm.opened_at, type: 'Opened by', customer: comm.customer.name });
+      if (comm.clicked_at) rawEvents.push({ time: comm.clicked_at, type: 'Clicked CTA by', customer: comm.customer.name });
+      if (comm.purchased_at) {
+        const orderData = orderMapForEvents.get(comm.customer_id);
+        const amount = (orderData && orderData._count.id > 0) ? Number(orderData._sum.amount) / orderData._count.id : 1500;
+        rawEvents.push({ time: comm.purchased_at, type: 'Purchase recorded', customer: comm.customer.name, revenue: amount });
+      }
+    }
+    
+    rawEvents.sort((a, b) => b.time.getTime() - a.time.getTime());
+    const recent_events = rawEvents.slice(0, 20).map(e => ({
+      type: e.type,
+      customer: e.customer,
+      revenue: e.revenue ? formatRupees(e.revenue) : undefined,
+      time: e.time.toISOString()
+    }));
+
     const insights = {
       campaign_id: id,
       campaign_name: campaign.name,
@@ -223,6 +256,7 @@ Do not use markdown formatting.`;
       performance_pct: performanceVsPrediction,
       revenue_sources: Object.entries(revenueSources).map(([name, value]) => ({ name, value })).sort((a,b) => b.value - a.value),
       ai_summary: aiSummary,
+      recent_events,
     };
 
     // Cache insights for 5s (so UI updates faster during simulation)
