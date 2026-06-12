@@ -44,7 +44,7 @@ function CommandCenterContent() {
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [previewVariant, setPreviewVariant] = useState<any | null>(null);
   
-  const [selectedPersonaId, setSelectedPersonaId] = useState<string>('');
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string>(searchParams?.get('persona') || '');
   
   // Simulation State
   const [simData, setSimData] = useState<any[] | null>(null);

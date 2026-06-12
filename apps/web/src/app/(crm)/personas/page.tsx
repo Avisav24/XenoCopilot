@@ -76,6 +76,42 @@ export default function PersonasPage() {
                </div>
 
                <div className="flex flex-col gap-2">
+                 <span className="label-text">Engagement & Behavior</span>
+                 <div className="bg-canvas border border-hairline rounded-lg p-4 flex flex-col gap-4 text-[14px]">
+                    <div className="flex justify-between border-b border-hairline pb-2">
+                      <span className="text-ink-muted">Avg. Order Value</span>
+                      <span className="font-mono-numbers font-medium text-ink">₹{selectedPersona.avgAOV?.toLocaleString() || 0}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-hairline pb-2">
+                      <span className="text-ink-muted">Avg. Lifetime Value</span>
+                      <span className="font-mono-numbers font-medium text-ink">₹{selectedPersona.avgLTV?.toLocaleString() || 0}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-hairline pb-2">
+                      <span className="text-ink-muted">Purchase Frequency</span>
+                      <span className="font-medium text-ink">{selectedPersona.purchaseFrequency || '-'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-hairline pb-2">
+                      <span className="text-ink-muted">Discount Affinity</span>
+                      <span className="font-medium text-ink">{selectedPersona.discountAffinity || '-'}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-hairline pb-2">
+                      <span className="text-ink-muted">Best Channel</span>
+                      <span className="font-medium text-ink">{selectedPersona.bestChannel || '-'}</span>
+                    </div>
+                    {selectedPersona.primaryTraits && selectedPersona.primaryTraits.length > 0 && (
+                      <div className="flex flex-col gap-2 pt-2">
+                         <span className="text-ink-muted">Key Traits</span>
+                         <div className="flex flex-wrap gap-2 mt-1">
+                           {selectedPersona.primaryTraits.map((trait: string, idx: number) => (
+                             <span key={idx} className="bg-surface-soft border border-hairline px-2 py-1 rounded text-[12px] font-medium text-ink">{trait}</span>
+                           ))}
+                         </div>
+                      </div>
+                    )}
+                 </div>
+               </div>
+
+               <div className="flex flex-col gap-2">
                  <span className="label-text">Action Plan</span>
                  <div className="bg-primary-soft border border-primary/20 rounded-lg p-4 flex flex-col gap-4 text-[14px]">
                     <div className="flex flex-col gap-1 border-b border-primary/10 pb-3">
@@ -86,7 +122,7 @@ export default function PersonasPage() {
                       <span className="text-primary font-medium">Revenue Opportunity</span>
                       <span className="font-mono-numbers font-bold text-semantic-success">₹{selectedPersona.revenueOpportunity?.toLocaleString()}</span>
                     </div>
-                    <button onClick={() => router.push('/chat')} className="btn-primary w-full mt-2">
+                    <button onClick={() => router.push(`/chat?goal=${encodeURIComponent(selectedPersona.recommendedAction)}&persona=${selectedPersona.id}`)} className="btn-primary w-full mt-2">
                       Strategize Campaign
                     </button>
                  </div>

@@ -539,6 +539,9 @@ Example format:
           monthlyTrend: '-8%',
           recommendedAction: 'VIP Early Access Campaign',
           expectedImpact: Math.round(vipRev * 0.05),
+          purchaseFrequency: 'Every 2-3 weeks',
+          discountAffinity: 'Low',
+          primaryTraits: ['Brand Loyalist', 'Early Adopter', 'High AOV'],
           aiSummary: 'VIP customers represent a large portion of revenue, but purchasing velocity has declined by 8% over the last 30 days. Action is required to maintain LTV.'
         },
         {
@@ -555,6 +558,9 @@ Example format:
           monthlyTrend: '-12%',
           recommendedAction: 'Aggressive Win-Back Sequence',
           expectedImpact: Math.round(dormantRev * 0.10),
+          purchaseFrequency: 'Every 6-8 months',
+          discountAffinity: 'High',
+          primaryTraits: ['Price Sensitive', 'Seasonal Buyer', 'High Churn Risk'],
           aiSummary: 'These customers previously contributed significantly but have not purchased in 90+ days. The historical recovery rate drops off sharply after 120 days, making immediate intervention critical.'
         },
         {
@@ -571,6 +577,9 @@ Example format:
           monthlyTrend: '+2%',
           recommendedAction: 'Volume Flash Sale',
           expectedImpact: Math.round(regularRev * 0.04),
+          purchaseFrequency: 'Every 1-2 months',
+          discountAffinity: 'Very High',
+          primaryTraits: ['Deal Seeker', 'Impulse Buyer', 'Volume Shopper'],
           aiSummary: 'This segment exhibits price sensitivity but reliable volume during promotional periods. Engaging them with structured sales drives predictable revenue spikes.'
         }
       ];
