@@ -39,8 +39,8 @@ export function Sidebar() {
 
   return (
     <>
-      <div className="flex-shrink-0 w-[200px] hidden md:block" />
-      <aside className="sidebar fixed top-0 left-0 h-full z-40 flex flex-col justify-between bg-canvas border-r border-hairline w-[200px]">
+      <div className="flex-shrink-0 w-[240px] hidden md:block" />
+      <aside className="sidebar fixed top-0 left-0 h-full z-40 flex flex-col justify-between bg-canvas border-r border-hairline w-[240px]">
         
         <nav className="flex flex-col gap-1 p-4 pt-6 flex-1">
           <div className="flex items-center px-3 mb-8 mt-2">
