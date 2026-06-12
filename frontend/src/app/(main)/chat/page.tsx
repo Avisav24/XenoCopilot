@@ -322,14 +322,15 @@ function CampaignStudioContent() {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {[
-                        { ch: 'WhatsApp', rev: strategyResult?.expectedRevenue || 0, conv: strategyResult && strategyResult.count > 0 ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100) : 0, match: 'High', cost: '₹4,500' },
-                        { ch: 'Email',    rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.4), conv: strategyResult && strategyResult.count > 0 ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.4) : 0, match: 'Medium', cost: '₹120' },
-                        { ch: 'SMS',      rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.2), conv: strategyResult && strategyResult.count > 0 ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.2) : 0, match: 'Low', cost: '₹1,200' },
+                        { ch: 'WhatsApp', icon: MessageText, color: 'text-[#25D366]', rev: strategyResult?.expectedRevenue || 0, conv: strategyResult && strategyResult.count > 0 ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100) : 0, match: 'High', cost: '₹4,500' },
+                        { ch: 'Email',    icon: Mail, color: 'text-[#7C3AED]', rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.4), conv: strategyResult && strategyResult.count > 0 ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.4) : 0, match: 'Medium', cost: '₹120' },
+                        { ch: 'SMS',      icon: SmartphoneDevice, color: 'text-[#2563EB]', rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.2), conv: strategyResult && strategyResult.count > 0 ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.2) : 0, match: 'Low', cost: '₹1,200' },
                       ].map(row => {
                         const isRecommended = row.ch === (strategyResult?.channel || 'WhatsApp');
                         return (
                           <tr key={row.ch} className={clsx(selectedChannel === row.ch ? 'bg-blue-50/30' : 'hover:bg-slate-50/60', 'cursor-pointer transition-colors')} onClick={() => setSelectedChannel(row.ch)}>
                             <td className="py-3 px-4 text-[13px] font-bold text-slate-900 flex items-center gap-2">
+                              <row.icon height={16} width={16} className={isRecommended ? row.color : "text-slate-400"} />
                               {row.ch}
                               {isRecommended && <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Rec</span>}
                             </td>
