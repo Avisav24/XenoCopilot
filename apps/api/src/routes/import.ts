@@ -35,7 +35,7 @@ export async function importRoutes(fastify: FastifyInstance) {
       const buffer = await data.toBuffer();
       const csvString = buffer.toString('utf-8');
 
-      const records = parse(csvString, { columns: true, skip_empty_lines: true });
+      const records = parse(csvString, { columns: true, skip_empty_lines: true, bom: true, trim: true });
       
       let validCount = 0;
       let rejectedCount = 0;
@@ -96,7 +96,7 @@ export async function importRoutes(fastify: FastifyInstance) {
       const buffer = await data.toBuffer();
       const csvString = buffer.toString('utf-8');
 
-      const records = parse(csvString, { columns: true, skip_empty_lines: true });
+      const records = parse(csvString, { columns: true, skip_empty_lines: true, bom: true, trim: true });
       
       let validCount = 0;
       let rejectedCount = 0;
@@ -106,7 +106,8 @@ export async function importRoutes(fastify: FastifyInstance) {
         const parsed = OrderCsvRow.safeParse(record);
         if (!parsed.success) {
           rejectedCount++;
-          if (issues.length < 10) issues.push(`Row rejected: invalid schema`);
+          const issueMsg = parsed.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join(', ');
+          if (issues.length < 10) issues.push(`Row rejected: ${issueMsg}`);
           continue;
         }
 
