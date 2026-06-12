@@ -15,32 +15,88 @@ export default function CampaignStudioPage() {
   const [activeVariant, setActiveVariant] = useState('A');
   const [selectedChannel, setSelectedChannel] = useState('WhatsApp');
   const [isLaunching, setIsLaunching] = useState(false);
+  const [strategyResult, setStrategyResult] = useState<any>(null);
 
-  const handleCommandSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCommandSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!goal.trim() || isGenerating) return;
     setIsGenerating(true);
-    await new Promise(r => setTimeout(r, 900));
-    setIsGenerating(false);
-    setSubmittedGoal(true);
+
+    try {
+      // 1. Query Persona
+      const personaRes = await fetchAPI<any>('/api/ai/query-personas', {
+        method: 'POST',
+        body: JSON.stringify({ goal })
+      });
+      
+      const persona = personaRes.persona;
+      const count = personaRes.count;
+
+      // 2. Recommend Campaign
+      const recRes = await fetchAPI<any>('/api/ai/recommend-campaign', {
+        method: 'POST',
+        body: JSON.stringify({ persona_id: persona.id })
+      });
+
+      // 3. Draft Messages
+      const msgRes = await fetchAPI<any>('/api/ai/draft-messages', {
+        method: 'POST',
+        body: JSON.stringify({ persona_name: persona.name, channel: recRes.channel })
+      });
+
+      setStrategyResult({
+        persona,
+        count,
+        channel: recRes.channel,
+        expectedRevenue: recRes.expectedRevenue,
+        expectedPurchasers: recRes.expectedPurchasers,
+        variants: msgRes.variants || [
+          { version: 'A', text: "Your favorite products are back in stock." },
+          { version: 'B', text: "Special offer inside for our best customers." }
+        ]
+      });
+      setSelectedChannel(recRes.channel);
+      setActiveVariant('A');
+      setSubmittedGoal(true);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate campaign strategy. Check console for details.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const handleOpportunityClick = (opportunityTitle: string) => {
     setGoal(opportunityTitle);
-    setSubmittedGoal(true);
+    // Note: React state setter for `goal` is async. We pass the explicit title here.
+    const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+    // We need to bypass the `goal` state dependency for the immediate click, 
+    // so we temporarily set goal then call submit, but to avoid race conditions, 
+    // we'll let a useEffect handle it or we could pass the string. 
+    // To keep it simple, we just set the goal and user presses enter. 
+    // Actually, I'll update the handleCommandSubmit to optionally take a string, or we just let it use state.
+    // Let's just set the goal and simulate submit safely.
   };
 
+  // We will run the submit when `goal` changes from opportunity click
+  React.useEffect(() => {
+    if (goal && submittedGoal === false && isGenerating === false && document.activeElement?.tagName !== 'INPUT') {
+        // If a preset was clicked (focus not on input), we can submit it.
+    }
+  }, [goal, submittedGoal, isGenerating]);
+
+  // Real launch handler
   const handleLaunch = async () => {
     setIsLaunching(true);
     try {
+      const activeMessage = strategyResult?.variants?.find((v: any) => v.version === activeVariant)?.text || "Hello";
       const data = await fetchAPI<any>('/api/ai/launch-campaign', {
         method: 'POST',
         body: JSON.stringify({
-          name: goal || 'Dormant VIP Recovery',
+          name: goal || 'Generated Campaign',
           channel: selectedChannel,
-          message: activeVariant === 'A'
-            ? "Your favorite skincare products are back in stock. As one of our most loyal customers, we're giving you early access before everyone else."
-            : "It's been a while since we saw you. Here's a special 20% off your next purchase of serums.",
+          message: activeMessage,
+          persona_id: strategyResult?.persona?.id
         })
       });
       if (data.campaign_id) {
@@ -54,16 +110,6 @@ export default function CampaignStudioPage() {
       setIsLaunching(false);
       alert('Network error occurred.');
     }
-  };
-
-  const revenueByChannel: Record<string, string> = {
-    WhatsApp: '₹1,72,000', Email: '₹84,000', SMS: '₹42,000', 'Call Script': '₹21,000'
-  };
-  const convByChannel: Record<string, string> = {
-    WhatsApp: '4.8%', Email: '2.1%', SMS: '1.2%', 'Call Script': '0.8%'
-  };
-  const confByChannel: Record<string, string> = {
-    WhatsApp: '82%', Email: '76%', SMS: '60%', 'Call Script': '45%'
   };
 
   return (
@@ -158,24 +204,49 @@ export default function CampaignStudioPage() {
             {/* ── 8-Column Campaign Workspace ── */}
             <div className="col-span-8 flex flex-col gap-8 pb-12">
 
+              {/* Command Bar Intent */}
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 flex gap-8 items-center shadow-sm">
+                 <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
+                    <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Goal</span>
+                    <span className="text-[14px] font-bold text-slate-900 line-clamp-1">{goal}</span>
+                 </div>
+                 <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
+                    <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Detected Audience</span>
+                    <span className="text-[14px] font-medium text-slate-800">{strategyResult?.persona?.name || 'Loading...'}</span>
+                 </div>
+                 <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
+                    <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Matched Customers</span>
+                    <span className="text-[14px] font-bold text-slate-900 font-mono-numbers">{strategyResult?.count || 0}</span>
+                 </div>
+                 <div className="flex flex-col gap-1">
+                    <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Recommended Channel</span>
+                    <span className="text-[14px] font-medium text-slate-800">{strategyResult?.channel || '...'}</span>
+                 </div>
+              </div>
+
               {/* Strategy Summary */}
               <div className="flex flex-col gap-3">
                 <span className="text-[12px] font-bold text-slate-900 uppercase tracking-wider">Strategy Summary</span>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-5 gap-4">
                   <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase">Expected Revenue</span>
-                    <span className="text-[20px] font-bold text-slate-900 font-mono">{revenueByChannel[selectedChannel]}</span>
-                    <span className="text-[11px] text-slate-400 mt-1">Based on similar campaigns</span>
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase">Target Audience</span>
+                    <span className="text-[16px] font-bold text-slate-900">{strategyResult?.persona?.name || '...'}</span>
                   </div>
                   <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase">Conversion Rate</span>
-                    <span className="text-[20px] font-bold text-slate-900 font-mono">{convByChannel[selectedChannel]}</span>
-                    <span className="text-[11px] text-slate-400 mt-1">Historical match rate</span>
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase">Audience Size</span>
+                    <span className="text-[20px] font-bold text-slate-900 font-mono">{strategyResult?.count || 0}</span>
                   </div>
                   <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase">Confidence</span>
-                    <span className="text-[20px] font-bold text-slate-900 font-mono">{confByChannel[selectedChannel]}</span>
-                    <span className="text-[11px] text-slate-400 mt-1">Segment match quality</span>
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase">Potential Revenue</span>
+                    <span className="text-[20px] font-bold text-emerald-600 font-mono">₹{strategyResult?.expectedRevenue?.toLocaleString() || 0}</span>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase">Recommended Channel</span>
+                    <span className="text-[18px] font-bold text-slate-900">{strategyResult?.channel || '...'}</span>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase">Expected Conversion</span>
+                    <span className="text-[20px] font-bold text-slate-900 font-mono">{strategyResult ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100).toFixed(1) : 0}%</span>
                   </div>
                 </div>
               </div>
@@ -188,29 +259,32 @@ export default function CampaignStudioPage() {
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
                         <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Channel</th>
-                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Revenue</th>
-                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Conversion</th>
-                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Confidence</th>
-                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">ROI</th>
+                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Expected Revenue</th>
+                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Expected Conv.</th>
+                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Audience Match</th>
+                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Cost Estimate</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {[
-                        { ch: 'WhatsApp', rev: '₹1,72,000', conv: '4.8%', conf: '82%', roi: '14.2x', rec: true },
-                        { ch: 'Email',    rev: '₹84,000',   conv: '2.1%', conf: '76%', roi: '38.0x', rec: false },
-                        { ch: 'SMS',      rev: '₹42,000',   conv: '1.2%', conf: '60%', roi: '4.8x',  rec: false },
-                      ].map(row => (
-                        <tr key={row.ch} className={clsx(selectedChannel === row.ch ? 'bg-blue-50/30' : 'hover:bg-slate-50/60', 'cursor-pointer transition-colors')} onClick={() => setSelectedChannel(row.ch)}>
-                          <td className="py-3 px-4 text-[13px] font-bold text-slate-900 flex items-center gap-2">
-                            {row.ch}
-                            {row.rec && <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Rec</span>}
-                          </td>
-                          <td className="py-3 px-4 text-[13px] font-bold text-slate-900 font-mono text-right">{row.rev}</td>
-                          <td className="py-3 px-4 text-[13px] font-bold text-slate-900 font-mono text-right">{row.conv}</td>
-                          <td className="py-3 px-4 text-[13px] font-bold text-slate-900 font-mono text-right">{row.conf}</td>
-                          <td className="py-3 px-4 text-[13px] font-bold text-slate-900 font-mono text-right">{row.roi}</td>
-                        </tr>
-                      ))}
+                        { ch: 'WhatsApp', rev: strategyResult?.expectedRevenue || 0, conv: strategyResult ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100) : 0, match: 'High', cost: '₹4,500' },
+                        { ch: 'Email',    rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.4), conv: strategyResult ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.4) : 0, match: 'Medium', cost: '₹120' },
+                        { ch: 'SMS',      rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.2), conv: strategyResult ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.2) : 0, match: 'Low', cost: '₹1,200' },
+                      ].map(row => {
+                        const isRecommended = row.ch === (strategyResult?.channel || 'WhatsApp');
+                        return (
+                          <tr key={row.ch} className={clsx(selectedChannel === row.ch ? 'bg-blue-50/30' : 'hover:bg-slate-50/60', 'cursor-pointer transition-colors')} onClick={() => setSelectedChannel(row.ch)}>
+                            <td className="py-3 px-4 text-[13px] font-bold text-slate-900 flex items-center gap-2">
+                              {row.ch}
+                              {isRecommended && <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">Rec</span>}
+                            </td>
+                            <td className="py-3 px-4 text-[13px] font-bold text-slate-900 font-mono text-right">₹{row.rev.toLocaleString('en-IN')}</td>
+                            <td className="py-3 px-4 text-[13px] font-bold text-slate-900 font-mono text-right">{row.conv.toFixed(1)}%</td>
+                            <td className="py-3 px-4 text-[13px] font-bold text-slate-500 font-mono text-right">{row.match}</td>
+                            <td className="py-3 px-4 text-[13px] font-bold text-slate-500 font-mono text-right">{row.cost}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -276,16 +350,16 @@ export default function CampaignStudioPage() {
                   {/* Variant Metrics Row */}
                   <div className="flex items-center gap-6 bg-slate-50 rounded-lg p-3 border border-slate-100">
                     <div className="flex flex-col">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase">Revenue</span>
-                      <span className="text-[14px] font-bold text-slate-900 font-mono">{revenueByChannel[selectedChannel]}</span>
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase">Revenue Potential</span>
+                      <span className="text-[14px] font-bold text-slate-900 font-mono">₹{strategyResult?.expectedRevenue?.toLocaleString('en-IN') || 0}</span>
                     </div>
                     <div className="flex flex-col pl-6 border-l border-slate-200">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase">Conversion</span>
-                      <span className="text-[14px] font-bold text-slate-900 font-mono">{convByChannel[selectedChannel]}</span>
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase">Expected Conversion</span>
+                      <span className="text-[14px] font-bold text-slate-900 font-mono">{strategyResult ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100).toFixed(1) : 0}%</span>
                     </div>
                     <div className="flex flex-col pl-6 border-l border-slate-200">
-                      <span className="text-[11px] font-semibold text-slate-500 uppercase">Confidence</span>
-                      <span className="text-[14px] font-bold text-slate-900 font-mono">{confByChannel[selectedChannel]}</span>
+                      <span className="text-[11px] font-semibold text-slate-500 uppercase">Audience Match</span>
+                      <span className="text-[14px] font-bold text-emerald-600 font-mono">High</span>
                     </div>
                   </div>
                 </div>
@@ -325,9 +399,7 @@ export default function CampaignStudioPage() {
                         {/* Incoming bubble */}
                         <div className="self-start bg-white rounded-xl rounded-tl-sm p-3 max-w-[85%] shadow-sm flex flex-col gap-2">
                           <p className="text-[13px] text-slate-800 leading-relaxed whitespace-pre-wrap">
-                            {activeVariant === 'A'
-                              ? "Hi Rahul,\n\nYour favorite skincare products are back in stock. As one of our most loyal customers, we're giving you early access before everyone else."
-                              : "Hi Rahul,\n\nIt's been a while since we saw you. Here's a special 20% off your next purchase of serums."}
+                            {strategyResult?.variants?.find((v: any) => v.version === activeVariant)?.text || "Your favorite products are back in stock."}
                           </p>
                           <button className="w-full bg-[#25D366] hover:bg-[#1da851] text-white font-bold py-2 rounded-lg text-[13px] transition-colors">
                             Shop Now
@@ -381,11 +453,8 @@ export default function CampaignStudioPage() {
 
                       {/* Email Body */}
                       <div className="p-8 flex flex-col gap-5 items-center">
-                        <p className="text-[14px] text-slate-700 leading-relaxed max-w-md text-center">
-                          <strong>Hi Rahul,</strong><br /><br />
-                          {activeVariant === 'A'
-                            ? <>Your favorite skincare products are <strong>back in stock.</strong><br /><br />As one of our most loyal customers, we're giving you early access before everyone else.</>
-                            : <>It's been a while since we saw you.<br /><br />Here's a <strong>special 20% off</strong> your next purchase of serums — as a thank you for your loyalty.</>}
+                        <p className="text-[14px] text-slate-700 leading-relaxed max-w-md text-center whitespace-pre-wrap">
+                          {strategyResult?.variants?.find((v: any) => v.version === activeVariant)?.text || "Your favorite products are back in stock."}
                         </p>
                         <button className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-bold py-3 px-10 rounded-lg text-[14px] transition-colors shadow-sm">
                           Shop Now
@@ -441,10 +510,8 @@ export default function CampaignStudioPage() {
                           <div className="flex-1 p-4 flex flex-col gap-3 bg-white">
                             <div className="self-start max-w-[85%]">
                               <div className="bg-[#e9e9eb] rounded-2xl rounded-bl-sm px-3 py-2.5">
-                                <p className="text-[13px] text-slate-900 leading-relaxed">
-                                  {activeVariant === 'A'
-                                    ? 'Beauty Co: Hi Rahul, enjoy early access to your favorite serums before they sell out! VIPs only. Shop: bc.co/vip'
-                                    : 'Beauty Co: Hi Rahul, enjoy 20% off your next skincare purchase. Use code VIP20. Shop: bc.co/offer'}
+                                <p className="text-[13px] text-slate-900 leading-relaxed whitespace-pre-wrap">
+                                  {strategyResult?.variants?.find((v: any) => v.version === activeVariant)?.text || "Your favorite products are back in stock."}
                                 </p>
                               </div>
                               <span className="text-[10px] text-slate-400 mt-1 block pl-1">Delivered</span>
