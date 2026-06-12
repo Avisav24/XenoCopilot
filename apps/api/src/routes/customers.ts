@@ -61,32 +61,6 @@ export async function customerRoutes(fastify: FastifyInstance) {
     });
   });
 
-  fastify.get('/api/customers/:id', async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const customer = await prisma.customer.findUnique({
-      where: { id },
-      include: {
-        customer_personas: { include: { persona: true } },
-        orders: { orderBy: { order_date: 'desc' } }
-      }
-    });
-
-    if (!customer) return reply.status(404).send({ error: 'Not found' });
-
-    return reply.send({
-      ...customer,
-      total_spent: Number(customer.total_spent),
-      orders: customer.orders.map(o => ({ ...o, amount: Number(o.amount) }))
-    });
-  });
-
-  fastify.get('/api/personas', async (_request, reply) => {
-    const personas = await prisma.persona.findMany({
-      orderBy: { name: 'asc' }
-    });
-    return reply.send(personas);
-  });
-
   fastify.get('/api/customers/stats', async (_request, reply) => {
     // We can compute everything from all customers for this MVP
     const customers = await prisma.customer.findMany({
@@ -151,5 +125,33 @@ export async function customerRoutes(fastify: FastifyInstance) {
       topPersonas,
       topRevenuePersonas
     });
+  });
+
+  fastify.get('/api/customers/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const customer = await prisma.customer.findUnique({
+      where: { id },
+      include: {
+        customer_personas: { include: { persona: true } },
+        orders: { orderBy: { order_date: 'desc' } }
+      }
+    });
+
+    if (!customer) return reply.status(404).send({ error: 'Not found' });
+
+    return reply.send({
+      ...customer,
+      total_spent: Number(customer.total_spent),
+      orders: customer.orders.map(o => ({ ...o, amount: Number(o.amount) }))
+    });
+  });
+
+  fastify.get('/api/personas', async (_request, reply) => {
+    const personas = await prisma.persona.findMany({
+      orderBy: { name: 'asc' }
+    });
+    return reply.send(personas);
+  });
+
   });
 }
