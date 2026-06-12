@@ -251,91 +251,195 @@ export default function IntelligencePage() {
         /* ── AUDIENCE BUILDER TAB ── */
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-          {/* Left: Segment Builder */}
-          <div className="lg:col-span-1 flex flex-col gap-8">
+          {/* Left: Audience Definition */}
+          <div className="lg:col-span-1 flex flex-col gap-6">
+             <h2 className="text-[16px] font-semibold text-ink">Audience Definition</h2>
+             
+             {/* Audience Details & Filters */}
+             <div className="border border-hairline rounded-xl bg-canvas shadow-sm p-6 flex flex-col gap-6">
+                
+                <div className="flex flex-col gap-4">
+                   <div className="flex flex-col gap-1.5">
+                      <label className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Audience Name</label>
+                      <input type="text" defaultValue="Dormant High Value Customers" className="bg-canvas-soft border border-hairline rounded-lg px-3 py-2 text-[14px] font-bold text-ink w-full focus:outline-none focus:border-ink-muted" />
+                   </div>
+                   
+                   <div className="flex flex-col gap-1.5">
+                      <label className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Description</label>
+                      <textarea defaultValue="Customers inactive for 60+ days with spend > ₹5000" className="bg-canvas-soft border border-hairline rounded-lg px-3 py-2 text-[13px] text-ink w-full focus:outline-none focus:border-ink-muted resize-none h-16" />
+                   </div>
+                </div>
 
-            {/* Segment Builder */}
-            <div className="flex flex-col gap-4">
-              <h2 className="text-[16px] font-semibold text-ink">Segment Builder</h2>
-              <div className="border border-hairline rounded-xl bg-canvas shadow-sm p-5 flex flex-col gap-4">
-                <span className="text-[13px] font-bold text-ink uppercase">Rule-Based Segment</span>
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] flex-1">
-                      <option>Total Spend</option>
-                    </select>
-                    <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-16 text-center">
-                      <option>&gt;</option>
-                    </select>
-                    <input type="text" defaultValue="₹5000" readOnly className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
-                  </div>
-                  <div className="flex items-center gap-2 pl-4 border-l-2 border-hairline ml-2 py-1">
-                    <span className="text-[11px] font-bold text-ink-muted">AND</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] flex-1">
-                      <option>Last Purchase</option>
-                    </select>
-                    <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-16 text-center">
-                      <option>&gt;</option>
-                    </select>
-                    <input type="text" defaultValue="60 Days" readOnly className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
-                  </div>
+                <div className="border-t border-hairline pt-5 flex flex-col gap-4">
+                   <span className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Filters</span>
+                   
+                   <div className="flex flex-col gap-2">
+                     <div className="flex items-center gap-2">
+                       <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] flex-1 font-medium text-ink">
+                         <option>Total Spend</option>
+                       </select>
+                       <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-16 text-center">
+                         <option>&gt;</option>
+                       </select>
+                       <input type="text" defaultValue="₹5000" className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
+                     </div>
+                     <div className="flex items-center gap-2 pl-4 border-l-2 border-hairline ml-2 py-1">
+                       <span className="text-[11px] font-bold text-ink-muted">AND</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                       <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] flex-1 font-medium text-ink">
+                         <option>Last Purchase</option>
+                       </select>
+                       <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-16 text-center">
+                         <option>&gt;</option>
+                       </select>
+                       <input type="text" defaultValue="60 Days" className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
+                     </div>
+                     <button className="text-[12px] font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 mt-2 self-start">
+                        + Add Condition
+                     </button>
+                   </div>
                 </div>
-                <div className="flex justify-between mt-2 pt-4 border-t border-hairline">
-                  <button className="text-[13px] font-bold text-ink-muted hover:text-ink transition-colors">Save Segment</button>
-                  <button className="text-[13px] font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">Preview <FastArrowRight height={14} width={14} /></button>
+
+             </div>
+
+             {/* Audience Snapshot */}
+             <div className="border border-hairline rounded-xl bg-canvas shadow-sm p-6 flex flex-col gap-5">
+                <span className="text-[13px] font-bold text-ink uppercase tracking-wider">Audience Snapshot</span>
+                
+                <div className="grid grid-cols-2 gap-y-5 gap-x-4">
+                   <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Customers</span>
+                      <span className="text-[18px] font-bold text-ink font-mono-numbers">428</span>
+                   </div>
+                   <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Revenue Potential</span>
+                      <span className="text-[18px] font-bold text-semantic-success font-mono-numbers">₹1.72L</span>
+                   </div>
+                   <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Average Order Value</span>
+                      <span className="text-[16px] font-bold text-ink font-mono-numbers">₹4,200</span>
+                   </div>
+                   <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Last Purchase Avg</span>
+                      <span className="text-[16px] font-bold text-ink font-mono-numbers">78 Days</span>
+                   </div>
+                   <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Expected Conversion</span>
+                      <span className="text-[16px] font-bold text-ink font-mono-numbers">4.8%</span>
+                   </div>
+                   <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Best Channel</span>
+                      <span className="text-[14px] font-bold text-ink">WhatsApp</span>
+                   </div>
                 </div>
-              </div>
-            </div>
+
+                <div className="border-t border-hairline pt-5 mt-1">
+                   <button onClick={() => router.push('/chat?audience=dormant_vip')} className="w-full bg-ink hover:bg-ink/90 text-canvas font-bold py-3.5 rounded-lg transition-colors text-[14px] shadow-sm">
+                      Generate Campaign
+                   </button>
+                </div>
+             </div>
+
           </div>
 
-          {/* Right: Business Entities (Personas) */}
+          {/* Right: Recommended Audiences */}
           <div className="lg:col-span-2 flex flex-col gap-6">
-            <h2 className="text-[16px] font-semibold text-ink">Business Entities</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {personas?.map((p: any) => (
-                <div
-                  key={p.id}
-                  onClick={() => router.push(`/chat?persona=${p.id}`)}
-                  className="border border-hairline rounded-xl bg-canvas shadow-sm p-6 flex flex-col gap-4 cursor-pointer hover:border-ink-muted hover:shadow-md transition-all group"
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex flex-col gap-1">
-                      <h3 className="text-[15px] font-bold text-ink group-hover:text-ink/80 transition-colors">{p.name}</h3>
-                      <span className="text-[12px] font-semibold text-ink-muted uppercase tracking-wider">{p.customerCount.toLocaleString()} Customers</span>
-                    </div>
-                    <span className={clsx(
-                      'text-[11px] font-bold px-2 py-1 rounded uppercase',
-                      p.churnRisk?.includes('High') ? 'bg-red-100 text-red-800' : p.churnRisk === 'Medium' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-                    )}>
-                      {p.churnRisk} Risk
-                    </span>
-                  </div>
+             <h2 className="text-[16px] font-semibold text-ink">Recommended Audiences</h2>
+             
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               {[
+                  {
+                     id: 'dormant_vip',
+                     name: 'Dormant VIP Recovery',
+                     count: 428,
+                     revenue: '₹1.72L',
+                     aov: '₹4200',
+                     risk: 'High',
+                     channel: 'WhatsApp',
+                     goal: 'Win-back'
+                  },
+                  {
+                     id: 'post_purchase',
+                     name: 'Post-Purchase Cross-Sell',
+                     count: 1240,
+                     revenue: '₹94,000',
+                     aov: '₹1850',
+                     risk: 'Low',
+                     channel: 'Email',
+                     goal: 'Expansion'
+                  },
+                  {
+                     id: 'weekend_activation',
+                     name: 'Weekend Activation',
+                     count: 812,
+                     revenue: '₹48,000',
+                     aov: '₹850',
+                     risk: 'Medium',
+                     channel: 'SMS',
+                     goal: 'Conversion'
+                  },
+                  {
+                     id: 'abandoned_cart',
+                     name: 'High-Intent Cart Abandoners',
+                     count: 156,
+                     revenue: '₹2.1L',
+                     aov: '₹8500',
+                     risk: 'High',
+                     channel: 'WhatsApp',
+                     goal: 'Recovery'
+                  }
+               ].map((aud) => (
+                 <div
+                   key={aud.id}
+                   className="border border-hairline rounded-xl bg-canvas shadow-sm p-6 flex flex-col gap-5 hover:border-ink-muted hover:shadow-md transition-all group"
+                 >
+                   <div className="flex justify-between items-start">
+                     <div className="flex flex-col gap-1.5">
+                       <h3 className="text-[16px] font-bold text-ink">{aud.name}</h3>
+                       <span className="text-[12px] font-semibold text-ink-muted uppercase tracking-wider">{aud.count.toLocaleString()} Customers</span>
+                     </div>
+                     <span className={clsx(
+                       'text-[11px] font-bold px-2 py-1 rounded uppercase tracking-wider',
+                       aud.risk === 'High' ? 'bg-red-50 text-red-700 border border-red-100' : aud.risk === 'Medium' ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                     )}>
+                       {aud.risk} Risk
+                     </span>
+                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mt-1">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Revenue</span>
-                      <span className="text-[18px] font-bold text-ink font-mono-numbers">₹{p.revenueContribution?.toLocaleString()}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Avg. Order Value</span>
-                      <span className="text-[18px] font-bold text-ink font-mono-numbers">₹{p.avgAOV?.toLocaleString() || 0}</span>
-                    </div>
-                  </div>
+                   <div className="grid grid-cols-2 gap-4 bg-canvas-soft rounded-lg p-4 border border-hairline">
+                     <div className="flex flex-col gap-1">
+                       <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Revenue Potential</span>
+                       <span className="text-[18px] font-bold text-semantic-success font-mono-numbers">{aud.revenue}</span>
+                     </div>
+                     <div className="flex flex-col gap-1 pl-4 border-l border-hairline">
+                       <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Avg. Order Value</span>
+                       <span className="text-[18px] font-bold text-ink font-mono-numbers">{aud.aov}</span>
+                     </div>
+                   </div>
 
-                  <div className="border-t border-hairline pt-4 mt-2 flex justify-between items-center">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Best Channel</span>
-                      <span className="text-[12px] font-bold text-ink">{p.bestChannels?.[0] || 'Email'}</span>
-                    </div>
-                    <span className="text-[12px] font-bold text-ink flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                      Generate Campaign <FastArrowRight height={14} width={14} />
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                   <div className="grid grid-cols-2 gap-4 mt-1">
+                      <div className="flex flex-col gap-1">
+                         <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Best Channel</span>
+                         <span className="text-[13px] font-bold text-ink">{aud.channel}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                         <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Primary Goal</span>
+                         <span className="text-[13px] font-bold text-ink">{aud.goal}</span>
+                      </div>
+                   </div>
+
+                   <div className="border-t border-hairline pt-4 mt-1 flex justify-between items-center">
+                     <span className="text-[13px] font-bold text-ink-muted hover:text-ink cursor-pointer transition-colors">
+                        View Audience
+                     </span>
+                     <button onClick={() => router.push(`/chat?audience=${aud.id}`)} className="text-[13px] font-bold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                       Generate Campaign <FastArrowRight height={14} width={14} />
+                     </button>
+                   </div>
+                 </div>
+               ))}
+             </div>
           </div>
 
         </div>
