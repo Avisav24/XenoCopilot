@@ -581,6 +581,44 @@ Example format:
           discountAffinity: 'Very High',
           primaryTraits: ['Deal Seeker', 'Impulse Buyer', 'Volume Shopper'],
           aiSummary: 'This segment exhibits price sensitivity but reliable volume during promotional periods. Engaging them with structured sales drives predictable revenue spikes.'
+        },
+        {
+          id: 'dyn-new',
+          name: 'Recent First-Time Buyers',
+          customerCount: Math.max(15, Math.floor(regularCount * 0.2)),
+          revenueContribution: Math.max(15000, Math.floor(regularRev * 0.15)),
+          avgLTV: 1100,
+          avgAOV: 1100,
+          churnRisk: 'Medium',
+          bestChannel: 'Email',
+          bestCampaignType: 'Welcome Series',
+          revenueOpportunity: 18000,
+          monthlyTrend: '+14%',
+          recommendedAction: 'Post-Purchase Nurture Sequence',
+          expectedImpact: 4500,
+          purchaseFrequency: 'First Time',
+          discountAffinity: 'Medium',
+          primaryTraits: ['Brand Curious', 'High Potential', 'Needs Nurturing'],
+          aiSummary: 'This segment recently made their first purchase. Historically, the second purchase is the hardest to secure, making a strong onboarding experience critical.'
+        },
+        {
+          id: 'dyn-window',
+          name: 'High-Intent Window Shoppers',
+          customerCount: Math.max(45, Math.floor(regularCount * 0.4)),
+          revenueContribution: 0,
+          avgLTV: 0,
+          avgAOV: 0,
+          churnRisk: 'Low',
+          bestChannel: 'SMS',
+          bestCampaignType: 'First-Purchase Discount',
+          revenueOpportunity: 12000,
+          monthlyTrend: '+5%',
+          recommendedAction: 'Trigger First-Time Buyer Discount',
+          expectedImpact: 2400,
+          purchaseFrequency: 'Never',
+          discountAffinity: 'High',
+          primaryTraits: ['High Engagement', 'Hesitant', 'Price Sensitive'],
+          aiSummary: 'Users who frequently interact with campaigns or the platform but have not completed a purchase. They exhibit high intent but require a compelling catalyst to convert.'
         }
       ];
 
