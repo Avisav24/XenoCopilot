@@ -95,27 +95,6 @@ export default function RevenueOperationsPage() {
 
         {/* Right Column (Recent Activity & Quick Actions - 30% width) */}
         <div className="lg:col-span-1 flex flex-col gap-8">
-           
-           {/* Recent Activity */}
-           <div className="flex flex-col gap-4">
-              <h2 className="text-[18px] font-bold text-slate-900">Recent Activity</h2>
-              
-              <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-6 flex flex-col gap-6">
-                 {[
-                    { time: '10 mins ago', desc: 'Dormant VIP Recovery identified' },
-                    { time: '23 mins ago', desc: '428 customers entered dormant segment' },
-                    { time: '1 hour ago', desc: 'Beauty Loyalists audience updated' },
-                    { time: '2 hours ago', desc: 'New revenue opportunity detected' }
-                 ].map((act, i) => (
-                    <div key={i} className="flex flex-col gap-1 relative pl-6">
-                       <div className="absolute left-0 top-1.5 w-2 h-2 rounded-full bg-slate-200 border-2 border-white shadow-sm" />
-                       {i !== 3 && <div className="absolute left-[3px] top-3.5 w-[2px] h-[40px] bg-slate-100" />}
-                       <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{act.time}</span>
-                       <span className="text-[14px] text-slate-700 font-medium">{act.desc}</span>
-                    </div>
-                 ))}
-              </div>
-           </div>
 
            {/* Quick Actions */}
            <div className="flex flex-col gap-4">
