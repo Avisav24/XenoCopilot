@@ -11,6 +11,7 @@ export default function CampaignStudioPage() {
   const [goal, setGoal] = useState('');
   const [submittedGoal, setSubmittedGoal] = useState(false);
   const [activeVariant, setActiveVariant] = useState('A');
+  const [selectedChannel, setSelectedChannel] = useState('WhatsApp');
 
   const handleCommandSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,26 +169,33 @@ export default function CampaignStudioPage() {
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-slate-100">
-                        <tr className="bg-emerald-50/30">
-                           <td className="py-3 px-4 text-[13px] font-bold text-slate-900 flex items-center gap-2">WhatsApp <CheckCircle height={14} width={14} className="text-emerald-600"/></td>
+                        <tr onClick={() => setSelectedChannel('WhatsApp')} className={clsx("cursor-pointer transition-colors", selectedChannel === 'WhatsApp' ? "bg-emerald-50/30" : "hover:bg-slate-50")}>
+                           <td className="py-3 px-4 text-[13px] font-bold text-slate-900 flex items-center gap-2">WhatsApp {selectedChannel === 'WhatsApp' && <CheckCircle height={14} width={14} className="text-emerald-600"/>}</td>
                            <td className="py-3 px-4 text-[13px] font-bold text-emerald-600 font-mono text-right">₹1,72,000</td>
                            <td className="py-3 px-4 text-[13px] font-bold text-slate-900 font-mono text-right">4.8%</td>
                            <td className="py-3 px-4 text-[13px] font-bold text-slate-900 text-center">High</td>
                            <td className="py-3 px-4 text-[13px] font-bold text-slate-900 font-mono text-right">82%</td>
                         </tr>
-                        <tr>
-                           <td className="py-3 px-4 text-[13px] font-semibold text-slate-700">Email</td>
+                        <tr onClick={() => setSelectedChannel('Email')} className={clsx("cursor-pointer transition-colors", selectedChannel === 'Email' ? "bg-emerald-50/30" : "hover:bg-slate-50")}>
+                           <td className="py-3 px-4 text-[13px] font-semibold text-slate-700 flex items-center gap-2">Email {selectedChannel === 'Email' && <CheckCircle height={14} width={14} className="text-emerald-600"/>}</td>
                            <td className="py-3 px-4 text-[13px] font-medium text-slate-600 font-mono text-right">₹84,000</td>
                            <td className="py-3 px-4 text-[13px] font-medium text-slate-600 font-mono text-right">2.1%</td>
                            <td className="py-3 px-4 text-[13px] font-medium text-slate-600 text-center">Medium</td>
                            <td className="py-3 px-4 text-[13px] font-medium text-slate-600 font-mono text-right">76%</td>
                         </tr>
-                        <tr>
-                           <td className="py-3 px-4 text-[13px] font-semibold text-slate-700">SMS</td>
+                        <tr onClick={() => setSelectedChannel('SMS')} className={clsx("cursor-pointer transition-colors", selectedChannel === 'SMS' ? "bg-emerald-50/30" : "hover:bg-slate-50")}>
+                           <td className="py-3 px-4 text-[13px] font-semibold text-slate-700 flex items-center gap-2">SMS {selectedChannel === 'SMS' && <CheckCircle height={14} width={14} className="text-emerald-600"/>}</td>
                            <td className="py-3 px-4 text-[13px] font-medium text-slate-600 font-mono text-right">₹42,000</td>
                            <td className="py-3 px-4 text-[13px] font-medium text-slate-600 font-mono text-right">1.2%</td>
                            <td className="py-3 px-4 text-[13px] font-medium text-slate-600 text-center">Low</td>
                            <td className="py-3 px-4 text-[13px] font-medium text-slate-600 font-mono text-right">60%</td>
+                        </tr>
+                        <tr onClick={() => setSelectedChannel('Calls')} className={clsx("cursor-pointer transition-colors", selectedChannel === 'Calls' ? "bg-emerald-50/30" : "hover:bg-slate-50")}>
+                           <td className="py-3 px-4 text-[13px] font-semibold text-slate-700 flex items-center gap-2">Promotional Calls {selectedChannel === 'Calls' && <CheckCircle height={14} width={14} className="text-emerald-600"/>}</td>
+                           <td className="py-3 px-4 text-[13px] font-medium text-slate-600 font-mono text-right">₹21,000</td>
+                           <td className="py-3 px-4 text-[13px] font-medium text-slate-600 font-mono text-right">0.8%</td>
+                           <td className="py-3 px-4 text-[13px] font-medium text-slate-600 text-center">Low</td>
+                           <td className="py-3 px-4 text-[13px] font-medium text-slate-600 font-mono text-right">45%</td>
                         </tr>
                      </tbody>
                   </table>
@@ -239,34 +247,118 @@ export default function CampaignStudioPage() {
                {/* Message Experience Area */}
                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   
-                  {/* Channel Preview Panel (WhatsApp Style) */}
+                  {/* Channel Preview Panel */}
                   <div className="lg:col-span-2 border border-slate-200 rounded-xl bg-slate-100 flex flex-col overflow-hidden h-[450px]">
-                     <div className="bg-[#075E54] text-white px-4 py-3 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-slate-600">
-                           <MessageText height={16} width={16} />
-                        </div>
-                        <div className="flex flex-col">
-                           <span className="text-[14px] font-bold leading-tight">Beauty Co.</span>
-                           <span className="text-[11px] opacity-80">Official Business Account</span>
-                        </div>
-                     </div>
-                     <div className="flex-1 bg-[#E5DDD5] p-6 flex flex-col gap-4 overflow-y-auto" style={{ backgroundImage: 'url("https://w0.peakpx.com/wallpaper/818/148/HD-wallpaper-whatsapp-background-solid-color-thumbnail.jpg")', backgroundBlendMode: 'soft-light' }}>
-                        
-                        <div className="bg-white rounded-lg p-3 max-w-[85%] self-start shadow-sm flex flex-col gap-1 relative">
-                           <span className="text-[#075E54] font-bold text-[13px]">{activeVariant === 'A' ? "Early Access" : "We Miss You"}</span>
-                           <span className="text-[14px] text-slate-800 leading-snug whitespace-pre-wrap">
-                              {activeVariant === 'A' 
-                                 ? "Hi Rahul,\n\nYour favorite skincare products are back in stock.\n\nAs one of our most loyal customers, we're giving you early access before everyone else."
-                                 : "Hi Rahul,\n\nIt's been a while since we saw you. Here's a special 20% off your next purchase of serums."}
-                           </span>
-                           <span className="text-[10px] text-slate-400 self-end mt-1">11:32 AM</span>
-                        </div>
-                        
-                        <div className="bg-white rounded-lg py-2.5 px-4 max-w-[85%] self-start shadow-sm flex justify-center items-center border border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors">
-                           <span className="text-[14px] font-bold text-[#00A884]">Shop Now</span>
-                        </div>
+                     
+                     {selectedChannel === 'WhatsApp' && (
+                        <>
+                           <div className="bg-[#075E54] text-white px-4 py-3 flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-slate-300 overflow-hidden flex items-center justify-center text-slate-600">
+                                 <MessageText height={16} width={16} />
+                              </div>
+                              <div className="flex flex-col">
+                                 <span className="text-[14px] font-bold leading-tight">Beauty Co.</span>
+                                 <span className="text-[11px] opacity-80">Official Business Account</span>
+                              </div>
+                           </div>
+                           <div className="flex-1 bg-[#E5DDD5] p-6 flex flex-col gap-4 overflow-y-auto" style={{ backgroundImage: 'url("https://w0.peakpx.com/wallpaper/818/148/HD-wallpaper-whatsapp-background-solid-color-thumbnail.jpg")', backgroundBlendMode: 'soft-light' }}>
+                              <div className="bg-white rounded-lg p-3 max-w-[85%] self-start shadow-sm flex flex-col gap-1 relative">
+                                 <span className="text-[#075E54] font-bold text-[13px]">{activeVariant === 'A' ? "Early Access" : "We Miss You"}</span>
+                                 <span className="text-[14px] text-slate-800 leading-snug whitespace-pre-wrap">
+                                    {activeVariant === 'A' 
+                                       ? "Hi Rahul,\n\nYour favorite skincare products are back in stock.\n\nAs one of our most loyal customers, we're giving you early access before everyone else."
+                                       : "Hi Rahul,\n\nIt's been a while since we saw you. Here's a special 20% off your next purchase of serums."}
+                                 </span>
+                                 <span className="text-[10px] text-slate-400 self-end mt-1">11:32 AM</span>
+                              </div>
+                              <div className="bg-white rounded-lg py-2.5 px-4 max-w-[85%] self-start shadow-sm flex justify-center items-center border border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors">
+                                 <span className="text-[14px] font-bold text-[#00A884]">Shop Now</span>
+                              </div>
+                           </div>
+                        </>
+                     )}
 
-                     </div>
+                     {selectedChannel === 'Email' && (
+                        <>
+                           <div className="bg-white border-b border-slate-200 px-5 py-4 flex flex-col gap-2">
+                              <div className="flex items-center gap-4">
+                                 <span className="text-[13px] font-semibold text-slate-500 w-12">From:</span>
+                                 <span className="text-[14px] font-medium text-slate-900">Beauty Co &lt;hello@beautyco.com&gt;</span>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                 <span className="text-[13px] font-semibold text-slate-500 w-12">To:</span>
+                                 <span className="text-[14px] font-medium text-slate-900">Rahul Sharma</span>
+                              </div>
+                              <div className="flex items-center gap-4 border-t border-slate-100 pt-2 mt-1">
+                                 <span className="text-[13px] font-semibold text-slate-500 w-12">Subject:</span>
+                                 <span className="text-[14px] font-bold text-slate-900">{activeVariant === 'A' ? "Early Access to New Arrivals" : "20% Off Your Next Purchase"}</span>
+                              </div>
+                           </div>
+                           <div className="flex-1 bg-slate-50 p-8 flex flex-col items-center overflow-y-auto">
+                              <div className="bg-white border border-slate-200 rounded-lg p-8 max-w-md w-full shadow-sm flex flex-col gap-5 text-center">
+                                 <h2 className="text-[20px] font-bold text-slate-900">{activeVariant === 'A' ? "Exclusive Early Access" : "We've Missed You, Rahul"}</h2>
+                                 <p className="text-[14px] text-slate-600 leading-relaxed">
+                                    {activeVariant === 'A' 
+                                       ? "Your favorite skincare products are back in stock. As one of our most loyal customers, we're giving you early access before everyone else."
+                                       : "It's been a while since we saw you. Here's a special 20% off your next purchase of serums."}
+                                 </p>
+                                 <button className="bg-slate-900 text-white font-bold py-3 px-6 rounded-md self-center mt-2">
+                                    Shop Collection
+                                 </button>
+                              </div>
+                           </div>
+                        </>
+                     )}
+
+                     {selectedChannel === 'SMS' && (
+                        <div className="flex-1 bg-slate-100 flex items-center justify-center p-6">
+                           <div className="bg-white rounded-[32px] border-[8px] border-slate-800 w-[280px] h-[400px] shadow-xl flex flex-col overflow-hidden relative">
+                              <div className="bg-slate-100/80 backdrop-blur-md pt-6 pb-3 px-4 border-b border-slate-200 flex flex-col items-center">
+                                 <div className="w-10 h-10 rounded-full bg-slate-200 mb-1 flex items-center justify-center text-slate-500"><MessageText height={16} width={16} /></div>
+                                 <span className="text-[12px] font-semibold text-slate-900">Beauty Co</span>
+                              </div>
+                              <div className="flex-1 p-4 flex flex-col gap-3 bg-white overflow-y-auto">
+                                 <div className="text-[10px] text-center text-slate-400 font-medium my-1">Today 11:32 AM</div>
+                                 <div className="bg-slate-100 rounded-2xl rounded-tl-sm p-3 self-start max-w-[85%]">
+                                    <span className="text-[13px] text-slate-900 leading-snug">
+                                       {activeVariant === 'A' 
+                                          ? "BeautyCo: Rahul, your favorite serums are back! VIPs get early access today only. Shop: bc.co/vip"
+                                          : "BeautyCo: We miss you Rahul! Take 20% off your next serum order with code COMEBACK. Shop: bc.co/cb"}
+                                    </span>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     )}
+
+                     {selectedChannel === 'Calls' && (
+                        <div className="flex-1 bg-white p-6 flex flex-col gap-6 overflow-y-auto">
+                           <h3 className="text-[16px] font-bold text-slate-900 border-b border-slate-100 pb-2">Promotional Call Script</h3>
+                           <div className="flex flex-col gap-4">
+                              <div className="flex flex-col gap-1">
+                                 <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Opening</span>
+                                 <p className="text-[14px] text-slate-800 bg-slate-50 p-3 rounded-md">"Hi, am I speaking with Rahul? This is [Agent Name] from Beauty Co. I'm calling because we noticed you're one of our top customers for skincare serums."</p>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                 <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Offer</span>
+                                 <p className="text-[14px] text-slate-800 bg-slate-50 p-3 rounded-md">
+                                    {activeVariant === 'A' 
+                                       ? '"We have an exclusive restock today, and we wanted to offer you early access before it opens to the public."'
+                                       : '"We wanted to offer you a special 20% discount on your next order of serums as a thank you for your past purchases."'}
+                                 </p>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                 <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Objection Handling</span>
+                                 <p className="text-[14px] text-slate-800 bg-slate-50 p-3 rounded-md">"If you're well-stocked right now, we can hold this offer on your account for the next 30 days. Would you like me to send you the details?"</p>
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                 <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Closing CTA</span>
+                                 <p className="text-[14px] text-slate-800 bg-slate-50 p-3 rounded-md">"Great, I've just texted you the secure link. Thank you for being a valued customer, Rahul. Have a wonderful day!"</p>
+                              </div>
+                           </div>
+                        </div>
+                     )}
+
                   </div>
 
                   {/* Personalization Panel */}
