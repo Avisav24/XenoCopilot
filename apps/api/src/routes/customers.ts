@@ -152,6 +152,4 @@ export async function customerRoutes(fastify: FastifyInstance) {
     });
     return reply.send(personas);
   });
-
-  });
 }
