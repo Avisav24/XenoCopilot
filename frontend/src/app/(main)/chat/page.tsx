@@ -1,18 +1,28 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchAPI } from '@/lib/api';
 import { Search, Play, EditPencil, Clock, CheckCircle, Plus, Filter, LayoutRight, MessageText, ArrowRight, ShieldCheck, Mail, SmartphoneDevice, HeadsetHelp, Phone, VideoCamera, MoreHoriz, Emoji, Camera, Attachment, SendDiagonal, Xmark } from 'iconoir-react';
 import { clsx } from 'clsx';
 
-export default function CampaignStudioPage() {
+function CampaignStudioContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const audienceParam = searchParams.get('audience');
 
-  const [goal, setGoal] = useState('');
+  const [goal, setGoal] = useState(audienceParam || '');
   const [submittedGoal, setSubmittedGoal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeVariant, setActiveVariant] = useState('A');
+  const hasAutoSubmitted = useRef(false);
+
+  useEffect(() => {
+    if (audienceParam && !hasAutoSubmitted.current && !isGenerating && !submittedGoal) {
+      hasAutoSubmitted.current = true;
+      handleCommandSubmit();
+    }
+  }, [audienceParam]);
   const [selectedChannel, setSelectedChannel] = useState('WhatsApp');
   const [isLaunching, setIsLaunching] = useState(false);
   const [strategyResult, setStrategyResult] = useState<any>(null);
@@ -23,39 +33,34 @@ export default function CampaignStudioPage() {
     setIsGenerating(true);
 
     try {
-      // 1. Query Persona
-      const personaRes = await fetchAPI<any>('/api/ai/query-personas', {
+      // 1. Dynamic Segmentation & SQL Query
+      const segmentRes = await fetchAPI<any>('/api/ai/segment', {
         method: 'POST',
         body: JSON.stringify({ goal })
       });
       
-      const persona = personaRes.persona;
-      const count = personaRes.count;
+      const count = segmentRes.count;
 
-      // 2. Recommend Campaign
-      const recRes = await fetchAPI<any>('/api/ai/recommend-campaign', {
-        method: 'POST',
-        body: JSON.stringify({ persona_id: persona.id })
-      });
-
-      // 3. Draft Messages
+      // 2. Draft Messages
       const msgRes = await fetchAPI<any>('/api/ai/draft-messages', {
         method: 'POST',
-        body: JSON.stringify({ persona_name: persona.name, channel: recRes.channel })
+        body: JSON.stringify({ persona_name: segmentRes.name, channel: segmentRes.channel })
       });
 
       setStrategyResult({
-        persona,
+        persona: { name: segmentRes.name, id: segmentRes.id },
         count,
-        channel: recRes.channel,
-        expectedRevenue: recRes.expectedRevenue,
-        expectedPurchasers: recRes.expectedPurchasers,
+        channel: segmentRes.channel,
+        expectedRevenue: segmentRes.expectedRevenue,
+        expectedPurchasers: segmentRes.expectedPurchasers,
+        conversionRate: segmentRes.conversionRate,
+        audienceMatch: segmentRes.audienceMatch,
         variants: [
           { version: 'A', text: msgRes.variantA || "Your favorite products are back in stock." },
           { version: 'B', text: msgRes.variantB || "Special offer inside for our best customers." }
         ]
       });
-      setSelectedChannel(recRes.channel);
+      setSelectedChannel(segmentRes.channel);
       setActiveVariant('A');
       setSubmittedGoal(true);
     } catch (err: any) {
@@ -80,8 +85,9 @@ export default function CampaignStudioPage() {
 
   // We will run the submit when `goal` changes from opportunity click
   React.useEffect(() => {
-    if (goal && submittedGoal === false && isGenerating === false && document.activeElement?.tagName !== 'INPUT') {
+    if (goal && submittedGoal === false && isGenerating === false && document.activeElement?.tagName !== 'INPUT' && !hasAutoSubmitted.current) {
         // If a preset was clicked (focus not on input), we can submit it.
+        handleCommandSubmit();
     }
   }, [goal, submittedGoal, isGenerating]);
 
@@ -652,8 +658,8 @@ export default function CampaignStudioPage() {
                     { label: 'Selected Channel', value: selectedChannel },
                     { label: 'Predicted Revenue', value: `₹${strategyResult?.expectedRevenue?.toLocaleString('en-IN') || 0}`, mono: true },
                     { label: 'Conversion Rate',  value: `${strategyResult ? (strategyResult.count > 0 ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100).toFixed(1) : 0) : 0}%`, mono: true },
-                    { label: 'Audience Match',   value: 'High', mono: true },
-                    { label: 'Launch Risk',      value: 'Low', risk: true },
+                    { label: 'Audience Match',   value: strategyResult?.audienceMatch || 'High', mono: true },
+                    { label: 'Launch Risk',      value: strategyResult?.risk || 'Low', risk: true },
                     { label: 'Schedule',         value: 'Immediate' },
                     { label: 'Active Variant',   value: `Variant ${activeVariant}` },
                   ].map(row => (
@@ -712,5 +718,13 @@ export default function CampaignStudioPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function CampaignStudioPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-sm text-slate-500">Loading Studio...</div>}>
+      <CampaignStudioContent />
+    </Suspense>
   );
 }

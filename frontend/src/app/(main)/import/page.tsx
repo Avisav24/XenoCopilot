@@ -55,7 +55,7 @@ export default function ImportPage() {
      await new Promise(r => setTimeout(r, 600));
 
      setProcessStage(3);
-     await fetchAPI('/api/import/process', { method: 'POST' });
+     await fetchAPI('/api/import/process', { method: 'POST', body: '{}' });
      
      setProcessStage(4);
      await new Promise(r => setTimeout(r, 800));
@@ -238,7 +238,7 @@ export default function ImportPage() {
                   </div>
 
                   <button 
-                     disabled={(!customerResult || !orderResult) || isProcessing}
+                     disabled={isProcessing}
                      onClick={handleRunProcessing}
                      className="w-full mt-4 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-3 rounded-lg text-[13px] transition-colors shadow-sm flex items-center justify-center gap-2"
                   >

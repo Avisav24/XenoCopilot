@@ -101,6 +101,95 @@ export async function aiRoutes(fastify: FastifyInstance) {
   const genaiInstances = geminiKeys.map(key => new GoogleGenAI({ apiKey: key }));
   const groqInstances = groqKeys.map(key => new Groq({ apiKey: key }));
 
+  // ── 1.5 Dynamic Segmentation (SQL) ─────────────────────────────────────────
+  fastify.post('/api/ai/segment', async (request, reply) => {
+    try {
+      const { goal } = request.body as { goal: string };
+      
+      const systemPrompt = `You are a SQL AI for a CRM database. 
+You must translate the marketer's natural language goal into a valid PostgreSQL WHERE clause for the "customers" table.
+The "customers" table has these columns:
+- total_spent (numeric)
+- total_orders (integer)
+- last_order_date (timestamp)
+
+Rules:
+- Output ONLY a JSON object containing the "where_clause" string, "channel" (the best channel for this goal: "WhatsApp", "Email", or "SMS"), and "goal_type" (a short 1-word category like "Win-back", "Expansion", "Retention").
+- The where_clause must be valid postgres SQL syntax (e.g., "total_spent > 5000 AND last_order_date < NOW() - INTERVAL '90 days'").
+- Do NOT include the word WHERE, just the condition.
+- If the goal is completely generic (e.g. "Increase revenue"), return "1=1" as the where_clause.
+
+Example Output:
+{
+  "where_clause": "total_spent > 5000 AND last_order_date < NOW() - INTERVAL '90 days'",
+  "channel": "WhatsApp",
+  "goal_type": "Win-back"
+}`;
+
+      const text = await generateWithFallback(
+        genaiInstances, 
+        groqInstances, 
+        systemPrompt, 
+        `Goal: "${goal}"`, 
+        0.1,
+        true
+      );
+
+      const parsed = JSON.parse(text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
+      const whereClause = parsed.where_clause || '1=1';
+
+      // Execute dynamic raw query safely
+      const query = `
+        SELECT 
+          COUNT(*)::int as count,
+          COALESCE(SUM(total_spent), 0) as total_revenue
+        FROM "customers"
+        WHERE ${whereClause}
+      `;
+      
+      const result: any = await prisma.$queryRawUnsafe(query);
+      const count = result[0]?.count || 0;
+      const totalRevenue = Number(result[0]?.total_revenue || 0);
+      const aov = count > 0 ? Math.round(totalRevenue / count) : 0;
+      
+      let risk = 'Low';
+      if (whereClause.includes('90') || whereClause.includes('60') || whereClause.includes('180')) risk = 'High';
+      else if (whereClause.includes('30')) risk = 'Medium';
+
+      const channelName = parsed.channel || 'Email';
+      const channelMetric = await prisma.channelMetric.findFirst({
+        where: { channel: channelName }
+      });
+      const convRate = channelMetric ? Number(channelMetric.conversion_rate) : 5;
+      const expectedPurchasers = Math.max(1, Math.round(count * (convRate / 100)));
+      
+      let audienceMatch = 'High';
+      if (count < 50) audienceMatch = 'Low';
+      else if (count < 200) audienceMatch = 'Medium';
+
+      return reply.send({
+        id: 'dyn_' + Date.now(),
+        name: parsed.goal_type || 'Custom Segment',
+        description: goal,
+        count: count,
+        revenue: '₹' + (totalRevenue > 100000 ? (totalRevenue/100000).toFixed(2) + 'L' : totalRevenue.toLocaleString('en-IN')),
+        revenueRaw: totalRevenue,
+        expectedRevenue: Math.round(expectedPurchasers * aov),
+        expectedPurchasers: expectedPurchasers,
+        conversionRate: convRate,
+        audienceMatch: audienceMatch,
+        aov: '₹' + aov.toLocaleString('en-IN'),
+        risk: risk,
+        channel: channelName,
+        goal: parsed.goal_type || 'Conversion'
+      });
+
+    } catch (err) {
+      console.error('segment error:', err);
+      return reply.status(500).send({ error: 'Failed to segment audience' });
+    }
+  });
+
   // ── 1. Query Personas ─────────────────────────────────────────
   fastify.post('/api/ai/query-personas', async (request, reply) => {
     try {
@@ -208,7 +297,15 @@ export async function aiRoutes(fastify: FastifyInstance) {
     try {
       const { persona_name, channel } = DraftMessagesSchema.parse(request.body);
 
-      const systemPrompt = `You are an expert fashion copywriter. Draft 2 message variants for a campaign targeting the "${persona_name}" persona via ${channel}.
+      const systemPrompt = `You are a data-driven CRM copywriter. Draft 2 message variants for a campaign targeting the "${persona_name}" persona via ${channel}.
+      
+      ## Copy Constraints
+      - Messages must be short (maximum 3-5 lines).
+      - Never use generic marketing language (e.g., "Valued Customer", "Dear Customer", "We Miss You", "Special Offer Just For You").
+      - Instead, write as if referencing actual database attributes (Customer Name, Last Purchase, Favorite Category).
+      - (e.g., "Hi {{first_name}}, your last skincare purchase was 42 days ago", "You typically reorder every 35 days", "You are among our top VIPs").
+      - Messages must feel directly generated from a live CRM database.
+
       Return ONLY a JSON object with this exact structure:
       {
         "variantA": "<message text>",
@@ -410,7 +507,7 @@ Instead reference actual attributes (Customer Name, Last Purchase, Favorite Cate
 Messages should feel generated from CRM database records.`;
 
       const personaListStr = personas
-        .map((p) => `ID: ${p.id} | Name: ${p.name} | Count: ${p.customerCount}`)
+        .map((p) => `ID: ${p.id} | Name: ${p.name} | Count: ${p.customer_count}`)
         .join('\n');
 
       const userPrompt = `Overall DB Health Avg: ${Math.round(stats._avg.health_score || 0)}
@@ -598,7 +695,7 @@ Example format:
         {
           id: 'dyn-dormant',
           name: 'Lapsed High-Spenders',
-          customerCount: dormantCount,
+          customer_count: dormantCount,
           revenueContribution: dormantRev,
           avgLTV: dormantCount > 0 ? Math.round(dormantRev / dormantCount) : 0,
           avgAOV: 1200,

@@ -31,7 +31,30 @@ export default function IntelligencePage() {
   const [page, setPage] = useState(0);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'directory' | 'audience'>('directory');
+  const [audienceDesc, setAudienceDesc] = useState('Customers inactive for 60+ days with spend > ₹5000');
+  const [audienceResult, setAudienceResult] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const LIMIT = 20;
+
+  const handleAnalyzeAudience = async () => {
+    if (!audienceDesc.trim() || isAnalyzing) return;
+    setIsAnalyzing(true);
+    try {
+      const res = await fetch('/api/ai/segment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goal: audienceDesc })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAudienceResult(data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const { data: stats, isLoading: isStatsLoading } = useQuery({
     queryKey: ['customer-stats-full'],
@@ -266,7 +289,11 @@ export default function IntelligencePage() {
                    
                    <div className="flex flex-col gap-1.5">
                       <label className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Description</label>
-                      <textarea defaultValue="Customers inactive for 60+ days with spend > ₹5000" className="bg-canvas-soft border border-hairline rounded-lg px-3 py-2 text-[13px] text-ink w-full focus:outline-none focus:border-ink-muted resize-none h-16" />
+                      <textarea 
+                        value={audienceDesc} 
+                        onChange={(e) => setAudienceDesc(e.target.value)}
+                        className="bg-canvas-soft border border-hairline rounded-lg px-3 py-2 text-[13px] text-ink w-full focus:outline-none focus:border-ink-muted resize-none h-16" 
+                      />
                    </div>
                 </div>
 
@@ -295,8 +322,12 @@ export default function IntelligencePage() {
                        </select>
                        <input type="text" defaultValue="60 Days" className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
                      </div>
-                     <button className="text-[12px] font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1 mt-2 self-start">
-                        + Add Condition
+                     <button 
+                        onClick={handleAnalyzeAudience}
+                        disabled={isAnalyzing}
+                        className="text-[12px] bg-ink text-canvas px-4 py-2 rounded font-bold hover:bg-ink/90 transition-colors flex items-center justify-center gap-1 mt-2 self-start disabled:opacity-50"
+                     >
+                        {isAnalyzing ? 'Analyzing...' : 'Analyze Segment'}
                      </button>
                    </div>
                 </div>
@@ -310,32 +341,35 @@ export default function IntelligencePage() {
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4">
                    <div className="flex flex-col gap-1">
                       <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Customers</span>
-                      <span className="text-[18px] font-bold text-ink font-mono-numbers">428</span>
+                      <span className="text-[18px] font-bold text-ink font-mono-numbers">{audienceResult ? audienceResult.count : '--'}</span>
                    </div>
                    <div className="flex flex-col gap-1">
                       <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Revenue Potential</span>
-                      <span className="text-[18px] font-bold text-semantic-success font-mono-numbers">₹1.72L</span>
+                      <span className="text-[18px] font-bold text-semantic-success font-mono-numbers">{audienceResult ? audienceResult.revenue : '--'}</span>
                    </div>
                    <div className="flex flex-col gap-1">
                       <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Average Order Value</span>
-                      <span className="text-[16px] font-bold text-ink font-mono-numbers">₹4,200</span>
+                      <span className="text-[16px] font-bold text-ink font-mono-numbers">{audienceResult ? audienceResult.aov : '--'}</span>
                    </div>
                    <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Last Purchase Avg</span>
-                      <span className="text-[16px] font-bold text-ink font-mono-numbers">78 Days</span>
+                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Risk Level</span>
+                      <span className="text-[16px] font-bold text-ink font-mono-numbers">{audienceResult ? audienceResult.risk : '--'}</span>
                    </div>
                    <div className="flex flex-col gap-1">
                       <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Expected Conversion</span>
-                      <span className="text-[16px] font-bold text-ink font-mono-numbers">4.8%</span>
+                      <span className="text-[16px] font-bold text-ink font-mono-numbers">{audienceResult ? `${audienceResult.conversionRate}%` : '--'}</span>
                    </div>
                    <div className="flex flex-col gap-1">
                       <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Best Channel</span>
-                      <span className="text-[14px] font-bold text-ink">WhatsApp</span>
+                      <span className="text-[14px] font-bold text-ink">{audienceResult ? audienceResult.channel : '--'}</span>
                    </div>
                 </div>
 
                 <div className="border-t border-hairline pt-5 mt-1">
-                   <button onClick={() => router.push('/chat?audience=dormant_vip')} className="w-full bg-ink hover:bg-ink/90 text-canvas font-bold py-3.5 rounded-lg transition-colors text-[14px] shadow-sm">
+                   <button 
+                      onClick={() => router.push(`/chat?audience=${encodeURIComponent(audienceDesc)}`)} 
+                      disabled={!audienceResult}
+                      className="w-full bg-ink hover:bg-ink/90 disabled:opacity-50 text-canvas font-bold py-3.5 rounded-lg transition-colors text-[14px] shadow-sm">
                       Generate Campaign
                    </button>
                 </div>
