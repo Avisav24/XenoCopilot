@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
-import { Spark, Group, Megaphone, StatsReport, User, Settings, GraphUp } from 'iconoir-react';
+import { Spark, Group, Megaphone, StatsReport, Settings, GraphUp, DatabaseScript } from 'iconoir-react';
 
 const navGroups = [
   {
@@ -16,8 +16,7 @@ const navGroups = [
   {
     label: 'Customers',
     items: [
-      { href: '/intelligence', label: 'Customer Intelligence', icon: <Group height={18} width={18} /> },
-      { href: '/personas', label: 'Personas', icon: <User height={18} width={18} /> },
+      { href: '/intelligence', label: 'Customer 360', icon: <Group height={18} width={18} /> },
     ]
   },
   {
@@ -29,8 +28,8 @@ const navGroups = [
   {
     label: 'Settings',
     items: [
-      { href: '/import', label: 'Data Import', icon: <Settings height={18} width={18} /> },
-      { href: '/architecture', label: 'Architecture', icon: <StatsReport height={18} width={18} /> },
+      { href: '/import', label: 'Data Import', icon: <DatabaseScript height={18} width={18} /> },
+      { href: '/architecture', label: 'System Architecture', icon: <StatsReport height={18} width={18} /> },
     ]
   }
 ];

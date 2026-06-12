@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getCustomers, getCustomerStats } from '@/lib/api';
-import { Search, Xmark, Mail, Phone, MapPin, Group, WarningTriangle, GraphUp, Strategy } from 'iconoir-react';
+import { getCustomers, getCustomerStats, getDynamicPersonas } from '@/lib/api';
+import { useRouter } from 'next/navigation';
+import { Search, Xmark, Mail, Phone, MapPin, Group, WarningTriangle, GraphUp, Strategy, Filter, FastArrowRight } from 'iconoir-react';
 import { clsx } from 'clsx';
 
 const PERSONA_COLORS: Record<string, string> = {
@@ -25,9 +26,13 @@ function getDotColor(persona: string) {
 }
 
 export default function IntelligencePage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'directory' | 'audience'>('directory');
+  const [nlSegmentQuery, setNlSegmentQuery] = useState('');
+  const [nlResult, setNlResult] = useState<any>(null);
   const LIMIT = 20;
 
   const { data: stats, isLoading: isStatsLoading } = useQuery({
@@ -40,9 +45,30 @@ export default function IntelligencePage() {
     queryFn: () => getCustomers({ limit: LIMIT, offset: page * LIMIT, search: search || undefined }) as any,
   });
 
+  const { data: personas } = useQuery({
+    queryKey: ['dynamic-personas'],
+    queryFn: getDynamicPersonas,
+  });
+
   const customers = listData?.customers || [];
   const sortedCustomers = [...customers].sort((a, b) => a.health_score - b.health_score);
   const total = listData?.total || 0;
+
+  const handleNlSegmentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nlSegmentQuery) return;
+    setNlResult('loading');
+    setTimeout(() => {
+      setNlResult({
+        filters: [
+          { field: 'Total Spend', operator: '>', value: '₹5000' },
+          { field: 'Last Purchase', operator: '>', value: '90 Days' }
+        ],
+        audienceSize: 428,
+        revenuePotential: '₹1.72L'
+      });
+    }, 1200);
+  };
 
   return (
     <div className="flex flex-col gap-8 w-full pb-24 relative">
@@ -205,14 +231,184 @@ export default function IntelligencePage() {
       })()}
 
       {/* Header */}
-      <div className="flex flex-col gap-2 border-b border-hairline pb-8">
-        <h1>Customer Intelligence</h1>
-        <p className="max-w-2xl">
-          Operational customer intelligence. AI-driven risk factors and immediate revenue opportunities.
-        </p>
+      <div className="flex flex-col gap-4 border-b border-hairline pb-6">
+        <div className="flex flex-col gap-1">
+          <h1>Customer 360</h1>
+          <p className="max-w-2xl">
+            Customer-level operational intelligence. Identify at-risk accounts, build audiences, and generate campaigns.
+          </p>
+        </div>
+        {/* Tab Navigation */}
+        <div className="flex gap-1">
+          <button
+            onClick={() => setActiveTab('directory')}
+            className={clsx(
+              'px-4 py-2 text-[13px] font-semibold rounded-md transition-colors',
+              activeTab === 'directory'
+                ? 'bg-ink text-canvas'
+                : 'text-ink-muted hover:bg-canvas-soft hover:text-ink'
+            )}
+          >
+            Customer Directory
+          </button>
+          <button
+            onClick={() => setActiveTab('audience')}
+            className={clsx(
+              'px-4 py-2 text-[13px] font-semibold rounded-md transition-colors',
+              activeTab === 'audience'
+                ? 'bg-ink text-canvas'
+                : 'text-ink-muted hover:bg-canvas-soft hover:text-ink'
+            )}
+          >
+            Audience Builder
+          </button>
+        </div>
       </div>
 
-      {isStatsLoading ? (
+      {activeTab === 'audience' ? (
+        /* ── AUDIENCE BUILDER TAB ── */
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+          {/* Left: Segment Builder */}
+          <div className="lg:col-span-1 flex flex-col gap-8">
+
+            {/* NL Builder */}
+            <div className="flex flex-col gap-4">
+              <h2 className="text-[16px] font-semibold text-ink">Segment Builder</h2>
+              <div className="border border-hairline rounded-xl bg-canvas shadow-sm p-5 flex flex-col gap-4 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-1 h-full bg-ink" />
+                <form onSubmit={handleNlSegmentSubmit} className="flex flex-col gap-3">
+                  <label className="text-[13px] font-bold text-ink flex items-center gap-1.5">
+                    <Filter height={16} width={16} className="text-ink" /> Natural Language Query
+                  </label>
+                  <textarea
+                    value={nlSegmentQuery}
+                    onChange={e => setNlSegmentQuery(e.target.value)}
+                    placeholder="e.g., Customers who spent more than ₹5000 and haven't purchased in 90 days."
+                    className="w-full bg-canvas-soft border border-hairline rounded-lg px-4 py-3 text-[14px] text-ink focus:outline-none focus:border-ink-muted min-h-[100px] resize-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={nlResult === 'loading' || !nlSegmentQuery.trim()}
+                    className="bg-ink hover:bg-ink/80 disabled:opacity-50 text-canvas font-bold px-4 py-2.5 rounded-lg transition-colors text-[14px]"
+                  >
+                    {nlResult === 'loading' ? 'Analyzing Query...' : 'Generate Audience'}
+                  </button>
+                </form>
+
+                {nlResult && nlResult !== 'loading' && (
+                  <div className="mt-2 border-t border-hairline pt-4 flex flex-col gap-4">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Detected Filters</span>
+                      {nlResult.filters.map((f: any, idx: number) => (
+                        <div key={idx} className="bg-canvas-soft border border-hairline px-3 py-2 rounded-md flex items-center gap-2 text-[13px] font-mono">
+                          <span className="font-bold text-ink">{f.field}</span>
+                          <span className="text-ink-muted font-bold">{f.operator}</span>
+                          <span className="font-bold text-ink">{f.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[11px] font-semibold text-ink-muted uppercase">Audience Size</span>
+                        <span className="text-[18px] font-bold text-ink font-mono-numbers">{nlResult.audienceSize}</span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[11px] font-semibold text-ink-muted uppercase">Revenue Potential</span>
+                        <span className="text-[18px] font-bold text-semantic-success font-mono-numbers">{nlResult.revenuePotential}</span>
+                      </div>
+                    </div>
+                    <button onClick={() => router.push('/chat')} className="w-full bg-ink hover:bg-ink/80 text-canvas font-bold py-2.5 rounded-lg transition-colors text-[13px]">
+                      Generate Campaign
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Rule-Based Builder */}
+            <div className="border border-hairline rounded-xl bg-canvas shadow-sm p-5 flex flex-col gap-4">
+              <span className="text-[13px] font-bold text-ink uppercase">Rule-Based Segment</span>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] flex-1">
+                    <option>Total Spend</option>
+                  </select>
+                  <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-16 text-center">
+                    <option>&gt;</option>
+                  </select>
+                  <input type="text" defaultValue="₹5000" readOnly className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
+                </div>
+                <div className="flex items-center gap-2 pl-4 border-l-2 border-hairline ml-2 py-1">
+                  <span className="text-[11px] font-bold text-ink-muted">AND</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] flex-1">
+                    <option>Last Purchase</option>
+                  </select>
+                  <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-16 text-center">
+                    <option>&gt;</option>
+                  </select>
+                  <input type="text" defaultValue="60 Days" readOnly className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
+                </div>
+              </div>
+              <div className="flex justify-between mt-2 pt-4 border-t border-hairline">
+                <button className="text-[13px] font-bold text-ink-muted hover:text-ink transition-colors">Save Segment</button>
+                <button className="text-[13px] font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">Preview <FastArrowRight height={14} width={14} /></button>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Business Entities (Personas) */}
+          <div className="lg:col-span-2 flex flex-col gap-6">
+            <h2 className="text-[16px] font-semibold text-ink">Business Entities</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {personas?.map((p: any) => (
+                <div
+                  key={p.id}
+                  onClick={() => router.push(`/chat?persona=${p.id}`)}
+                  className="border border-hairline rounded-xl bg-canvas shadow-sm p-6 flex flex-col gap-4 cursor-pointer hover:border-ink-muted hover:shadow-md transition-all group"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex flex-col gap-1">
+                      <h3 className="text-[15px] font-bold text-ink group-hover:text-ink/80 transition-colors">{p.name}</h3>
+                      <span className="text-[12px] font-semibold text-ink-muted uppercase tracking-wider">{p.customerCount.toLocaleString()} Customers</span>
+                    </div>
+                    <span className={clsx(
+                      'text-[11px] font-bold px-2 py-1 rounded uppercase',
+                      p.churnRisk?.includes('High') ? 'bg-red-100 text-red-800' : p.churnRisk === 'Medium' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                    )}>
+                      {p.churnRisk} Risk
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mt-1">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Revenue</span>
+                      <span className="text-[18px] font-bold text-ink font-mono-numbers">₹{p.revenueContribution?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Avg. Order Value</span>
+                      <span className="text-[18px] font-bold text-ink font-mono-numbers">₹{p.avgAOV?.toLocaleString() || 0}</span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-hairline pt-4 mt-2 flex justify-between items-center">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Best Channel</span>
+                      <span className="text-[12px] font-bold text-ink">{p.bestChannels?.[0] || 'Email'}</span>
+                    </div>
+                    <span className="text-[12px] font-bold text-ink flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      Generate Campaign <FastArrowRight height={14} width={14} />
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      ) : isStatsLoading ? (
         <div className="flex justify-center py-20 text-ink-muted text-[14px] font-medium">Loading intelligence data...</div>
       ) : stats ? (
         <div className="flex flex-col w-full gap-8">
