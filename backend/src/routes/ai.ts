@@ -106,12 +106,13 @@ export async function aiRoutes(fastify: FastifyInstance) {
     try {
       const { goal } = request.body as { goal: string };
       
-      const systemPrompt = `You are a SQL AI for a CRM database. 
+const systemPrompt = `You are a SQL AI for a CRM database. 
 You must translate the marketer's natural language goal into a valid PostgreSQL WHERE clause for the "customers" table.
 The "customers" table has these columns:
 - total_spent (numeric)
-- total_orders (integer)
+- health_score (integer)
 - last_order_date (timestamp)
+- signup_date (timestamp)
 
 Rules:
 - Output ONLY a JSON object containing the "where_clause" string, "channel" (the best channel for this goal: "WhatsApp", "Email", or "SMS"), and "goal_type" (a short 1-word category like "Win-back", "Expansion", "Retention").
