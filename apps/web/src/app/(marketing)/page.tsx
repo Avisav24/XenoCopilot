@@ -101,9 +101,9 @@ export default function LandingPage() {
 
   const handleLaunch = (e: React.MouseEvent) => {
     e.preventDefault();
-    gsap.to(container.current, {
-      opacity: 0, duration: 0.3, ease: 'power2.inOut',
-      onComplete: () => router.push('/opportunities')
+    gsap.to('.hero-fade', {
+      opacity: 0, y: -15, duration: 0.4, stagger: 0.05, ease: 'power2.in',
+      onComplete: () => router.push('/revenue')
     });
   };
 
@@ -204,7 +204,7 @@ export default function LandingPage() {
               <div className="w-3 h-3 rounded-full bg-semantic-success/80"></div>
             </div>
             <div className="mx-auto flex items-center justify-center h-7 px-4 rounded bg-canvas border border-hairline w-[300px] text-[12px] text-ink-muted shadow-sm">
-              app.xenocopilot.com/opportunities
+              app.xenocopilot.com/revenue
             </div>
           </div>
           

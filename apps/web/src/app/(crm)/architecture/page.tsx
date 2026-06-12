@@ -23,8 +23,8 @@ export default function ArchitecturePage() {
          <div className="border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col overflow-hidden">
             <div className="bg-slate-50 p-6 border-b border-slate-100 flex flex-col gap-2">
                <div className="flex items-center gap-2">
-                  <CodeBrackets height={20} width={20} className="text-blue-600" />
-                  <h2 className="text-[18px] font-bold text-slate-900">Current Scale (Assignment)</h2>
+                  <CodeBrackets height={20} width={20} className="text-slate-900" />
+                  <h2 className="text-[18px] font-bold text-slate-900">Current Architecture</h2>
                </div>
                <p className="text-[14px] text-slate-600">Built to demonstrate the end-to-end product vision and UI/UX capability without requiring extensive cloud infrastructure.</p>
             </div>
@@ -72,21 +72,33 @@ export default function ArchitecturePage() {
                   </div>
                </div>
 
-               <div className="mt-auto bg-blue-50 border border-blue-100 p-4 rounded-lg">
-                  <p className="text-[13px] text-blue-800 font-medium leading-relaxed">
-                     <span className="font-bold">Execution Note:</span> For the scope of this assignment, the channel service uses a local Node.js simulator to generate probabilistic webhook events (Sent → Delivered → Opened → Clicked → Purchased) and posts them back to the CRM.
+               <div className="flex flex-col gap-3 border-t border-slate-100 pt-5">
+                  <span className="text-[12px] font-bold text-slate-900 uppercase">Webhook Pipeline</span>
+                  <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg flex flex-col gap-3 font-mono text-[13px] text-slate-700">
+                     <div className="flex items-center gap-2"><span className="text-emerald-600 font-bold">1</span> Campaign Request</div>
+                     <div className="text-slate-400 pl-2">↓</div>
+                     <div className="flex items-center gap-2"><span className="text-emerald-600 font-bold">2</span> Node.js Channel Simulator</div>
+                     <div className="text-slate-400 pl-2">↓</div>
+                     <div className="flex items-center gap-2"><span className="text-emerald-600 font-bold">3</span> Webhook Receipt API (/api/webhook)</div>
+                     <div className="text-slate-400 pl-2">↓</div>
+                     <div className="flex items-center gap-2"><span className="text-emerald-600 font-bold">4</span> Real-time Analytics Update</div>
+                  </div>
+               </div>
+
+               <div className="mt-auto bg-slate-100 border border-slate-200 p-4 rounded-lg">
+                  <p className="text-[13px] text-slate-700 font-medium leading-relaxed">
+                     <span className="font-bold text-slate-900">Execution Note:</span> The channel service uses a local Node.js simulator to generate probabilistic webhook events and post them back to the CRM.
                   </p>
                </div>
             </div>
          </div>
 
          {/* Future Scale (Production) */}
-         <div className="border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-blue-500" />
-            <div className="bg-slate-50 p-6 border-b border-slate-100 flex flex-col gap-2 pt-7">
+         <div className="border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col overflow-hidden relative opacity-80 hover:opacity-100 transition-opacity">
+            <div className="bg-slate-50 p-6 border-b border-slate-100 flex flex-col gap-2">
                <div className="flex items-center gap-2">
-                  <CloudSync height={20} width={20} className="text-purple-600" />
-                  <h2 className="text-[18px] font-bold text-slate-900">Future Scale (Production)</h2>
+                  <CloudSync height={20} width={20} className="text-slate-900" />
+                  <h2 className="text-[18px] font-bold text-slate-900">Future Scale Considerations</h2>
                </div>
                <p className="text-[14px] text-slate-600">The architecture required to support millions of profiles and high-throughput real-time campaign execution.</p>
             </div>

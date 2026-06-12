@@ -28,9 +28,9 @@ module.exports = {
           soft: '#F8FAFC',
         },
         semantic: {
-          success: '#10B981',
-          warning: '#F59E0B',
-          danger: '#EF4444',
+          success: '#16A34A',
+          warning: '#D97706',
+          danger: '#DC2626',
         }
       },
       borderRadius: {

@@ -7,7 +7,7 @@ import { getDynamicSuggestions, getDynamicPersonas, simulateCampaign } from '@/l
 import { Spark, Check, Send, Xmark, ChatBubble, Phone, Mail, SmartphoneDevice, MessageText, Calendar, Play, EditPencil, Clock, CheckCircle } from 'iconoir-react';
 import { clsx } from 'clsx';
 
-export default function CampaignCopilotPage() {
+export default function CampaignStudioPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   

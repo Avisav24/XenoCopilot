@@ -89,24 +89,29 @@ export default function EngagementInsightsPage() {
          <h3 className="text-[16px] font-bold text-slate-900">Campaign Health</h3>
          <div className="grid grid-cols-2 md:grid-cols-5 gap-0 border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden divide-x divide-slate-200">
             <div className="p-5 flex flex-col gap-1 cursor-pointer hover:bg-slate-50 transition-colors group">
-               <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Status</span>
+               <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-slate-900 transition-colors">Status</span>
                <span className="text-[18px] font-bold text-emerald-600">Performing Above Target</span>
+               <span className="text-[12px] font-medium text-slate-500 mt-1">Exceeding baseline by 14%</span>
             </div>
             <div className="p-5 flex flex-col gap-1 cursor-pointer hover:bg-slate-50 transition-colors group">
-               <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Revenue Generated</span>
+               <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-slate-900 transition-colors">Revenue Generated</span>
                <span className="text-[20px] font-bold text-slate-900 font-mono-numbers">{insights.actual_revenue || '₹27,385'}</span>
+               <span className="text-[12px] font-medium text-slate-500 mt-1">From 90 customers</span>
             </div>
             <div className="p-5 flex flex-col gap-1 cursor-pointer hover:bg-slate-50 transition-colors group">
-               <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Conversion Rate</span>
+               <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-slate-900 transition-colors">Conversion Rate</span>
                <span className="text-[20px] font-bold text-slate-900 font-mono-numbers">{funnel.conversion_rate || '8.9%'}</span>
+               <span className="text-[12px] font-medium text-slate-500 mt-1">Industry avg: 2.1%</span>
             </div>
             <div className="p-5 flex flex-col gap-1 cursor-pointer hover:bg-slate-50 transition-colors group">
-               <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Top Audience</span>
+               <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-slate-900 transition-colors">Top Audience</span>
                <span className="text-[16px] font-bold text-slate-900 mt-1">{insights.persona || 'Beauty Loyalists'}</span>
+               <span className="text-[12px] font-medium text-slate-500 mt-1">Highest CTR group</span>
             </div>
-            <div className="p-5 flex flex-col gap-1 cursor-pointer hover:bg-blue-50 transition-colors group bg-blue-50/30">
-               <span className="text-[12px] font-semibold text-blue-600 uppercase tracking-wider">Best Action</span>
-               <span className="text-[16px] font-bold text-blue-800 mt-1 flex items-center gap-1">Increase audience 2x <ArrowRight height={16} width={16} /></span>
+            <div className="p-5 flex flex-col gap-1 cursor-pointer hover:bg-slate-50 transition-colors group bg-slate-50">
+               <span className="text-[12px] font-semibold text-slate-900 uppercase tracking-wider">Best Action</span>
+               <span className="text-[16px] font-bold text-slate-900 mt-1 flex items-center gap-1">Increase audience 2x <ArrowRight height={16} width={16} className="text-blue-600"/></span>
+               <span className="text-[12px] font-medium text-slate-500 mt-1 hover:text-blue-600">Review Audience Builder →</span>
             </div>
          </div>
       </div>
@@ -166,15 +171,15 @@ export default function EngagementInsightsPage() {
         {/* Next Recommendation & Cadence */}
         <div className="lg:col-span-1 flex flex-col gap-3">
           <h3 className="text-[16px] font-bold text-slate-900">Next Recommended Campaign</h3>
-          <div className="border-2 border-blue-600/20 rounded-xl bg-white shadow-sm p-5 flex flex-col gap-4 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-1 h-full bg-blue-600" />
+          <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-5 flex flex-col gap-4 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1 h-full bg-slate-900" />
             
             <div className="flex justify-between items-start">
               <div className="flex flex-col gap-1">
-                <span className="text-[12px] font-bold text-blue-600 uppercase tracking-wider">Optimal Send Window</span>
+                <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Optimal Send Window</span>
                 <span className="text-[18px] font-bold text-slate-900">25 Jun 2026</span>
               </div>
-              <span className="text-[11px] font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded">87% Confidence</span>
+              <span className="text-[11px] font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded uppercase tracking-wider">87% Confidence</span>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mt-1">
@@ -224,7 +229,7 @@ export default function EngagementInsightsPage() {
             onClick={() => setActiveTab(tab)}
             className={clsx(
               "pb-4 text-[15px] font-bold transition-colors border-b-[3px]",
-              activeTab === tab ? "text-blue-600 border-blue-600" : "text-slate-500 border-transparent hover:text-slate-900"
+              activeTab === tab ? "text-slate-900 border-slate-900" : "text-slate-500 border-transparent hover:text-slate-900"
             )}
           >
             {tab}

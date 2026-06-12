@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { UploadSquare, CheckCircle, WarningCircle, Settings, DataTransferBoth, FastArrowRight, Db } from 'iconoir-react';
+import { UploadSquare, CheckCircle, WarningCircle, Settings, DataTransferBoth, FastArrowRight, Database } from 'iconoir-react';
 import { clsx } from 'clsx';
 import { useRouter } from 'next/navigation';
 
@@ -71,7 +71,7 @@ export default function DataImportPage() {
       
       <div className="flex flex-col gap-2 text-center items-center mt-8">
         <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mb-2">
-          <Db height={32} width={32} />
+          <Database height={32} width={32} />
         </div>
         <h1 className="text-[32px] font-bold text-slate-900 leading-none">Data Import Engine</h1>
         <p className="max-w-xl text-[16px] text-slate-500">

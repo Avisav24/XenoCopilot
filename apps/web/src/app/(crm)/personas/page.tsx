@@ -143,21 +143,21 @@ export default function PersonasPage() {
             {/* Natural Language Builder */}
             <div className="flex flex-col gap-4">
                <h2 className="text-[18px] font-bold text-slate-900">Segment Builder</h2>
-               <div className="border-2 border-purple-600/20 rounded-xl bg-white shadow-sm p-5 flex flex-col gap-4 relative overflow-hidden">
-                  <div className="absolute top-0 left-0 w-1 h-full bg-purple-600" />
+               <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-5 flex flex-col gap-4 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-slate-900" />
                   
                   <form onSubmit={handleNlSegmentSubmit} className="flex flex-col gap-3">
-                     <label className="text-[13px] font-bold text-slate-700 flex items-center gap-1.5"><Spark height={16} width={16} className="text-purple-600"/> Natural Language Query</label>
+                     <label className="text-[13px] font-bold text-slate-700 flex items-center gap-1.5"><Filter height={16} width={16} className="text-slate-900"/> Natural Language Query</label>
                      <textarea 
                         value={nlSegmentQuery}
                         onChange={e => setNlSegmentQuery(e.target.value)}
                         placeholder="e.g., Show customers who spent more than ₹5000 and have not purchased in 90 days."
-                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-[14px] text-slate-900 focus:outline-none focus:border-purple-600 min-h-[100px] resize-none"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-[14px] text-slate-900 focus:outline-none focus:border-slate-400 min-h-[100px] resize-none"
                      />
                      <button 
                         type="submit"
                         disabled={nlResult === 'loading' || !nlSegmentQuery.trim()}
-                        className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold px-4 py-2.5 rounded-lg transition-colors text-[14px]"
+                        className="bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-bold px-4 py-2.5 rounded-lg transition-colors text-[14px]"
                      >
                         {nlResult === 'loading' ? 'Analyzing Query...' : 'Generate Audience'}
                      </button>
@@ -170,7 +170,7 @@ export default function PersonasPage() {
                            {nlResult.filters.map((f: any, idx: number) => (
                               <div key={idx} className="bg-slate-100 border border-slate-200 px-3 py-2 rounded-md flex items-center gap-2 text-[13px] font-mono">
                                  <span className="font-bold text-slate-700">{f.field}</span>
-                                 <span className="text-purple-600 font-bold">{f.operator}</span>
+                                 <span className="text-slate-600 font-bold">{f.operator}</span>
                                  <span className="font-bold text-slate-900">{f.value}</span>
                               </div>
                            ))}
@@ -249,11 +249,11 @@ export default function PersonasPage() {
                   <div 
                      key={p.id} 
                      onClick={() => setSelectedId(p.id)}
-                     className="border border-slate-200 rounded-xl bg-white shadow-sm p-6 flex flex-col gap-4 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
+                     className="border border-slate-200 rounded-xl bg-white shadow-sm p-6 flex flex-col gap-4 cursor-pointer hover:border-slate-400 hover:shadow-md transition-all group"
                   >
                      <div className="flex justify-between items-start">
                         <div className="flex flex-col gap-1">
-                           <h3 className="text-[16px] font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{p.name}</h3>
+                           <h3 className="text-[16px] font-bold text-slate-900 group-hover:text-slate-700 transition-colors">{p.name}</h3>
                            <span className="text-[13px] font-semibold text-slate-500 uppercase tracking-wider">{p.customerCount.toLocaleString()} Customers</span>
                         </div>
                         <span className={clsx("text-[11px] font-bold px-2 py-1 rounded uppercase", p.churnRisk.includes('High') ? "bg-red-100 text-red-800" : p.churnRisk === 'Medium' ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800")}>
@@ -261,7 +261,7 @@ export default function PersonasPage() {
                         </span>
                      </div>
 
-                     <div className="grid grid-cols-2 gap-4 mt-2">
+                     <div className="grid grid-cols-2 gap-4 mt-1">
                         <div className="flex flex-col gap-1">
                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Revenue Contribution</span>
                            <span className="text-[18px] font-bold text-slate-900 font-mono-numbers">₹{p.revenueContribution.toLocaleString()}</span>
@@ -272,12 +272,17 @@ export default function PersonasPage() {
                         </div>
                      </div>
 
+                     <div className="flex flex-col gap-1 mt-2">
+                        <span className="text-[11px] font-bold text-slate-900 uppercase">Business Summary</span>
+                        <p className="text-[13px] text-slate-600 font-medium leading-snug line-clamp-2">This audience represents a high-value cohort contributing significantly to overall LTV. They are highly responsive to {p.bestChannels?.[0] || 'Email'} campaigns.</p>
+                     </div>
+
                      <div className="border-t border-slate-100 pt-4 mt-2 flex justify-between items-center">
                         <div className="flex items-center gap-1.5">
                            <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Best Channel</span>
                            <span className="text-[12px] font-bold text-slate-900">{p.bestChannels?.[0] || 'Email'}</span>
                         </div>
-                        <span className="text-[12px] font-bold text-blue-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                        <span className="text-[12px] font-bold text-slate-700 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                            Analyze Entity <FastArrowRight height={14} width={14} />
                         </span>
                      </div>

@@ -47,7 +47,7 @@ export default function IntelligencePage() {
   return (
     <div className="flex flex-col gap-8 w-full pb-24 relative">
       
-      {/* AI Account Summary Drawer */}
+      {/* Account Intelligence Drawer */}
       {selectedCustomerId && (() => {
         const sc = customers.find((c: any) => c.id === selectedCustomerId);
         if (!sc) return null;
@@ -85,7 +85,7 @@ export default function IntelligencePage() {
               
               <div className="p-6 flex flex-col gap-8">
                  <div className="flex flex-col gap-2">
-                   <span className="label-text">AI Customer Brief</span>
+                   <span className="text-[13px] font-bold text-slate-900 uppercase tracking-wider">Account Brief</span>
                    <div className="bg-canvas border border-hairline rounded-lg p-4 flex flex-col gap-4 text-[14px]">
                       <div className="flex justify-between border-b border-hairline pb-2">
                         <span className="text-ink-muted">Health Trend</span>
@@ -131,7 +131,7 @@ export default function IntelligencePage() {
                         <span className="font-bold text-ink text-right">{actionText}</span>
                       </div>
                       <div className="flex justify-between border-b border-primary/10 pb-2">
-                        <span className="text-primary font-medium">AI Confidence</span>
+                        <span className="text-slate-700 font-medium">Confidence Score</span>
                         <span className="font-mono-numbers font-bold text-ink text-right">{confidence}</span>
                       </div>
                       <div className="flex justify-between">
@@ -228,7 +228,7 @@ export default function IntelligencePage() {
                 <span className="text-[40px] font-bold tracking-tight text-slate-950 font-mono-numbers leading-none">{stats.total.toLocaleString()}</span>
               </div>
               <div className="flex flex-col gap-1 pt-4 border-t border-slate-100">
-                <span className="text-[13px] text-slate-500">Total enriched profiles</span>
+                <span className="text-[13px] text-slate-500 font-medium">100% profiles enriched • ↑ 12% this month</span>
               </div>
             </div>
 
@@ -241,7 +241,7 @@ export default function IntelligencePage() {
                 <span className="text-[40px] font-bold tracking-tight text-slate-950 font-mono-numbers leading-none text-semantic-danger">₹94,500</span>
               </div>
               <div className="flex flex-col gap-1 pt-4 border-t border-slate-100">
-                <span className="text-[13px] text-slate-500">85 action items required</span>
+                <span className="text-[13px] text-slate-500 font-medium">85 customers require immediate engagement</span>
               </div>
             </div>
 
@@ -254,7 +254,7 @@ export default function IntelligencePage() {
                 <span className="text-[40px] font-bold tracking-tight text-slate-950 font-mono-numbers leading-none">₹3.2M</span>
               </div>
               <div className="flex flex-col gap-1 pt-4 border-t border-slate-100">
-                <span className="text-[13px] text-slate-500">Top decile retention stable</span>
+                <span className="text-[13px] text-slate-500 font-medium">Top decile retention stable at 94%</span>
               </div>
             </div>
 
@@ -267,7 +267,7 @@ export default function IntelligencePage() {
                 <span className="text-[40px] font-bold tracking-tight text-slate-950 font-mono-numbers leading-none">₹15,703</span>
               </div>
               <div className="flex flex-col gap-1 pt-4 border-t border-slate-100">
-                <span className="text-[13px] text-slate-500">Historical performance</span>
+                <span className="text-[13px] text-slate-500 font-medium">↑ 8% vs previous quarter</span>
               </div>
             </div>
           </div>
@@ -292,19 +292,19 @@ export default function IntelligencePage() {
                </div>
             </div>
 
-            <div className="table-container">
-              <table className="table-enterprise">
-                <thead>
+            <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th>Customer</th>
-                    <th>Priority</th>
-                    <th>Health Score</th>
-                    <th>Primary Personas</th>
-                    <th className="text-right">Next Action</th>
-                    <th className="text-right">Revenue Potential</th>
+                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Customer</th>
+                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Priority</th>
+                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Health Score</th>
+                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Primary Personas</th>
+                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider text-right">Next Action</th>
+                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider text-right">Revenue Potential</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {isListLoading
                     ? Array.from({ length: 5 }).map((_, i) => (
                         <tr key={i}><td colSpan={6} className="px-4 py-4"><div className="h-4 skeleton rounded w-full" /></td></tr>
@@ -322,30 +322,30 @@ export default function IntelligencePage() {
                         const expectedRec = isCritical ? 1850 : isLow ? 540 : isHigh ? 230 : 120;
                         
                         return (
-                          <tr key={c.id} onClick={() => setSelectedCustomerId(c.id)} className="cursor-pointer">
-                            <td>
+                          <tr key={c.id} onClick={() => setSelectedCustomerId(c.id)} className="cursor-pointer hover:bg-slate-50/50 transition-colors">
+                            <td className="py-4 px-5">
                               <div className="flex flex-col gap-0.5">
-                                <span className="font-medium text-ink">{c.name}</span>
-                                <span className="text-ink-muted text-[12px]">{c.email}</span>
+                                <span className="font-bold text-slate-900 text-[14px]">{c.name}</span>
+                                <span className="text-slate-500 text-[13px]">{c.email}</span>
                               </div>
                             </td>
-                            <td>
-                              <span className={priorityColor}>{priorityStr}</span>
+                            <td className="py-4 px-5">
+                              <span className={clsx("text-[11px] font-bold px-2 py-1 rounded uppercase", isCritical ? "bg-red-100 text-red-800" : isHigh ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-700")}>{priorityStr}</span>
                             </td>
-                            <td>
+                            <td className="py-4 px-5">
                               <div className="flex flex-col gap-0.5">
-                                <span className={clsx("font-mono-numbers font-semibold", c.health_score < 40 ? "text-semantic-danger" : c.health_score > 85 ? "text-semantic-success" : "text-ink")}>
+                                <span className={clsx("font-mono-numbers font-bold text-[14px]", c.health_score < 40 ? "text-red-600" : c.health_score > 85 ? "text-emerald-600" : "text-slate-900")}>
                                   {c.health_score}
                                 </span>
                                 <div className="flex items-center gap-1 text-[11px]">
-                                  <span className="text-ink-muted font-medium">{c.health_score > 85 ? 'Very Loyal' : c.health_score > 60 ? 'Active' : 'At Risk'}</span>
-                                  <span className={c.health_score < 40 ? "text-semantic-danger font-bold" : c.health_score > 85 ? "text-semantic-success font-bold" : "text-ink-muted"}>
+                                  <span className="text-slate-500 font-semibold uppercase">{c.health_score > 85 ? 'Very Loyal' : c.health_score > 60 ? 'Active' : 'At Risk'}</span>
+                                  <span className={c.health_score < 40 ? "text-red-600 font-bold" : c.health_score > 85 ? "text-emerald-600 font-bold" : "text-slate-500"}>
                                     {c.health_score < 40 ? '↓↓ Urgent' : c.health_score > 85 ? '↑ Stable' : '↓ Declining'}
                                   </span>
                                 </div>
                               </div>
                             </td>
-                            <td>
+                            <td className="py-4 px-5">
                               <div className="flex gap-2 flex-wrap items-center">
                                 {c.personas.slice(0, 2).map((p: string) => (
                                   <div key={p} className="badge-persona">
@@ -354,20 +354,20 @@ export default function IntelligencePage() {
                                   </div>
                                 ))}
                                 {c.personas.length > 2 && (
-                                  <span className="text-[10px] text-ink-muted font-medium">+{c.personas.length - 2}</span>
+                                  <span className="text-[10px] text-slate-500 font-bold">+{c.personas.length - 2}</span>
                                 )}
                               </div>
                             </td>
-                            <td className="text-right">
+                            <td className="py-4 px-5 text-right">
                               <div className="flex flex-col items-end gap-0.5">
-                                <span className="font-semibold text-ink">{actionText}</span>
-                                <span className="text-[11px] text-ink-muted">{confidence} Confidence</span>
+                                <span className="font-bold text-slate-900 text-[14px]">{actionText}</span>
+                                <span className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">{confidence} Confidence</span>
                               </div>
                             </td>
-                            <td className="text-right">
+                            <td className="py-4 px-5 text-right">
                               <div className="flex flex-col items-end gap-0.5">
-                                <span className="font-mono-numbers font-bold text-primary">₹{expectedRec.toLocaleString('en-IN')}</span>
-                                <span className="text-[11px] text-ink-muted">Expected Impact</span>
+                                <span className="font-mono-numbers font-bold text-emerald-600 text-[14px]">₹{expectedRec.toLocaleString('en-IN')}</span>
+                                <span className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Expected Impact</span>
                               </div>
                             </td>
                           </tr>
