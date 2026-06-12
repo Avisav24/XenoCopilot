@@ -26,9 +26,23 @@ export const launchCampaign = (data: { name: string; persona_id: string; channel
 
 export const strategizeCampaign = (goal: string) =>
   fetchAPI<{ 
-    opportunityAnalysis: { score: number; potentialRevenue: number; audienceSize: number; historicalConversion: number; confidence: number; revenueAtRisk: number; };
-    aiRecommendation: { recommendedVariantId: string; why: string[]; expectedOutcome: { revenue: number; purchases: number; conversion: number; }; };
-    variants: { id: string; name: string; message: string; expectedRevenue: number; openRate: number; purchaseRate: number; confidence: number; strengths: string[]; risks: string[]; }[] 
+    executiveInsight: {
+      recommendedVariant: string;
+      expectedRevenue: number;
+      audienceSize: number;
+      confidence: number;
+      reason: string;
+    };
+    variants: {
+      id: string;
+      type: string;
+      subject: string;
+      previewText: string;
+      messageBody: string;
+      expectedConversion: number;
+      expectedRevenue: number;
+      confidence: number;
+    }[];
   }>('/api/ai/strategize', {
     method: 'POST',
     body: JSON.stringify({ goal }),
@@ -51,6 +65,10 @@ export const getDynamicPersonas = () => fetchAPI<{
   recommendedAction: string;
   expectedImpact: number;
   aiSummary: string;
+  purchaseFrequency?: string;
+  discountAffinity?: string;
+  bestChannels?: { channel: string; confidence: number }[];
+  primaryTraits?: string[];
 }[]>('/api/ai/dynamic-personas');
 
 export const getOpportunities = () => fetchAPI<{
@@ -67,6 +85,9 @@ export const getOpportunities = () => fetchAPI<{
   urgency: string;
   actionScenario: { description: string; value: number };
   noActionScenario: { description: string; value: number; churnImpact: string };
+  recommendedChannels?: string[];
+  activationMix?: { channel: string; percentage: number; reason: string }[];
+  mixReason?: string;
 }[]>('/api/ai/opportunities');
 
 export const getNextBestAction = (customer_id: string) => 

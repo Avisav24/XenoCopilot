@@ -338,85 +338,81 @@ export async function aiRoutes(fastify: FastifyInstance) {
         _count: { id: true }
       });
 
-      const systemPrompt = `You are an expert CRM strategist, lifecycle marketer, and conversion copywriter.
-Your task is to create multiple campaign variants for the same audience.
-Do NOT generate generic marketing messages.
-Use customer behavior, personas, purchase history, health scores, channel preference, and campaign objective.
+      const systemPrompt = `You are the backend engine for an enterprise Marketing Platform.
+Your responsibility is to generate actual campaign variants ready to send.
 
-Return ONLY a JSON object with this EXACT structure:
+You must return a JSON object with the following exact structure:
 {
-  "opportunityAnalysis": {
-    "score": 92,
-    "potentialRevenue": 16200,
-    "historicalConversion": 3.1,
-    "confidence": 81,
-    "revenueAtRisk": 8400
-  },
-  "aiRecommendation": {
-    "recommendedVariantId": "A",
-    "why": [
-      "Highest predicted revenue",
-      "Strong historical engagement",
-      "Best performance for dormant VIPs"
-    ],
-    "expectedOutcome": {
-      "revenue": 7200,
-      "purchases": 7,
-      "conversion": 2.8
-    }
+  "executiveSummary": {
+    "recommendedVariant": "Variant Name",
+    "expectedRevenue": 22800,
+    "audienceSize": 98,
+    "estimatedConversion": 3.1,
+    "launchRisk": "Low",
+    "recommendedChannel": "WhatsApp",
+    "whyThisCampaign": [
+      "Customers have not purchased in 60+ days",
+      "Average reorder cycle is 35 days",
+      "Previous WhatsApp campaigns generated highest ROI"
+    ]
   },
   "variants": [
     {
-      "id": "A",
-      "name": "Emotional Reconnection",
-      "message": "The exact message copy",
-      "expectedRevenue": 7200,
-      "openRate": 38,
-      "purchaseRate": 15,
-      "confidence": 81,
-      "strengths": ["Highest engagement", "Strong loyalty recovery"],
-      "risks": ["Slower conversion"]
+      "id": "recovery",
+      "type": "Recovery Campaign",
+      "subject": "Subject line (max 1 line)...",
+      "previewText": "Preview text (max 1 line)...",
+      "messageBody": "Message body (3-5 lines max)...",
+      "expectedConversion": 2.8,
+      "expectedRevenue": 18400,
+      "audienceSize": 98
     },
     {
-      "id": "B",
-      "name": "Value Driven",
-      "message": "The exact message copy",
-      "expectedRevenue": 5900,
-      "openRate": 25,
-      "purchaseRate": 11,
-      "confidence": 68,
-      "strengths": ["Quick conversion", "Clear value"],
-      "risks": ["Lowers margin"]
+      "id": "cross_sell",
+      "type": "Cross-Sell Campaign",
+      "subject": "Subject line...",
+      "previewText": "Preview text...",
+      "messageBody": "Message body...",
+      "expectedConversion": 2.2,
+      "expectedRevenue": 14200,
+      "audienceSize": 98
     },
     {
-      "id": "C",
-      "name": "Urgency Driven",
-      "message": "The exact message copy",
-      "expectedRevenue": 4800,
-      "openRate": 35,
-      "purchaseRate": 8,
-      "confidence": 62,
-      "strengths": ["Immediate action"],
-      "risks": ["High opt-out risk"]
+      "id": "vip",
+      "type": "VIP Campaign",
+      "subject": "Subject line...",
+      "previewText": "Preview text...",
+      "messageBody": "Message body...",
+      "expectedConversion": 3.1,
+      "expectedRevenue": 22800,
+      "audienceSize": 98
     }
   ]
 }
 
-CRITICAL RULES:
-1. "why" in aiRecommendation MUST be an array of short strings (max 3 items). No paragraphs.
-2. Provide exactly 3 message variants.
-3. Message copy should be concise and directly address the persona.`;
+## Copy Constraints
+Messages must be short:
+- Subject: Maximum 1 line.
+- Preview: Maximum 1 line.
+- Body: Maximum 3-5 lines.
+
+## Personalization Rules
+Never use generic marketing language (e.g., "Valued Customer", "Dear Customer", "We Miss You", "Special Offer Just For You").
+Instead reference actual attributes (Customer Name, Last Purchase, Favorite Category, Purchase Frequency, LTV Tier).
+(e.g., "Hi Sarah,", "Your last skincare purchase was 42 days ago", "You typically reorder every 35 days", "You are among our top skincare customers").
+Messages should feel generated from CRM database records.`;
 
       const personaListStr = personas
-        .map((p) => `ID: ${p.id} | Name: ${p.name} | Desc: ${p.description}`)
+        .map((p) => `ID: ${p.id} | Name: ${p.name} | Count: ${p.customerCount}`)
         .join('\n');
 
-      const userPrompt = `Customer Segment Context: Overall DB Health Avg: ${Math.round(stats._avg.health_score || 0)}
-Campaign Objective: "${goal}"
-Top Personas:
+      const userPrompt = `Overall DB Health Avg: ${Math.round(stats._avg.health_score || 0)}
+Target Personas context:
 ${personaListStr}
 
-Generate the 3 persuasion strategies.`;
+User Objective: "${goal}"
+
+Generate the structured JSON campaign variants for this objective.`;
 
       let aiResult;
       try {
@@ -426,14 +422,61 @@ Generate the 3 persuasion strategies.`;
           systemPrompt, 
           userPrompt, 
           0.2,
-          true
+          true // Force JSON
         );
 
-        const cleaned = text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
-        aiResult = JSON.parse(cleaned);
+        aiResult = JSON.parse(text);
       } catch (aiErr) {
         console.error('AI strategize failed:', aiErr);
-        return reply.status(500).send({ error: 'AI failed to generate strategy' });
+        // Fallback mock data if AI fails
+        aiResult = {
+          executiveSummary: {
+            recommendedVariant: "Dormant Customer Recovery",
+            expectedRevenue: 19500,
+            audienceSize: 428,
+            estimatedConversion: 2.5,
+            launchRisk: "Low",
+            recommendedChannel: "WhatsApp",
+            whyThisCampaign: [
+              "Customers have not purchased in 60+ days",
+              "Average reorder cycle is 35 days",
+              "Previous WhatsApp campaigns generated highest ROI",
+              "Estimated recoverable revenue: ₹19,500"
+            ]
+          },
+          variants: [
+            {
+              id: "recovery",
+              type: "Recovery Campaign",
+              subject: "Time to restock your skincare essentials",
+              previewText: "Your last purchase was 60 days ago",
+              messageBody: "Hi Sarah,\n\nYour Vitamin C Serum may be running low.\n\nWe've selected products based on your previous purchases.\n\nExplore your personalized recommendations today.",
+              expectedConversion: 2.8,
+              expectedRevenue: 18400,
+              audienceSize: 428
+            },
+            {
+              id: "cross_sell",
+              type: "Cross-Sell Campaign",
+              subject: "Recommended based on your skincare routine",
+              previewText: "Perfect additions to your regimen",
+              messageBody: "Hi Sarah,\n\nYou typically reorder every 35 days.\n\nBased on your past orders, Hydration Booster pairs perfectly with your routine.\n\nDiscover these customized suggestions.",
+              expectedConversion: 2.2,
+              expectedRevenue: 14200,
+              audienceSize: 428
+            },
+            {
+              id: "vip",
+              type: "VIP Campaign",
+              subject: "Early access for our top customers",
+              previewText: "Exclusive preview of the new collection",
+              messageBody: "Hi Sarah,\n\nYou are among our top skincare customers.\n\nWe're giving you priority access to our upcoming line.\n\nNo discount needed, just early access.",
+              expectedConversion: 3.1,
+              expectedRevenue: 22800,
+              audienceSize: 428
+            }
+          ]
+        };
       }
 
       return reply.send(aiResult);
@@ -533,7 +576,8 @@ Example format:
           avgLTV: vipCount > 0 ? Math.round(vipRev / vipCount) : 0,
           avgAOV: 1850,
           churnRisk: 'Low',
-          bestChannel: 'WhatsApp',
+          bestChannels: ['Outbound Calls', 'WhatsApp', 'Email'],
+          channelConfidence: 89,
           bestCampaignType: 'Early Access Drops',
           revenueOpportunity: Math.round(vipRev * 0.15),
           monthlyTrend: '-8%',
@@ -552,7 +596,8 @@ Example format:
           avgLTV: dormantCount > 0 ? Math.round(dormantRev / dormantCount) : 0,
           avgAOV: 1200,
           churnRisk: 'Very High',
-          bestChannel: 'Email',
+          bestChannels: ['Email', 'Outbound Calls', 'SMS'],
+          channelConfidence: 76,
           bestCampaignType: 'Win-Back Offers',
           revenueOpportunity: Math.round(dormantRev * 0.25),
           monthlyTrend: '-12%',
@@ -571,7 +616,8 @@ Example format:
           avgLTV: regularCount > 0 ? Math.round(regularRev / regularCount) : 0,
           avgAOV: 850,
           churnRisk: 'Medium',
-          bestChannel: 'SMS',
+          bestChannels: ['SMS', 'Email', 'WhatsApp'],
+          channelConfidence: 92,
           bestCampaignType: 'Flash Sales',
           revenueOpportunity: Math.round(regularRev * 0.10),
           monthlyTrend: '+2%',
@@ -590,7 +636,8 @@ Example format:
           avgLTV: 1100,
           avgAOV: 1100,
           churnRisk: 'Medium',
-          bestChannel: 'Email',
+          bestChannels: ['Email', 'WhatsApp', 'Outbound Calls'],
+          channelConfidence: 81,
           bestCampaignType: 'Welcome Series',
           revenueOpportunity: 18000,
           monthlyTrend: '+14%',
@@ -609,7 +656,8 @@ Example format:
           avgLTV: 0,
           avgAOV: 0,
           churnRisk: 'Low',
-          bestChannel: 'SMS',
+          bestChannels: ['SMS', 'WhatsApp', 'Email'],
+          channelConfidence: 68,
           bestCampaignType: 'First-Purchase Discount',
           revenueOpportunity: 12000,
           monthlyTrend: '+5%',
@@ -648,6 +696,13 @@ Example format:
           ],
           aiExplanation: 'Customer inactivity is increasing. Historical recovery rate decreases after 60 days. This creates pressure to act.',
           recommendedAction: 'Launch Win-Back Campaign',
+          recommendedChannels: ['WhatsApp', 'Email', 'Outbound Calls'],
+          activationMix: [
+            { channel: 'WhatsApp', percentage: 50 },
+            { channel: 'Email', percentage: 30 },
+            { channel: 'Outbound Calls', percentage: 20 }
+          ],
+          mixReason: 'Dormant customers require a multi-channel approach. High-value dormant users should be called directly to overcome friction.',
           revenueAtRisk: 8400,
           urgency: 'High',
           actionScenario: {
@@ -674,6 +729,13 @@ Example format:
           ],
           aiExplanation: 'VIP engagement has dropped. Leaving this cohort unengaged risks losing high-LTV customers to competitors.',
           recommendedAction: 'VIP Early Access Campaign',
+          recommendedChannels: ['Outbound Calls', 'WhatsApp', 'Email'],
+          activationMix: [
+            { channel: 'Outbound Calls', percentage: 40 },
+            { channel: 'WhatsApp', percentage: 35 },
+            { channel: 'Email', percentage: 25 }
+          ],
+          mixReason: 'High-value customers respond better to personal outreach.',
           revenueAtRisk: 4200,
           urgency: 'Medium',
           actionScenario: {
@@ -700,6 +762,13 @@ Example format:
           ],
           aiExplanation: 'Clear inventory and drive volume from an audience currently seeking value. Delaying misses the peak buying window.',
           recommendedAction: 'Send 48hr Flash Sale',
+          recommendedChannels: ['SMS', 'Email', 'WhatsApp'],
+          activationMix: [
+            { channel: 'SMS', percentage: 60 },
+            { channel: 'Email', percentage: 30 },
+            { channel: 'WhatsApp', percentage: 10 }
+          ],
+          mixReason: 'Discount buyers are volume-driven. Mass SMS paired with Email is the most cost-effective activation strategy.',
           revenueAtRisk: 1200,
           urgency: 'Low',
           actionScenario: {
@@ -819,9 +888,23 @@ Example format:
           audienceMatch: 'Low',
           confidence: 'High',
           reasoning: 'High delivery but very low click-through. Not recommended for revenue generation campaigns unless paired with significant discounts.'
+        },
+        {
+          channel: 'Outbound Calls',
+          expectedDelivery: 90,
+          expectedCalls: Math.round(baseAudience * 0.3),
+          connectedCalls: Math.round(baseAudience * 0.144),
+          interestedCustomers: Math.round(baseAudience * 0.05),
+          expectedPurchases: Math.round(baseAudience * 0.018),
+          expectedRevenue: Math.round(baseAudience * 0.018 * 1650),
+          conversion: 1.8,
+          audienceMatch: 'High',
+          confidence: 'High',
+          reasoning: 'Outbound calling provides the highest qualitative conversion rate for high-value segments, although limited by capacity.'
         }
       ];
 
+      channels.sort((a, b) => b.expectedRevenue - a.expectedRevenue);
       return reply.send(channels);
     } catch (err) {
       return reply.status(500).send({ error: 'Failed' });

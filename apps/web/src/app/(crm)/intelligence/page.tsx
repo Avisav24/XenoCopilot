@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCustomers, getCustomerStats } from '@/lib/api';
-import { Search, Xmark, Mail, Phone, MapPin } from 'iconoir-react';
+import { Search, Xmark, Mail, Phone, MapPin, Group, WarningTriangle, GraphUp, Strategy } from 'iconoir-react';
 import { clsx } from 'clsx';
 
 const PERSONA_COLORS: Record<string, string> = {
@@ -140,6 +140,64 @@ export default function IntelligencePage() {
                       </div>
                    </div>
                  </div>
+
+                 <div className="flex flex-col gap-2">
+                   <span className="label-text">Contact Channels</span>
+                   <div className="flex gap-2 flex-wrap">
+                     <span className="text-[12px] bg-canvas-soft border border-hairline px-2 py-1 rounded text-ink font-medium">WhatsApp</span>
+                     <span className="text-[12px] bg-canvas-soft border border-hairline px-2 py-1 rounded text-ink font-medium">Email</span>
+                     <span className="text-[12px] bg-canvas-soft border border-hairline px-2 py-1 rounded text-ink font-medium">Outbound Call</span>
+                   </div>
+                 </div>
+
+                 <div className="flex flex-col gap-2">
+                   <span className="label-text">Recent Call Activity</span>
+                   <div className="bg-canvas border border-hairline rounded-lg p-4 flex flex-col gap-3 text-[13px]">
+                     <div className="flex justify-between border-b border-hairline pb-2">
+                       <span className="text-ink-muted">Last Call</span>
+                       <span className="font-medium text-ink">3 days ago</span>
+                     </div>
+                     <div className="flex justify-between border-b border-hairline pb-2">
+                       <span className="text-ink-muted">Outcome</span>
+                       <span className="font-medium text-semantic-success">Interested</span>
+                     </div>
+                     <div className="flex justify-between">
+                       <span className="text-ink-muted">Next Follow Up</span>
+                       <span className="font-medium text-ink">Tomorrow</span>
+                     </div>
+                   </div>
+                 </div>
+
+                 <div className="flex flex-col gap-2">
+                   <span className="label-text">Customer Timeline</span>
+                   <div className="flex flex-col gap-0 border-l-2 border-hairline ml-2 pl-4 py-1 relative">
+                     <div className="relative mb-6">
+                       <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-emerald-500 ring-4 ring-canvas" />
+                       <span className="block text-[13px] font-bold text-emerald-600">Purchased Order #8932 (₹2,100)</span>
+                       <span className="block text-[11px] font-bold text-ink-muted">10:12 AM today • 47 mins after click</span>
+                     </div>
+                     <div className="relative mb-6">
+                       <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-primary ring-4 ring-canvas" />
+                       <span className="block text-[13px] font-medium text-ink">Clicked WhatsApp Link</span>
+                       <span className="block text-[11px] font-bold text-ink-muted">09:45 AM today</span>
+                     </div>
+                     <div className="relative mb-6">
+                       <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-primary ring-4 ring-canvas" />
+                       <span className="block text-[13px] font-medium text-ink">Opened WhatsApp Message</span>
+                       <span className="block text-[11px] font-bold text-ink-muted">09:43 AM today</span>
+                     </div>
+                     <div className="relative mb-6">
+                       <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-muted ring-4 ring-canvas" />
+                       <span className="block text-[13px] font-medium text-ink">Delivered via WhatsApp</span>
+                       <span className="block text-[11px] font-bold text-ink-muted">09:42 AM today</span>
+                     </div>
+                     <div className="relative">
+                       <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-muted ring-4 ring-canvas" />
+                       <span className="block text-[13px] font-medium text-ink">Sent "Dormant VIP Recovery"</span>
+                       <span className="block text-[11px] font-bold text-ink-muted">09:41 AM today</span>
+                     </div>
+                   </div>
+                 </div>
               </div>
             </div>
           </div>
@@ -160,22 +218,57 @@ export default function IntelligencePage() {
         <div className="flex flex-col w-full gap-8">
           
           {/* KPI Row */}
-          <div className="grid grid-cols-4 gap-6">
-            <div className="card flex flex-col gap-1 p-5">
-              <span className="label-text">Customers</span>
-              <span className="text-[32px] font-bold text-ink font-mono-numbers">{stats.total.toLocaleString()}</span>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-white border border-slate-200 rounded-[16px] p-6 hover:-translate-y-[2px] hover:shadow-sm transition-all duration-200 flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                 <Group height={18} width={18} className="text-slate-500" />
+                 <h3 className="text-[14px] font-medium text-slate-600">Customers</h3>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[40px] font-bold tracking-tight text-slate-950 font-mono-numbers leading-none">{stats.total.toLocaleString()}</span>
+              </div>
+              <div className="flex flex-col gap-1 pt-4 border-t border-slate-100">
+                <span className="text-[13px] text-slate-500">Total enriched profiles</span>
+              </div>
             </div>
-            <div className="card flex flex-col gap-1 p-5">
-              <span className="label-text">Revenue at Risk</span>
-              <span className="text-[32px] font-bold text-semantic-danger font-mono-numbers">₹94,500</span>
+
+            <div className="bg-white border border-slate-200 rounded-[16px] p-6 hover:-translate-y-[2px] hover:shadow-sm transition-all duration-200 flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                 <WarningTriangle height={18} width={18} className="text-slate-500" />
+                 <h3 className="text-[14px] font-medium text-slate-600">Revenue at Risk</h3>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[40px] font-bold tracking-tight text-slate-950 font-mono-numbers leading-none text-semantic-danger">₹94,500</span>
+              </div>
+              <div className="flex flex-col gap-1 pt-4 border-t border-slate-100">
+                <span className="text-[13px] text-slate-500">85 action items required</span>
+              </div>
             </div>
-            <div className="card flex flex-col gap-1 p-5">
-              <span className="label-text">VIP Revenue</span>
-              <span className="text-[32px] font-bold text-ink font-mono-numbers">₹3.2M</span>
+
+            <div className="bg-white border border-slate-200 rounded-[16px] p-6 hover:-translate-y-[2px] hover:shadow-sm transition-all duration-200 flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                 <GraphUp height={18} width={18} className="text-slate-500" />
+                 <h3 className="text-[14px] font-medium text-slate-600">VIP Revenue</h3>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[40px] font-bold tracking-tight text-slate-950 font-mono-numbers leading-none">₹3.2M</span>
+              </div>
+              <div className="flex flex-col gap-1 pt-4 border-t border-slate-100">
+                <span className="text-[13px] text-slate-500">Top decile retention stable</span>
+              </div>
             </div>
-            <div className="card flex flex-col gap-1 p-5">
-              <span className="label-text">Average LTV</span>
-              <span className="text-[32px] font-bold text-ink font-mono-numbers">₹15,703</span>
+
+            <div className="bg-white border border-slate-200 rounded-[16px] p-6 hover:-translate-y-[2px] hover:shadow-sm transition-all duration-200 flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                 <Strategy height={18} width={18} className="text-slate-500" />
+                 <h3 className="text-[14px] font-medium text-slate-600">Average LTV</h3>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[40px] font-bold tracking-tight text-slate-950 font-mono-numbers leading-none">₹15,703</span>
+              </div>
+              <div className="flex flex-col gap-1 pt-4 border-t border-slate-100">
+                <span className="text-[13px] text-slate-500">Historical performance</span>
+              </div>
             </div>
           </div>
 

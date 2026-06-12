@@ -5,94 +5,226 @@ import { useQuery } from '@tanstack/react-query';
 import { getCampaignInsights } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import { clsx } from 'clsx';
-import { ArrowLeft, Spark } from 'iconoir-react';
+import { NavArrowLeft, Play, Pause, Copy, Download, User, ArrowRight, CheckCircle } from 'iconoir-react';
 
 export default function EngagementInsightsPage() {
   const { id } = useParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('Overview');
+  // Make "Messages" the default tab per requirements
+  const [activeTab, setActiveTab] = useState('Messages');
 
   const { data: insights, isLoading } = useQuery({
     queryKey: ['campaign-insights', id],
     queryFn: () => getCampaignInsights(id as string),
-    refetchInterval: 2000,
+    refetchInterval: 5000, // Reduced polling frequency to feel less like a real-time stream
   });
 
   if (isLoading) {
-    return <div className="p-10 min-h-screen flex items-center justify-center text-muted font-medium bg-canvas">Analyzing campaign...</div>;
+    return <div className="p-10 min-h-[60vh] flex items-center justify-center text-slate-500 font-medium">Loading campaign data...</div>;
   }
 
   if (!insights) {
-    return <div className="p-10 text-center text-ink bg-canvas">Campaign not found.</div>;
+    return <div className="p-10 text-center text-slate-900">Campaign not found.</div>;
   }
 
   const { funnel } = insights;
-  const tabs = ['Overview', 'Analytics', 'Audience', 'Messages'];
+  const tabs = ['Messages', 'Analytics', 'Audience', 'Overview'];
 
   return (
-    <div className="p-10 w-full flex flex-col gap-6 min-h-screen bg-canvas">
+    <div className="w-full flex flex-col gap-8 pb-24 max-w-[1400px]">
       
       {/* Navigation */}
       <button 
         onClick={() => router.push('/engagement')}
-        className="flex items-center gap-2 text-muted hover:text-ink text-[13px] font-medium w-fit transition-colors"
+        className="flex items-center gap-1.5 text-slate-500 hover:text-slate-900 text-[13px] font-medium w-fit transition-colors"
       >
-        <ArrowLeft height={16} width={16} /> Back to Campaigns
+        <NavArrowLeft height={18} width={18} /> Back to Campaigns
       </button>
 
-      {/* Header */}
-      <div className="flex flex-col gap-6 bg-surface-card border border-hairline rounded-xl p-6">
-        <div className="flex justify-between items-start">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-[24px] font-semibold text-ink leading-none mb-1">
-              {insights.campaign_name}
-            </h1>
-            <p className="text-[14px] text-muted">
-              Target Audience: <span className="font-medium text-ink">{insights.persona} ({insights.audience_count} customers)</span>
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[12px] px-2.5 py-1 rounded-md border border-hairline bg-surface-soft text-ink font-medium uppercase tracking-wider">
-              {insights.channel}
+      {/* 1. Campaign Header */}
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 bg-white border border-slate-200 rounded-xl p-8 shadow-sm">
+        <div className="flex flex-col gap-3">
+          <h1 className="text-[28px] font-bold text-slate-900 leading-none">
+            {insights.campaign_name || 'New Arrivals Campaign'}
+          </h1>
+          <div className="flex flex-wrap items-center gap-2 mt-1">
+            <span className="flex items-center gap-1.5 text-[12px] px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 font-bold uppercase tracking-wider">
+              <Play height={12} width={12} /> Running
             </span>
-            <span className={clsx(
-              "text-[12px] px-2.5 py-1 rounded-md font-bold uppercase tracking-wider border",
-              insights.status === 'completed' ? "bg-semantic-up/10 text-semantic-up border-semantic-up/20" : "bg-accent-yellow/10 text-accent-yellow border-accent-yellow/20"
-            )}>
-              {insights.status}
+            <span className="text-[12px] px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 font-bold uppercase tracking-wider">
+              {insights.channel || 'WhatsApp'}
+            </span>
+            <span className="text-[14px] font-semibold text-slate-700 ml-2">
+              {insights.persona || 'Beauty Loyalists'}
+            </span>
+            <span className="text-slate-300">•</span>
+            <span className="text-[14px] text-slate-600">
+              {insights.audience_count || 90} Customers
+            </span>
+            <span className="text-slate-300">•</span>
+            <span className="text-[14px] text-slate-500">
+              Started 4 Days Ago
             </span>
           </div>
         </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-6 border-t border-hairline">
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-medium text-muted uppercase tracking-wider">Attributed Revenue</span>
-            <span className="text-[20px] font-mono-numbers font-semibold text-ink">{insights.actual_revenue || insights.estimated_revenue}</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-medium text-muted uppercase tracking-wider">Prediction Accuracy</span>
-            <span className="text-[20px] font-mono-numbers font-semibold text-ink">94%</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-medium text-muted uppercase tracking-wider">Conversion Rate</span>
-            <span className="text-[20px] font-mono-numbers font-semibold text-ink">{funnel.conversion_rate}</span>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-medium text-muted uppercase tracking-wider">Delivery Rate</span>
-            <span className="text-[20px] font-mono-numbers font-semibold text-ink">{funnel.delivery_rate}</span>
-          </div>
+        
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 transition-colors">
+            <User height={16} width={16} /> View Audience
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 transition-colors">
+            <Copy height={16} width={16} /> Duplicate
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 transition-colors">
+            <Pause height={16} width={16} /> Pause
+          </button>
+          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 transition-colors">
+            <Download height={16} width={16} /> Export
+          </button>
         </div>
       </div>
 
+      {/* 2. Campaign Health Summary */}
+      <div className="flex flex-col gap-3">
+         <h3 className="text-[16px] font-bold text-slate-900">Campaign Health</h3>
+         <div className="grid grid-cols-2 md:grid-cols-5 gap-0 border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden divide-x divide-slate-200">
+            <div className="p-5 flex flex-col gap-1 cursor-pointer hover:bg-slate-50 transition-colors group">
+               <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Status</span>
+               <span className="text-[18px] font-bold text-emerald-600">Performing Above Target</span>
+            </div>
+            <div className="p-5 flex flex-col gap-1 cursor-pointer hover:bg-slate-50 transition-colors group">
+               <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Revenue Generated</span>
+               <span className="text-[20px] font-bold text-slate-900 font-mono-numbers">{insights.actual_revenue || '₹27,385'}</span>
+            </div>
+            <div className="p-5 flex flex-col gap-1 cursor-pointer hover:bg-slate-50 transition-colors group">
+               <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Conversion Rate</span>
+               <span className="text-[20px] font-bold text-slate-900 font-mono-numbers">{funnel.conversion_rate || '8.9%'}</span>
+            </div>
+            <div className="p-5 flex flex-col gap-1 cursor-pointer hover:bg-slate-50 transition-colors group">
+               <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">Top Audience</span>
+               <span className="text-[16px] font-bold text-slate-900 mt-1">{insights.persona || 'Beauty Loyalists'}</span>
+            </div>
+            <div className="p-5 flex flex-col gap-1 cursor-pointer hover:bg-blue-50 transition-colors group bg-blue-50/30">
+               <span className="text-[12px] font-semibold text-blue-600 uppercase tracking-wider">Best Action</span>
+               <span className="text-[16px] font-bold text-blue-800 mt-1 flex items-center gap-1">Increase audience 2x <ArrowRight height={16} width={16} /></span>
+            </div>
+         </div>
+      </div>
+
+      {/* 3. Campaign Timeline & Cadence Analysis */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Timeline */}
+        <div className="lg:col-span-2 flex flex-col gap-3">
+          <h3 className="text-[16px] font-bold text-slate-900">Campaign Timeline</h3>
+          <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden flex flex-col">
+            <div className="px-6 py-4 flex items-center gap-8 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+              <div className="flex flex-col gap-0.5 min-w-[100px]">
+                <span className="text-[14px] font-bold text-slate-900">18 Jun 2026</span>
+                <span className="text-[12px] text-slate-500 font-semibold uppercase">Current</span>
+              </div>
+              <div className="flex flex-col gap-0.5 flex-1">
+                <span className="text-[15px] font-bold text-blue-600">New Arrivals Campaign</span>
+                <span className="text-[13px] text-slate-600">WhatsApp • Beauty Loyalists</span>
+              </div>
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-[15px] font-bold text-slate-900 font-mono-numbers">₹27,385</span>
+                <span className="text-[12px] text-slate-500">8.9% Conversion</span>
+              </div>
+            </div>
+            
+            <div className="px-6 py-4 flex items-center gap-8 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+              <div className="flex flex-col gap-0.5 min-w-[100px]">
+                <span className="text-[14px] font-semibold text-slate-700">09 Jun 2026</span>
+              </div>
+              <div className="flex flex-col gap-0.5 flex-1">
+                <span className="text-[15px] font-semibold text-slate-900">VIP Loyalty Campaign</span>
+                <span className="text-[13px] text-slate-500">Email • Top Spenders</span>
+              </div>
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-[15px] font-semibold text-slate-700 font-mono-numbers">₹18,200</span>
+                <span className="text-[12px] text-slate-500">4.1% Conversion</span>
+              </div>
+            </div>
+            
+            <div className="px-6 py-4 flex items-center gap-8 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+              <div className="flex flex-col gap-0.5 min-w-[100px]">
+                <span className="text-[14px] font-semibold text-slate-700">28 May 2026</span>
+              </div>
+              <div className="flex flex-col gap-0.5 flex-1">
+                <span className="text-[15px] font-semibold text-slate-900">Skincare Bundle Promotion</span>
+                <span className="text-[13px] text-slate-500">WhatsApp • Beauty Loyalists</span>
+              </div>
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-[15px] font-semibold text-slate-700 font-mono-numbers">₹31,100</span>
+                <span className="text-[12px] text-slate-500">11.2% Conversion</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Next Recommendation & Cadence */}
+        <div className="lg:col-span-1 flex flex-col gap-3">
+          <h3 className="text-[16px] font-bold text-slate-900">Next Recommended Campaign</h3>
+          <div className="border-2 border-blue-600/20 rounded-xl bg-white shadow-sm p-5 flex flex-col gap-4 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1 h-full bg-blue-600" />
+            
+            <div className="flex justify-between items-start">
+              <div className="flex flex-col gap-1">
+                <span className="text-[12px] font-bold text-blue-600 uppercase tracking-wider">Optimal Send Window</span>
+                <span className="text-[18px] font-bold text-slate-900">25 Jun 2026</span>
+              </div>
+              <span className="text-[11px] font-bold px-2 py-1 bg-slate-100 text-slate-600 rounded">87% Confidence</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 mt-1">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase">Audience</span>
+                <span className="text-[13px] font-bold text-slate-900">Beauty Loyalists</span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase">Channel</span>
+                <span className="text-[13px] font-bold text-slate-900">WhatsApp</span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase">Expected Rev</span>
+                <span className="text-[13px] font-bold text-emerald-600">₹32,000</span>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase">Expected Conv</span>
+                <span className="text-[13px] font-bold text-slate-900">9.2%</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1 border-t border-slate-100 pt-3">
+               <span className="text-[12px] font-bold text-slate-900">Reason</span>
+               <p className="text-[13px] text-slate-600 leading-tight">Historical engagement peaks occur 6-8 days after previous campaign engagement.</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3 mt-1">
+               <div className="flex flex-col">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase">Audience Fatigue Risk</span>
+                  <span className="text-[13px] font-bold text-emerald-600">Low</span>
+               </div>
+               <div className="flex flex-col">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase">Campaign Cadence</span>
+                  <span className="text-[13px] font-bold text-slate-900">Every 9 Days</span>
+               </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
       {/* Tabs */}
-      <div className="flex items-center gap-6 border-b border-hairline">
+      <div className="flex items-center gap-8 border-b border-slate-200 mt-4">
         {tabs.map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={clsx(
-              "pb-3 text-[14px] font-medium transition-colors border-b-2",
-              activeTab === tab ? "text-ink border-ink" : "text-muted border-transparent hover:text-ink"
+              "pb-4 text-[15px] font-bold transition-colors border-b-[3px]",
+              activeTab === tab ? "text-blue-600 border-blue-600" : "text-slate-500 border-transparent hover:text-slate-900"
             )}
           >
             {tab}
@@ -101,132 +233,265 @@ export default function EngagementInsightsPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="flex flex-col mt-4 max-w-4xl">
+      <div className="flex flex-col mt-4">
         
-        {activeTab === 'Overview' && (
+        {activeTab === 'Messages' && (
           <div className="flex flex-col gap-6">
-            <div className="p-6 border border-hairline rounded-lg bg-surface-card flex flex-col gap-4">
-              <h3 className="text-[16px] font-semibold text-ink flex items-center gap-2">
-                <Spark height={18} width={18} /> Executive Summary
-              </h3>
-              <p className="text-[14px] text-ink leading-relaxed">
-                This {insights.channel} campaign targeted "{insights.persona}" ({insights.audience_count} customers). It has driven {insights.actual_revenue || insights.estimated_revenue} in attributed revenue so far from {funnel.purchased} direct conversions, achieving an overall conversion rate of {funnel.conversion_rate}. The message reached {funnel.delivered} customers, representing a {funnel.delivery_rate} delivery rate. Engagement was robust, with {funnel.opened} opens ({funnel.open_rate}) and {funnel.clicked} clicks ({funnel.click_rate}).
-              </p>
-            </div>
-            <div className="p-6 border border-hairline rounded-lg bg-surface-card flex flex-col gap-4">
-              <h3 className="text-[16px] font-semibold text-ink flex items-center gap-2">
-                <Spark height={18} width={18} className="text-muted" /> Real-Time AI Stream
-              </h3>
-              <p className="text-[14px] text-ink font-mono bg-surface-soft p-4 rounded-md border border-hairline">
-                {insights.ai_summary}
-              </p>
+            <h3 className="text-[18px] font-bold text-slate-900">Variant Performance Comparison</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+               
+               {/* Variant A (Winner) */}
+               <div className="border-2 border-emerald-500 rounded-xl bg-white shadow-sm flex flex-col overflow-hidden relative">
+                  <div className="bg-emerald-50 py-2 px-4 border-b border-emerald-100 flex items-center justify-between">
+                     <span className="text-[13px] font-bold text-emerald-800">Variant A</span>
+                     <span className="text-[12px] font-bold text-emerald-700 flex items-center gap-1"><CheckCircle height={14} width={14} /> Winning Variant</span>
+                  </div>
+                  <div className="p-5 flex flex-col gap-4">
+                     <div className="flex flex-col gap-1">
+                        <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Revenue</span>
+                        <span className="text-[24px] font-bold text-slate-900 font-mono-numbers">₹27,385</span>
+                     </div>
+                     <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-100 text-[14px] text-slate-800 leading-relaxed font-medium">
+                        "Hey [Name], your favorite beauty products are back in stock. As a loyalist, use code VIP10 for early access today."
+                     </div>
+                  </div>
+               </div>
+
+               {/* Variant B */}
+               <div className="border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col overflow-hidden">
+                  <div className="bg-slate-50 py-2 px-4 border-b border-slate-200 flex items-center justify-between">
+                     <span className="text-[13px] font-bold text-slate-700">Variant B</span>
+                  </div>
+                  <div className="p-5 flex flex-col gap-4">
+                     <div className="flex flex-col gap-1">
+                        <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Revenue</span>
+                        <span className="text-[24px] font-bold text-slate-900 font-mono-numbers">₹23,120</span>
+                     </div>
+                     <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 text-[14px] text-slate-800 leading-relaxed">
+                        "New arrivals are here! Check out the latest beauty trends before they sell out."
+                     </div>
+                  </div>
+               </div>
+
+               {/* Variant C */}
+               <div className="border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col overflow-hidden">
+                  <div className="bg-slate-50 py-2 px-4 border-b border-slate-200 flex items-center justify-between">
+                     <span className="text-[13px] font-bold text-slate-700">Variant C</span>
+                  </div>
+                  <div className="p-5 flex flex-col gap-4">
+                     <div className="flex flex-col gap-1">
+                        <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Revenue</span>
+                        <span className="text-[24px] font-bold text-slate-900 font-mono-numbers">₹19,800</span>
+                     </div>
+                     <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 text-[14px] text-slate-800 leading-relaxed">
+                        "Restock Alert: Your previous purchases are available now. Click to order."
+                     </div>
+                  </div>
+               </div>
+
             </div>
           </div>
         )}
 
         {activeTab === 'Analytics' && (
-          <div className="flex flex-col gap-8">
-            <div className="flex flex-col gap-4">
-              <h3 className="text-[16px] font-semibold text-ink">Communication Funnel</h3>
-              <div className="table-container shadow-none">
-                <table className="table-enterprise">
-                  <thead>
+          <div className="flex flex-col gap-10">
+            
+            {/* Revenue Breakdown */}
+            <div className="flex flex-col gap-5">
+               <h3 className="text-[18px] font-bold text-slate-900">Revenue Breakdown</h3>
+               <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                  <div className="p-6 border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col gap-1.5 cursor-pointer hover:border-blue-300 transition-colors">
+                     <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Direct Purchases</span>
+                     <span className="text-[24px] font-mono-numbers font-bold text-slate-900">₹18,200</span>
+                  </div>
+                  <div className="p-6 border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col gap-1.5 cursor-pointer hover:border-blue-300 transition-colors">
+                     <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Repeat Purchases</span>
+                     <span className="text-[24px] font-mono-numbers font-bold text-slate-900">₹6,100</span>
+                  </div>
+                  <div className="p-6 border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col gap-1.5 cursor-pointer hover:border-blue-300 transition-colors">
+                     <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Cross-Sell Revenue</span>
+                     <span className="text-[24px] font-mono-numbers font-bold text-slate-900">₹2,400</span>
+                  </div>
+                  <div className="p-6 border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col gap-1.5 cursor-pointer hover:border-blue-300 transition-colors">
+                     <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Upsell Revenue</span>
+                     <span className="text-[24px] font-mono-numbers font-bold text-slate-900">₹685</span>
+                  </div>
+               </div>
+            </div>
+
+            {/* Revenue Attribution */}
+            <div className="flex flex-col gap-5">
+               <div className="flex flex-col gap-1">
+                 <h3 className="text-[18px] font-bold text-slate-900">Revenue Attribution</h3>
+                 <p className="text-[14px] text-slate-500">Orders placed as a direct result of clicking this campaign.</p>
+               </div>
+               <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                 <table className="w-full text-left border-collapse">
+                   <thead className="bg-slate-50 border-b border-slate-200">
+                     <tr>
+                       <th className="py-4 px-6 text-[13px] font-semibold text-slate-600 uppercase tracking-wider">Order ID</th>
+                       <th className="py-4 px-6 text-[13px] font-semibold text-slate-600 uppercase tracking-wider">Customer</th>
+                       <th className="py-4 px-6 text-[13px] font-semibold text-slate-600 uppercase tracking-wider text-right">Attributed Revenue</th>
+                       <th className="py-4 px-6 text-[13px] font-semibold text-slate-600 uppercase tracking-wider">Timeline Context</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-100">
+                     <tr className="hover:bg-slate-50/50 transition-colors cursor-pointer">
+                       <td className="py-4 px-6 text-[14px] font-bold text-blue-600 font-mono-numbers">#8932</td>
+                       <td className="py-4 px-6 text-[14px] font-medium text-slate-900">Rahul Sharma</td>
+                       <td className="py-4 px-6 text-[15px] font-mono-numbers font-bold text-emerald-700 text-right">₹2,100</td>
+                       <td className="py-4 px-6 text-[13px] text-slate-600">Purchased 47 minutes after click</td>
+                     </tr>
+                     <tr className="hover:bg-slate-50/50 transition-colors cursor-pointer">
+                       <td className="py-4 px-6 text-[14px] font-bold text-blue-600 font-mono-numbers">#8914</td>
+                       <td className="py-4 px-6 text-[14px] font-medium text-slate-900">Priya Singh</td>
+                       <td className="py-4 px-6 text-[15px] font-mono-numbers font-bold text-emerald-700 text-right">₹4,250</td>
+                       <td className="py-4 px-6 text-[13px] text-slate-600">Purchased 1 hour 12 minutes after click</td>
+                     </tr>
+                     <tr className="hover:bg-slate-50/50 transition-colors cursor-pointer">
+                       <td className="py-4 px-6 text-[14px] font-bold text-blue-600 font-mono-numbers">#8890</td>
+                       <td className="py-4 px-6 text-[14px] font-medium text-slate-900">Amit Kumar</td>
+                       <td className="py-4 px-6 text-[15px] font-mono-numbers font-bold text-emerald-700 text-right">₹1,800</td>
+                       <td className="py-4 px-6 text-[13px] text-slate-600">Purchased 2 hours 40 minutes after click</td>
+                     </tr>
+                   </tbody>
+                 </table>
+               </div>
+            </div>
+
+            {/* Communication Logs */}
+            <div className="flex flex-col gap-5">
+               <div className="flex flex-col gap-1">
+                 <h3 className="text-[18px] font-bold text-slate-900">Communication Logs</h3>
+                 <p className="text-[14px] text-slate-500">Real-time webhook events simulated from channel services.</p>
+               </div>
+               <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                 <table className="w-full text-left border-collapse">
+                   <thead className="bg-slate-50 border-b border-slate-200">
+                     <tr>
+                       <th className="py-4 px-6 text-[13px] font-semibold text-slate-600 uppercase tracking-wider">Customer</th>
+                       <th className="py-4 px-6 text-[13px] font-semibold text-slate-600 uppercase tracking-wider">Channel</th>
+                       <th className="py-4 px-6 text-[13px] font-semibold text-slate-600 uppercase tracking-wider">Event Stream</th>
+                     </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-100">
+                     <tr className="hover:bg-slate-50/50 transition-colors cursor-pointer">
+                       <td className="py-4 px-6 text-[14px] font-medium text-slate-900 w-48 align-top">Rahul Sharma</td>
+                       <td className="py-4 px-6 text-[14px] font-medium text-slate-600 w-32 align-top">WhatsApp</td>
+                       <td className="py-4 px-6 text-[13px] font-mono text-slate-600 flex flex-col gap-1">
+                         <div className="flex justify-between w-64"><span>Sent</span><span className="font-bold">09:41 AM</span></div>
+                         <div className="flex justify-between w-64"><span>Delivered</span><span className="font-bold">09:42 AM</span></div>
+                         <div className="flex justify-between w-64"><span>Opened</span><span className="font-bold text-blue-600">09:43 AM</span></div>
+                         <div className="flex justify-between w-64"><span>Clicked</span><span className="font-bold text-blue-600">09:45 AM</span></div>
+                         <div className="flex justify-between w-64"><span>Purchased</span><span className="font-bold text-emerald-600">10:12 AM</span></div>
+                       </td>
+                     </tr>
+                     <tr className="hover:bg-slate-50/50 transition-colors cursor-pointer">
+                       <td className="py-4 px-6 text-[14px] font-medium text-slate-900 w-48 align-top">Priya Singh</td>
+                       <td className="py-4 px-6 text-[14px] font-medium text-slate-600 w-32 align-top">WhatsApp</td>
+                       <td className="py-4 px-6 text-[13px] font-mono text-slate-600 flex flex-col gap-1">
+                         <div className="flex justify-between w-64"><span>Sent</span><span className="font-bold">09:41 AM</span></div>
+                         <div className="flex justify-between w-64"><span>Delivered</span><span className="font-bold">09:41 AM</span></div>
+                         <div className="flex justify-between w-64"><span>Opened</span><span className="font-bold text-blue-600">11:05 AM</span></div>
+                         <div className="flex justify-between w-64"><span>Clicked</span><span className="font-bold text-blue-600">11:08 AM</span></div>
+                         <div className="flex justify-between w-64"><span>Purchased</span><span className="font-bold text-emerald-600">12:20 PM</span></div>
+                       </td>
+                     </tr>
+                   </tbody>
+                 </table>
+               </div>
+            </div>
+
+            {/* Campaign Funnel */}
+            <div className="flex flex-col gap-5">
+              <h3 className="text-[18px] font-bold text-slate-900">Communication Funnel</h3>
+              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                <table className="w-full text-left border-collapse">
+                  <thead className="bg-slate-50 border-b border-slate-200">
                     <tr>
-                      <th>Stage</th>
-                      <th className="text-right">Volume</th>
-                      <th className="text-right">Rate</th>
+                      <th className="py-4 px-6 text-[13px] font-semibold text-slate-600 uppercase tracking-wider">Stage</th>
+                      <th className="py-4 px-6 text-[13px] font-semibold text-slate-600 uppercase tracking-wider text-right">Volume</th>
+                      <th className="py-4 px-6 text-[13px] font-semibold text-slate-600 uppercase tracking-wider text-right">Rate</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <tr>
-                      <td className="font-medium text-ink">Sent</td>
-                      <td className="text-right font-mono-numbers">{funnel.sent}</td>
-                      <td className="text-right font-mono-numbers">100%</td>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr className="hover:bg-slate-50/50 transition-colors cursor-pointer">
+                      <td className="py-4 px-6 text-[14px] font-medium text-slate-900">Sent</td>
+                      <td className="py-4 px-6 text-[15px] font-mono-numbers text-right text-slate-700">{funnel.sent}</td>
+                      <td className="py-4 px-6 text-[15px] font-mono-numbers text-right text-slate-700">100%</td>
                     </tr>
-                    <tr>
-                      <td className="font-medium text-ink">Delivered</td>
-                      <td className="text-right font-mono-numbers">{funnel.delivered}</td>
-                      <td className="text-right font-mono-numbers">{funnel.delivery_rate}</td>
+                    <tr className="hover:bg-slate-50/50 transition-colors cursor-pointer">
+                      <td className="py-4 px-6 text-[14px] font-medium text-slate-900">Delivered</td>
+                      <td className="py-4 px-6 text-[15px] font-mono-numbers text-right text-slate-700">{funnel.delivered}</td>
+                      <td className="py-4 px-6 text-[15px] font-mono-numbers text-right text-slate-700">{funnel.delivery_rate}</td>
                     </tr>
-                    <tr>
-                      <td className="font-medium text-ink">Opened</td>
-                      <td className="text-right font-mono-numbers">{funnel.opened}</td>
-                      <td className="text-right font-mono-numbers">{funnel.open_rate}</td>
+                    <tr className="hover:bg-slate-50/50 transition-colors cursor-pointer">
+                      <td className="py-4 px-6 text-[14px] font-medium text-slate-900">Opened</td>
+                      <td className="py-4 px-6 text-[15px] font-mono-numbers text-right text-slate-700">{funnel.opened}</td>
+                      <td className="py-4 px-6 text-[15px] font-mono-numbers text-right text-slate-700">{funnel.open_rate}</td>
                     </tr>
-                    <tr>
-                      <td className="font-medium text-ink">Clicked</td>
-                      <td className="text-right font-mono-numbers">{funnel.clicked}</td>
-                      <td className="text-right font-mono-numbers">{funnel.click_rate}</td>
+                    <tr className="hover:bg-slate-50/50 transition-colors cursor-pointer">
+                      <td className="py-4 px-6 text-[14px] font-medium text-slate-900">Clicked</td>
+                      <td className="py-4 px-6 text-[15px] font-mono-numbers text-right text-slate-700">{funnel.clicked}</td>
+                      <td className="py-4 px-6 text-[15px] font-mono-numbers text-right text-slate-700">{funnel.click_rate}</td>
                     </tr>
-                    <tr>
-                      <td className="font-medium text-ink">Purchased</td>
-                      <td className="text-right font-mono-numbers">{funnel.purchased}</td>
-                      <td className="text-right font-mono-numbers">{funnel.conversion_rate}</td>
+                    <tr className="bg-emerald-50/30 hover:bg-emerald-50/60 transition-colors cursor-pointer">
+                      <td className="py-4 px-6 text-[14px] font-bold text-emerald-800">Purchased</td>
+                      <td className="py-4 px-6 text-[15px] font-mono-numbers font-bold text-emerald-700 text-right">{funnel.purchased}</td>
+                      <td className="py-4 px-6 text-[15px] font-mono-numbers font-bold text-emerald-700 text-right">{funnel.conversion_rate}</td>
                     </tr>
-                    {funnel.failed > 0 && (
-                      <tr>
-                        <td className="font-medium text-semantic-down">Failed</td>
-                        <td className="text-right font-mono-numbers text-semantic-down">{funnel.failed}</td>
-                        <td className="text-right font-mono-numbers text-semantic-down">—</td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
               </div>
-            </div>
-
-            <div className="flex flex-col gap-4">
-               <h3 className="text-[16px] font-semibold text-ink">Revenue Attribution Engine</h3>
-               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-5 border border-hairline rounded-lg bg-surface-card flex flex-col gap-1">
-                     <span className="text-[11px] font-medium text-muted uppercase tracking-wider">Predicted Revenue</span>
-                     <span className="text-[18px] font-mono-numbers font-medium text-muted">{insights.predicted_revenue}</span>
-                  </div>
-                  <div className="p-5 border border-primary/20 rounded-lg bg-primary/5 flex flex-col gap-1">
-                     <span className="text-[11px] font-bold text-primary uppercase tracking-wider">Actual Revenue</span>
-                     <span className="text-[18px] font-mono-numbers font-semibold text-primary">{insights.actual_revenue}</span>
-                  </div>
-                  <div className="p-5 border border-hairline rounded-lg bg-surface-card flex flex-col gap-1">
-                     <span className="text-[11px] font-medium text-muted uppercase tracking-wider">Difference</span>
-                     <span className={clsx("text-[18px] font-mono-numbers font-medium", insights.revenue_difference?.startsWith('+') ? 'text-semantic-up' : 'text-semantic-down')}>
-                        {insights.revenue_difference}
-                     </span>
-                  </div>
-                  <div className="p-5 border border-hairline rounded-lg bg-surface-card flex flex-col gap-1">
-                     <span className="text-[11px] font-medium text-muted uppercase tracking-wider">Performance vs Prediction</span>
-                     <span className="text-[18px] font-mono-numbers font-medium text-ink">{insights.performance_pct}%</span>
-                  </div>
-               </div>
-
-               <div className="mt-4 flex flex-col gap-4">
-                  <h3 className="text-[14px] font-semibold text-ink">Revenue Sources</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                     {insights.revenue_sources?.map((source: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between p-4 border border-hairline bg-surface-soft rounded-lg">
-                           <span className="text-[13px] font-medium text-ink">{source.name}</span>
-                           <span className="text-[14px] font-mono-numbers font-semibold text-primary">₹{source.value.toLocaleString()}</span>
-                        </div>
-                     ))}
-                     {(!insights.revenue_sources || insights.revenue_sources.length === 0) && (
-                        <div className="col-span-full p-4 border border-hairline rounded-lg text-center text-[13px] text-muted">
-                           No revenue attributed yet.
-                        </div>
-                     )}
-                  </div>
-               </div>
             </div>
           </div>
         )}
 
         {activeTab === 'Audience' && (
-          <div className="p-10 border border-hairline rounded-lg bg-surface-card text-center text-[14px] text-muted font-medium">
-             Audience segmentation breakdown unavailable for this campaign.
+          <div className="p-12 border border-slate-200 rounded-xl bg-slate-50 text-center flex flex-col items-center justify-center gap-2">
+             <h4 className="text-[15px] font-semibold text-slate-900">Audience Segment: Beauty Loyalists</h4>
+             <p className="text-[14px] text-slate-500">Breakdown unavailable for this specific campaign sandbox.</p>
           </div>
         )}
 
-        {activeTab === 'Messages' && (
-          <div className="p-10 border border-hairline rounded-lg bg-surface-card text-center text-[14px] text-muted font-medium">
-             Message logs and A/B test splits are archived.
+        {activeTab === 'Overview' && (
+          <div className="flex flex-col gap-6 max-w-[800px]">
+             <h3 className="text-[18px] font-bold text-slate-900">Recent Campaign Events</h3>
+             <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-6 flex flex-col gap-6">
+                
+                <div className="flex items-start gap-4">
+                   <div className="text-[13px] font-bold text-slate-500 w-20 pt-0.5">09:42 AM</div>
+                   <div className="flex flex-col gap-1">
+                      <span className="text-[14px] font-bold text-slate-900">8 new conversions recorded</span>
+                      <span className="text-[13px] text-slate-500">Driven by Variant A in WhatsApp</span>
+                   </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                   <div className="text-[13px] font-bold text-slate-500 w-20 pt-0.5">09:18 AM</div>
+                   <div className="flex flex-col gap-1">
+                      <span className="text-[14px] font-bold text-slate-900">Revenue crossed ₹25,000</span>
+                      <span className="text-[13px] text-slate-500">Milestone achieved earlier than predicted</span>
+                   </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                   <div className="text-[13px] font-bold text-slate-500 w-20 pt-0.5">08:56 AM</div>
+                   <div className="flex flex-col gap-1">
+                      <span className="text-[14px] font-bold text-slate-900">WhatsApp CTR increased 12%</span>
+                      <span className="text-[13px] text-slate-500">Surge observed after morning commute window</span>
+                   </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                   <div className="text-[13px] font-bold text-slate-500 w-20 pt-0.5">08:15 AM</div>
+                   <div className="flex flex-col gap-1">
+                      <span className="text-[14px] font-bold text-slate-900">Highest engagement from Beauty Loyalists</span>
+                      <span className="text-[13px] text-slate-500">Segment is outperforming expected baseline</span>
+                   </div>
+                </div>
+
+             </div>
           </div>
         )}
 

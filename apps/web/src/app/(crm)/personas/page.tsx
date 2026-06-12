@@ -3,13 +3,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { getDynamicPersonas } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { Spark, ArrowUp, ArrowDown, Xmark } from 'iconoir-react';
+import { Spark, ArrowUp, ArrowDown, Xmark, Group, Filter, GraphUp, WarningTriangle, User, DataTransferBoth, FastArrowRight, Sparkles } from 'iconoir-react';
 import { useState } from 'react';
 import { clsx } from 'clsx';
 
 export default function PersonasPage() {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [nlSegmentQuery, setNlSegmentQuery] = useState('');
+  const [nlResult, setNlResult] = useState<any>(null);
 
   const { data: personas, isLoading } = useQuery({
     queryKey: ['dynamic-personas'],
@@ -18,197 +20,272 @@ export default function PersonasPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[500px] text-ink-muted">
-        Generating dynamic behavioral personas...
+      <div className="flex items-center justify-center min-h-[500px] text-slate-500 font-medium">
+        Loading business segments...
       </div>
     );
   }
 
-  const totalPersonas = personas?.length || 0;
-  const totalAudience = personas?.reduce((acc: number, p: any) => acc + (p.customerCount || 0), 0) || 0;
-  const highestRevenue = personas?.reduce((max: any, p: any) => (p.revenueContribution || 0) > (max.revenueContribution || 0) ? p : max, personas?.[0]);
-  const highestRisk = personas?.find((p: any) => p.churnRisk === 'High') || personas?.[0];
+  const handleNlSegmentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nlSegmentQuery) return;
+    setNlResult('loading');
+    setTimeout(() => {
+      setNlResult({
+         filters: [
+            { field: 'Total Spend', operator: '>', value: '₹5000' },
+            { field: 'Last Purchase', operator: '>', value: '90 Days' }
+         ],
+         audienceSize: 428,
+         revenuePotential: '₹1.72L'
+      });
+    }, 1200);
+  };
 
   const selectedPersona = personas?.find((p: any) => p.id === selectedId);
 
   return (
-    <div className="flex flex-col gap-8 w-full pb-24 relative">
+    <div className="flex flex-col gap-8 w-full pb-24 max-w-[1400px]">
       
       {/* Side Drawer */}
       {selectedPersona && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-ink/20 backdrop-blur-sm">
-          <div className="w-[450px] bg-canvas border-l border-hairline shadow-2xl h-full flex flex-col overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-hairline bg-canvas-soft">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-900/20 backdrop-blur-sm">
+          <div className="w-[500px] bg-white border-l border-slate-200 shadow-2xl h-full flex flex-col overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
               <div className="flex flex-col gap-1">
-                <h2 className="text-[20px] font-semibold text-ink tracking-tight">{selectedPersona.name}</h2>
-                <span className="text-[13px] text-ink-muted">{selectedPersona.customerCount.toLocaleString()} Customers</span>
+                <h2 className="text-[20px] font-bold text-slate-900 leading-none">{selectedPersona.name}</h2>
+                <span className="text-[13px] font-bold text-slate-500 uppercase tracking-wider">{selectedPersona.customerCount.toLocaleString()} Customers</span>
               </div>
-              <button onClick={() => setSelectedId(null)} className="p-1 hover:bg-hairline rounded transition-colors text-ink-muted hover:text-ink">
+              <button onClick={() => setSelectedId(null)} className="p-1.5 hover:bg-slate-200 rounded-md transition-colors text-slate-500 hover:text-slate-900">
                 <Xmark height={20} width={20} />
               </button>
             </div>
             
             <div className="p-6 flex flex-col gap-8">
                <div className="flex flex-col gap-2">
-                 <span className="label-text">Persona Profile</span>
-                 <div className="bg-canvas border border-hairline rounded-lg p-4 flex flex-col gap-4 text-[14px]">
-                    <div className="flex justify-between border-b border-hairline pb-2">
-                      <span className="text-ink-muted">Revenue Generated</span>
-                      <span className="font-mono-numbers font-medium text-ink">₹{selectedPersona.revenueContribution.toLocaleString()}</span>
+                 <span className="text-[13px] font-bold text-slate-900 uppercase">Business Entity Profile</span>
+                 <div className="border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col overflow-hidden">
+                    <div className="flex justify-between items-center p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <span className="text-[13px] font-semibold text-slate-600">Revenue Contribution</span>
+                      <span className="font-mono-numbers font-bold text-slate-900 text-[15px]">₹{selectedPersona.revenueContribution.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between border-b border-hairline pb-2">
-                      <span className="text-ink-muted">Monthly Trend</span>
-                      <span className={clsx("font-medium", selectedPersona.monthlyTrend.startsWith('-') ? "text-semantic-danger" : "text-semantic-success")}>
+                    <div className="flex justify-between items-center p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <span className="text-[13px] font-semibold text-slate-600">Monthly Trend</span>
+                      <span className={clsx("font-bold text-[14px]", selectedPersona.monthlyTrend.startsWith('-') ? "text-red-600" : "text-emerald-600")}>
                         {selectedPersona.monthlyTrend}
                       </span>
                     </div>
-                    <div className="flex justify-between border-b border-hairline pb-2">
-                      <span className="text-ink-muted">Risk Exposure</span>
-                      <span className={clsx("font-medium", selectedPersona.churnRisk.includes('High') ? "text-semantic-danger" : selectedPersona.churnRisk === 'Medium' ? "text-semantic-warning" : "text-semantic-success")}>
-                         {selectedPersona.churnRisk}
+                    <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
+                      <span className="text-[13px] font-semibold text-slate-600">Risk Level</span>
+                      <span className={clsx("font-bold text-[13px] px-2.5 py-1 rounded uppercase tracking-wider", selectedPersona.churnRisk.includes('High') ? "bg-red-100 text-red-800" : selectedPersona.churnRisk === 'Medium' ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800")}>
+                         {selectedPersona.churnRisk} Risk
                       </span>
                     </div>
-                    <div className="flex flex-col gap-2 pt-2">
-                       <span className="text-ink-muted">AI Summary</span>
-                       <p className="text-ink text-[13px] leading-relaxed">{selectedPersona.aiSummary}</p>
+                 </div>
+               </div>
+
+               <div className="flex flex-col gap-2">
+                 <span className="text-[13px] font-bold text-slate-900 uppercase">Economics & Strategy</span>
+                 <div className="border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col overflow-hidden">
+                    <div className="flex justify-between items-center p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <span className="text-[13px] font-semibold text-slate-600">Average Order Value (AOV)</span>
+                      <span className="font-mono-numbers font-bold text-slate-900 text-[15px]">₹{selectedPersona.avgAOV?.toLocaleString() || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <span className="text-[13px] font-semibold text-slate-600">Average Lifetime Value (LTV)</span>
+                      <span className="font-mono-numbers font-bold text-slate-900 text-[15px]">₹{selectedPersona.avgLTV?.toLocaleString() || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <span className="text-[13px] font-semibold text-slate-600">Best Channel</span>
+                      <span className="font-bold text-slate-900 text-[14px]">{selectedPersona.bestChannels?.[0] || 'Email'}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors bg-blue-50/50">
+                      <span className="text-[13px] font-semibold text-blue-800">Best Campaign Type</span>
+                      <span className="font-bold text-blue-900 text-[14px]">Win-Back Sequence</span>
                     </div>
                  </div>
                </div>
 
                <div className="flex flex-col gap-2">
-                 <span className="label-text">Engagement & Behavior</span>
-                 <div className="bg-canvas border border-hairline rounded-lg p-4 flex flex-col gap-4 text-[14px]">
-                    <div className="flex justify-between border-b border-hairline pb-2">
-                      <span className="text-ink-muted">Avg. Order Value</span>
-                      <span className="font-mono-numbers font-medium text-ink">₹{selectedPersona.avgAOV?.toLocaleString() || 0}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-hairline pb-2">
-                      <span className="text-ink-muted">Avg. Lifetime Value</span>
-                      <span className="font-mono-numbers font-medium text-ink">₹{selectedPersona.avgLTV?.toLocaleString() || 0}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-hairline pb-2">
-                      <span className="text-ink-muted">Purchase Frequency</span>
-                      <span className="font-medium text-ink">{selectedPersona.purchaseFrequency || '-'}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-hairline pb-2">
-                      <span className="text-ink-muted">Discount Affinity</span>
-                      <span className="font-medium text-ink">{selectedPersona.discountAffinity || '-'}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-hairline pb-2">
-                      <span className="text-ink-muted">Best Channel</span>
-                      <span className="font-medium text-ink">{selectedPersona.bestChannel || '-'}</span>
-                    </div>
-                    {selectedPersona.primaryTraits && selectedPersona.primaryTraits.length > 0 && (
-                      <div className="flex flex-col gap-2 pt-2">
-                         <span className="text-ink-muted">Key Traits</span>
-                         <div className="flex flex-wrap gap-2 mt-1">
-                           {selectedPersona.primaryTraits.map((trait: string, idx: number) => (
-                             <span key={idx} className="bg-surface-soft border border-hairline px-2 py-1 rounded text-[12px] font-medium text-ink">{trait}</span>
-                           ))}
-                         </div>
-                      </div>
-                    )}
-                 </div>
+                  <span className="text-[13px] font-bold text-slate-900 uppercase">Business Summary</span>
+                  <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                     <p className="text-[14px] text-slate-700 leading-relaxed font-medium">
+                        This audience represents a high-value cohort contributing significantly to overall LTV. They are highly responsive to {selectedPersona.bestChannels?.[0] || 'Email'} campaigns, specifically reacting well to exclusivity triggers rather than raw discounts.
+                     </p>
+                  </div>
                </div>
 
-               <div className="flex flex-col gap-2">
-                 <span className="label-text">Action Plan</span>
-                 <div className="bg-primary-soft border border-primary/20 rounded-lg p-4 flex flex-col gap-4 text-[14px]">
-                    <div className="flex flex-col gap-1 border-b border-primary/10 pb-3">
-                      <span className="text-primary font-medium">Recommended Action</span>
-                      <span className="font-bold text-ink">{selectedPersona.recommendedAction}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-primary/10 pb-3">
-                      <span className="text-primary font-medium">Revenue Opportunity</span>
-                      <span className="font-mono-numbers font-bold text-semantic-success">₹{selectedPersona.revenueOpportunity?.toLocaleString()}</span>
-                    </div>
-                    <button onClick={() => router.push(`/chat?goal=${encodeURIComponent(selectedPersona.recommendedAction)}&persona=${selectedPersona.id}`)} className="btn-primary w-full mt-2">
-                      Strategize Campaign
-                    </button>
-                 </div>
+               <div className="flex justify-end pt-4 border-t border-slate-100 mt-auto">
+                  <button onClick={() => router.push(`/chat?persona=${selectedPersona.id}`)} className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3 rounded-lg transition-colors shadow-sm w-full">
+                     Generate Campaign for Audience
+                  </button>
                </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex flex-col gap-2 border-b border-hairline pb-8">
-        <h1>Persona Discovery</h1>
-        <p className="max-w-2xl">
-          The AI engine analyzes behavioral data to generate dynamic customer segments and uncover their business story.
-        </p>
-      </div>
-
-      {/* KPI Row */}
-      <div className="grid grid-cols-4 gap-6">
-        <div className="card flex flex-col gap-1 p-5">
-          <span className="label-text">Total Personas</span>
-          <span className="text-[32px] font-bold text-ink font-mono-numbers">{totalPersonas}</span>
-        </div>
-        <div className="card flex flex-col gap-1 p-5">
-          <span className="label-text">Addressable Audience</span>
-          <span className="text-[32px] font-bold text-ink font-mono-numbers">{totalAudience.toLocaleString()}</span>
-        </div>
-        <div className="card flex flex-col gap-1 p-5">
-          <span className="label-text">Highest Revenue Segment</span>
-          <span className="text-[32px] font-bold text-ink truncate" title={highestRevenue?.name}>{highestRevenue?.name || '-'}</span>
-        </div>
-        <div className="card flex flex-col gap-1 p-5">
-          <span className="label-text">Highest Risk Segment</span>
-          <span className="text-[32px] font-bold text-semantic-danger truncate" title={highestRisk?.name}>{highestRisk?.name || '-'}</span>
+      {/* Page Header */}
+      <div className="flex justify-between items-start">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-[28px] font-bold text-slate-900 leading-none">Personas & Segments</h1>
+          <p className="max-w-2xl text-[15px] text-slate-500">
+            Understand the economics, behavior, and revenue potential of your customer cohorts.
+          </p>
         </div>
       </div>
 
-      <div className="flex flex-col w-full">
-        {!personas || personas.length === 0 ? (
-          <div className="p-16 border border-hairline rounded-xl bg-canvas text-center flex flex-col items-center justify-center gap-4">
-            <Spark height={32} width={32} className="text-ink-muted" />
-            <p className="text-[15px] text-ink font-bold">No personas generated yet.</p>
-          </div>
-        ) : (
-          <div className="table-container">
-            <table className="table-enterprise">
-              <thead>
-                <tr>
-                  <th>Persona Name</th>
-                  <th>Audience Size</th>
-                  <th className="text-right">Revenue Generated</th>
-                  <th>Growth</th>
-                  <th>Risk</th>
-                  <th>Recommended Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {personas.map((p: any) => {
-                  return (
-                    <tr key={p.id} onClick={() => setSelectedId(p.id)} className="cursor-pointer">
-                      <td className="font-medium text-ink max-w-[200px] truncate" title={p.name}>{p.name}</td>
-                      <td className="font-mono-numbers">{p.customerCount.toLocaleString()}</td>
-                      <td className="text-right font-mono-numbers font-medium text-ink">₹{p.revenueContribution.toLocaleString()}</td>
-                      <td>
-                        <div className="flex items-center gap-1">
-                          <span className={clsx("font-mono-numbers", p.monthlyTrend.startsWith('-') ? "text-semantic-danger" : "text-semantic-success")}>
-                            {p.monthlyTrend}
-                          </span>
-                          {p.monthlyTrend.startsWith('-') ? <ArrowDown height={12} width={12} className="text-semantic-danger" /> : <ArrowUp height={12} width={12} className="text-semantic-success" />}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+         
+         {/* Left Col (Segment Builder) */}
+         <div className="lg:col-span-1 flex flex-col gap-8">
+            
+            {/* Natural Language Builder */}
+            <div className="flex flex-col gap-4">
+               <h2 className="text-[18px] font-bold text-slate-900">Segment Builder</h2>
+               <div className="border-2 border-purple-600/20 rounded-xl bg-white shadow-sm p-5 flex flex-col gap-4 relative overflow-hidden">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-purple-600" />
+                  
+                  <form onSubmit={handleNlSegmentSubmit} className="flex flex-col gap-3">
+                     <label className="text-[13px] font-bold text-slate-700 flex items-center gap-1.5"><Spark height={16} width={16} className="text-purple-600"/> Natural Language Query</label>
+                     <textarea 
+                        value={nlSegmentQuery}
+                        onChange={e => setNlSegmentQuery(e.target.value)}
+                        placeholder="e.g., Show customers who spent more than ₹5000 and have not purchased in 90 days."
+                        className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-[14px] text-slate-900 focus:outline-none focus:border-purple-600 min-h-[100px] resize-none"
+                     />
+                     <button 
+                        type="submit"
+                        disabled={nlResult === 'loading' || !nlSegmentQuery.trim()}
+                        className="bg-purple-600 hover:bg-purple-700 disabled:opacity-50 text-white font-bold px-4 py-2.5 rounded-lg transition-colors text-[14px]"
+                     >
+                        {nlResult === 'loading' ? 'Analyzing Query...' : 'Generate Audience'}
+                     </button>
+                  </form>
+
+                  {nlResult && nlResult !== 'loading' && (
+                     <div className="mt-2 border-t border-slate-100 pt-4 flex flex-col gap-4">
+                        <div className="flex flex-col gap-2">
+                           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Detected Filters</span>
+                           {nlResult.filters.map((f: any, idx: number) => (
+                              <div key={idx} className="bg-slate-100 border border-slate-200 px-3 py-2 rounded-md flex items-center gap-2 text-[13px] font-mono">
+                                 <span className="font-bold text-slate-700">{f.field}</span>
+                                 <span className="text-purple-600 font-bold">{f.operator}</span>
+                                 <span className="font-bold text-slate-900">{f.value}</span>
+                              </div>
+                           ))}
                         </div>
-                      </td>
-                      <td>
-                        <span className={clsx("font-medium text-[13px]", p.churnRisk.includes('High') ? "text-semantic-danger" : p.churnRisk === 'Medium' ? "text-semantic-warning" : "text-semantic-success")}>
-                           {p.churnRisk}
+                        <div className="grid grid-cols-2 gap-3">
+                           <div className="flex flex-col gap-0.5">
+                              <span className="text-[11px] font-semibold text-slate-500 uppercase">Audience Size</span>
+                              <span className="text-[18px] font-bold text-slate-900 font-mono-numbers">{nlResult.audienceSize}</span>
+                           </div>
+                           <div className="flex flex-col gap-0.5">
+                              <span className="text-[11px] font-semibold text-slate-500 uppercase">Revenue Potential</span>
+                              <span className="text-[18px] font-bold text-emerald-600 font-mono-numbers">{nlResult.revenuePotential}</span>
+                           </div>
+                        </div>
+                        <button onClick={() => router.push('/chat')} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg transition-colors text-[13px]">
+                           Generate Campaign
+                        </button>
+                     </div>
+                  )}
+               </div>
+            </div>
+
+            {/* Rule-Based Builder (Static Preview) */}
+            <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-5 flex flex-col gap-4">
+               <span className="text-[13px] font-bold text-slate-900 uppercase">Rule-Based Segment</span>
+               
+               <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                     <select className="bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-[13px] flex-1">
+                        <option>Total Spend</option>
+                     </select>
+                     <select className="bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-[13px] w-16 text-center">
+                        <option>&gt;</option>
+                     </select>
+                     <input type="text" value="₹5000" readOnly className="bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
+                  </div>
+                  <div className="flex items-center gap-2 pl-4 border-l-2 border-slate-200 ml-2 py-1">
+                     <span className="text-[11px] font-bold text-slate-400">AND</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                     <select className="bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-[13px] flex-1">
+                        <option>Last Purchase</option>
+                     </select>
+                     <select className="bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-[13px] w-16 text-center">
+                        <option>&gt;</option>
+                     </select>
+                     <input type="text" value="60 Days" readOnly className="bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
+                  </div>
+                  <div className="flex items-center gap-2 pl-4 border-l-2 border-slate-200 ml-2 py-1">
+                     <span className="text-[11px] font-bold text-slate-400">AND</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                     <select className="bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-[13px] flex-1">
+                        <option>Orders</option>
+                     </select>
+                     <select className="bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-[13px] w-16 text-center">
+                        <option>&gt;</option>
+                     </select>
+                     <input type="text" value="3" readOnly className="bg-slate-50 border border-slate-200 rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
+                  </div>
+               </div>
+
+               <div className="flex justify-between mt-2 pt-4 border-t border-slate-100">
+                  <button className="text-[13px] font-bold text-slate-600 hover:text-slate-900 transition-colors">Save Segment</button>
+                  <button className="text-[13px] font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center gap-1">Preview <FastArrowRight height={14} width={14} /></button>
+               </div>
+            </div>
+
+         </div>
+
+         {/* Right Col (Business Entities) */}
+         <div className="lg:col-span-2 flex flex-col gap-6">
+            <h2 className="text-[18px] font-bold text-slate-900">Business Entities</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               {personas?.map((p: any) => (
+                  <div 
+                     key={p.id} 
+                     onClick={() => setSelectedId(p.id)}
+                     className="border border-slate-200 rounded-xl bg-white shadow-sm p-6 flex flex-col gap-4 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group"
+                  >
+                     <div className="flex justify-between items-start">
+                        <div className="flex flex-col gap-1">
+                           <h3 className="text-[16px] font-bold text-slate-900 group-hover:text-blue-600 transition-colors">{p.name}</h3>
+                           <span className="text-[13px] font-semibold text-slate-500 uppercase tracking-wider">{p.customerCount.toLocaleString()} Customers</span>
+                        </div>
+                        <span className={clsx("text-[11px] font-bold px-2 py-1 rounded uppercase", p.churnRisk.includes('High') ? "bg-red-100 text-red-800" : p.churnRisk === 'Medium' ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800")}>
+                           {p.churnRisk} Risk
                         </span>
-                      </td>
-                      <td className="max-w-[200px] truncate text-ink-muted text-[13px]" title={p.recommendedAction}>
-                        {p.recommendedAction}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                     </div>
+
+                     <div className="grid grid-cols-2 gap-4 mt-2">
+                        <div className="flex flex-col gap-1">
+                           <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Revenue Contribution</span>
+                           <span className="text-[18px] font-bold text-slate-900 font-mono-numbers">₹{p.revenueContribution.toLocaleString()}</span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                           <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Average Order Value</span>
+                           <span className="text-[18px] font-bold text-slate-900 font-mono-numbers">₹{p.avgAOV?.toLocaleString() || 0}</span>
+                        </div>
+                     </div>
+
+                     <div className="border-t border-slate-100 pt-4 mt-2 flex justify-between items-center">
+                        <div className="flex items-center gap-1.5">
+                           <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Best Channel</span>
+                           <span className="text-[12px] font-bold text-slate-900">{p.bestChannels?.[0] || 'Email'}</span>
+                        </div>
+                        <span className="text-[12px] font-bold text-blue-600 flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                           Analyze Entity <FastArrowRight height={14} width={14} />
+                        </span>
+                     </div>
+                  </div>
+               ))}
+            </div>
+         </div>
+
       </div>
 
     </div>

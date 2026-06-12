@@ -144,7 +144,7 @@ export default function LandingPage() {
 
           {/* Headline */}
           <h1 className="hero-fade text-[52px] md:text-[72px] lg:text-[88px] font-bold leading-[1.05] text-ink mb-10 w-full max-w-5xl tracking-tight">
-            Your customer data already knows where <span className="text-primary">growth</span> exists.
+            Your data hides <span className="text-primary">growth</span>.
             <br />
             <span className="text-primary">XenoCopilot</span> finds it.
           </h1>

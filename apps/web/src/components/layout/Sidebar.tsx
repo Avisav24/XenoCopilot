@@ -9,7 +9,7 @@ const navGroups = [
   {
     label: 'Growth',
     items: [
-      { href: '/opportunities', label: 'Revenue Opportunities', icon: <GraphUp height={18} width={18} /> },
+      { href: '/revenue', label: 'Growth OS', icon: <GraphUp height={18} width={18} /> },
       { href: '/chat', label: 'Campaign Copilot', icon: <Spark height={18} width={18} /> },
     ]
   },
@@ -27,9 +27,10 @@ const navGroups = [
     ]
   },
   {
-    label: 'Analytics',
+    label: 'Settings',
     items: [
-      { href: '/revenue', label: 'Revenue Intelligence', icon: <StatsReport height={18} width={18} /> },
+      { href: '/import', label: 'Data Import', icon: <Settings height={18} width={18} /> },
+      { href: '/architecture', label: 'Architecture', icon: <StatsReport height={18} width={18} /> },
     ]
   }
 ];
@@ -39,8 +40,8 @@ export function Sidebar() {
 
   return (
     <>
-      <div className="flex-shrink-0 w-[280px] hidden md:block" />
-      <aside className="sidebar fixed top-0 left-0 h-full z-40 flex flex-col justify-between bg-canvas border-r border-hairline w-[280px]">
+      <div className="flex-shrink-0 w-[220px] hidden md:block" />
+      <aside className="sidebar fixed top-0 left-0 h-full z-40 flex flex-col justify-between bg-canvas border-r border-hairline w-[220px]">
         
         <nav className="flex flex-col gap-1 p-4 pt-6 flex-1">
           <div className="flex items-center px-3 mb-8 mt-2">
