@@ -696,7 +696,7 @@ Example format:
         {
           id: 'dyn-dormant',
           name: 'Lapsed High-Spenders',
-          customer_count: dormantCount,
+          customerCount: dormantCount,
           revenueContribution: dormantRev,
           avgLTV: dormantCount > 0 ? Math.round(dormantRev / dormantCount) : 0,
           avgAOV: 1200,

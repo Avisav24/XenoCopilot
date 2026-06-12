@@ -54,7 +54,7 @@ export default function PersonasPage() {
             <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
               <div className="flex flex-col gap-1">
                 <h2 className="text-[20px] font-bold text-slate-900 leading-none">{selectedPersona.name}</h2>
-                <span className="text-[13px] font-bold text-slate-500 uppercase tracking-wider">{selectedPersona.customerCount.toLocaleString()} Customers</span>
+                <span className="text-[13px] font-bold text-slate-500 uppercase tracking-wider">{(selectedPersona.customerCount || 0).toLocaleString()} Customers</span>
               </div>
               <button onClick={() => setSelectedId(null)} className="p-1.5 hover:bg-slate-200 rounded-md transition-colors text-slate-500 hover:text-slate-900">
                 <Xmark height={20} width={20} />
@@ -67,7 +67,7 @@ export default function PersonasPage() {
                  <div className="border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col overflow-hidden">
                     <div className="flex justify-between items-center p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
                       <span className="text-[13px] font-semibold text-slate-600">Revenue Contribution</span>
-                      <span className="font-mono-numbers font-bold text-slate-900 text-[15px]">₹{selectedPersona.revenueContribution.toLocaleString()}</span>
+                      <span className="font-mono-numbers font-bold text-slate-900 text-[15px]">₹{(selectedPersona.revenueContribution || 0).toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between items-center p-4 border-b border-slate-100 hover:bg-slate-50 transition-colors">
                       <span className="text-[13px] font-semibold text-slate-600">Monthly Trend</span>
@@ -254,7 +254,7 @@ export default function PersonasPage() {
                      <div className="flex justify-between items-start">
                         <div className="flex flex-col gap-1">
                            <h3 className="text-[16px] font-bold text-slate-900 group-hover:text-slate-700 transition-colors">{p.name}</h3>
-                           <span className="text-[13px] font-semibold text-slate-500 uppercase tracking-wider">{p.customerCount.toLocaleString()} Customers</span>
+                           <span className="text-[13px] font-semibold text-slate-500 uppercase tracking-wider">{(p.customerCount || 0).toLocaleString()} Customers</span>
                         </div>
                         <span className={clsx("text-[11px] font-bold px-2 py-1 rounded uppercase", p.churnRisk.includes('High') ? "bg-red-100 text-red-800" : p.churnRisk === 'Medium' ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800")}>
                            {p.churnRisk} Risk
@@ -264,7 +264,7 @@ export default function PersonasPage() {
                      <div className="grid grid-cols-2 gap-4 mt-1">
                         <div className="flex flex-col gap-1">
                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Revenue Contribution</span>
-                           <span className="text-[18px] font-bold text-slate-900 font-mono-numbers">₹{p.revenueContribution.toLocaleString()}</span>
+                           <span className="text-[18px] font-bold text-slate-900 font-mono-numbers">₹{(p.revenueContribution || 0).toLocaleString()}</span>
                         </div>
                         <div className="flex flex-col gap-1">
                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Average Order Value</span>
