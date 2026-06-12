@@ -16,7 +16,7 @@
     "incremental": true,
     "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": ["./*"],
+      "@/*": ["./src/*"],
       "@xenocopilot/shared-types": ["../../packages/shared-types/src/index.ts"]
     }
   },

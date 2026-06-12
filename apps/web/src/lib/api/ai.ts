@@ -1,20 +1,5 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+import { fetchAPI } from './core';
 
-async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    ...options,
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(err.error || err.message || `HTTP ${res.status}`);
-  }
-
-  return res.json();
-}
-
-// ── AI Persona Agent Workflow ─────────────────────────────
 export const queryPersonas = (goal: string) =>
   fetchAPI<{ persona: { id: string; name: string; description: string }; count: number }>('/api/ai/query-personas', {
     method: 'POST',
@@ -38,6 +23,7 @@ export const launchCampaign = (data: { name: string; persona_id: string; channel
     method: 'POST',
     body: JSON.stringify(data),
   });
+
 export const strategizeCampaign = (goal: string) =>
   fetchAPI<{ 
     opportunityAnalysis: { score: number; potentialRevenue: number; audienceSize: number; historicalConversion: number; confidence: number; revenueAtRisk: number; };
@@ -47,6 +33,7 @@ export const strategizeCampaign = (goal: string) =>
     method: 'POST',
     body: JSON.stringify({ goal }),
   });
+
 export const getDynamicSuggestions = () => fetchAPI<string[]>('/api/ai/suggestions');
 
 export const getDynamicPersonas = () => fetchAPI<{
@@ -93,50 +80,3 @@ export const simulateCampaign = (audience_size: number) =>
     method: 'POST',
     body: JSON.stringify({ audience_size }),
   });
-// ── Campaigns ─────────────────────────────────────────────
-export const getCampaigns = () => fetchAPI<any[]>('/api/campaigns');
-export const getCampaign = (id: string) => fetchAPI<any>(`/api/campaigns/${id}`);
-export const getCampaignMessages = (id: string, limit?: number) => fetchAPI<any[]>(`/api/campaigns/${id}/messages${limit ? `?limit=${limit}` : ''}`);
-export const getCampaignInsights = (id: string) => fetchAPI<any>(`/api/campaigns/${id}/insights`);
-
-// ── Customers ─────────────────────────────────────────────
-export const getCustomers = (params?: { limit?: number; offset?: number; search?: string }) => {
-  const qs = new URLSearchParams();
-  if (params?.limit) qs.set('limit', String(params.limit));
-  if (params?.offset) qs.set('offset', String(params.offset));
-  if (params?.search) qs.set('search', params.search);
-  return fetchAPI(`/api/customers?${qs}`);
-};
-
-export const getCustomer = (id: string) => fetchAPI<any>(`/api/customers/${id}`);
-
-export const getPersonas = () => fetchAPI<any[]>('/api/personas');
-
-export const getCustomerStats = () => fetchAPI<{
-  total: number;
-  active: number;
-  atRisk: number;
-  vip: number;
-  dormant: number;
-  avgLTV: number;
-  avgAOV: number;
-  healthDist: Record<string, number>;
-  topPersonas: { name: string; count: number }[];
-  topRevenuePersonas: { name: string; revenue: number }[];
-}>('/api/customers/stats');
-
-// ── Revenue ───────────────────────────────────────────────
-export const getRevenueStats = () => fetchAPI<{
-  totalRevenueInfluenced: number;
-  customersReactivated: number;
-  atRiskSaved: number;
-  topPersona: string;
-  topChannel: string;
-  revenueByCampaign: { name: string; value: number }[];
-  revenueByPersona: { name: string; value: number }[];
-  revenueByOpportunity: { name: string; value: number }[];
-  channelIntelligence: { channel: string; revenue: number; ctr: number; conversion: number }[];
-  keyInsight?: string;
-  keyRisk?: string;
-  keyOpportunity?: string;
-}>('/api/revenue/stats');

@@ -262,7 +262,7 @@ export default function OpportunitiesPage() {
                  <div className="text-[14px] font-semibold text-ink bg-canvas-soft border border-hairline px-3 py-2.5 rounded-md shadow-sm">
                    {selectedOpp.recommendedAction || 'VIP Early Access Activation'}
                  </div>
-                 <button className="btn-primary w-full text-[14px] py-2.5 font-semibold mt-1" onClick={() => router.push('/engagement')}>
+                 <button className="btn-primary w-full text-[14px] py-2.5 font-semibold mt-1" onClick={() => router.push(`/chat?goal=${encodeURIComponent(`Design a campaign for ${selectedOpp.title} using ${selectedOpp.recommendedAction || 'VIP Early Access'}`)}`)}>
                    Draft Strategy <ArrowRight height={16} width={16} />
                  </button>
                </div>

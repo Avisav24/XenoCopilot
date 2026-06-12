@@ -1,4 +1,4 @@
-import { Sidebar } from '@/components/Sidebar';
+import { Sidebar } from '@/components/layout/Sidebar';
 
 export default function CRMLayout({ children }: { children: React.ReactNode }) {
   return (

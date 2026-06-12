@@ -30,8 +30,8 @@ const LaunchCampaignSchema = z.object({
   message: z.string(),
 });
 
-// Helper function to try Gemini keys in sequence, then fallback to Groq
-async function generateWithFallback(genaiInstances: GoogleGenAI[], groq: Groq, systemInstruction: string, userPrompt: string, temperature: number, isJson: boolean = false) {
+// Helper function to try Gemini keys in sequence, then fallback to Groq keys
+async function generateWithFallback(genaiInstances: GoogleGenAI[], groqInstances: Groq[], systemInstruction: string, userPrompt: string, temperature: number, isJson: boolean = false) {
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   let lastGeminiError;
 
@@ -53,27 +53,34 @@ async function generateWithFallback(genaiInstances: GoogleGenAI[], groq: Groq, s
     }
   }
 
-  // Fallback to Groq
+  // Fallback to Groq keys
   console.warn(`[Gemini API] All keys failed. Falling back to Groq...`);
-  try {
-    const groqModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
-    const params: any = {
-      model: groqModel,
-      messages: [
-        { role: 'system', content: systemInstruction },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: temperature,
-    };
-    if (isJson) {
-      params.response_format = { type: 'json_object' };
+  
+  let lastGroqError;
+  const groqModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+  
+  for (let i = 0; i < groqInstances.length; i++) {
+    try {
+      const params: any = {
+        model: groqModel,
+        messages: [
+          { role: 'system', content: systemInstruction },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: temperature,
+      };
+      if (isJson) {
+        params.response_format = { type: 'json_object' };
+      }
+      const response = await groqInstances[i].chat.completions.create(params);
+      return response.choices[0]?.message?.content ?? '';
+    } catch (groqError: any) {
+      console.warn(`[Groq API] Key ${i + 1} Failed: ${groqError.message}. Trying next...`);
+      lastGroqError = groqError;
     }
-    const response = await groq.chat.completions.create(params);
-    return response.choices[0]?.message?.content ?? '';
-  } catch (groqError: any) {
-    console.error(`[Groq API] Failed: ${groqError.message}`);
-    throw new Error(`Both Gemini and Groq failed. Gemini Error: ${lastGeminiError?.message}`);
   }
+
+  throw new Error(`Both Gemini and Groq failed. Groq Error: ${lastGroqError?.message}`);
 }
 
 export async function aiRoutes(fastify: FastifyInstance) {
@@ -84,8 +91,15 @@ export async function aiRoutes(fastify: FastifyInstance) {
     process.env.GEMINI_API_KEY_3
   ].filter(Boolean) as string[];
 
+  const groqKeys = [
+    process.env.GROQ_API_KEY,
+    process.env.GROQ_API_KEY_1,
+    process.env.GROQ_API_KEY_2,
+    process.env.GROQ_API_KEY_3
+  ].filter(Boolean) as string[];
+
   const genaiInstances = geminiKeys.map(key => new GoogleGenAI({ apiKey: key }));
-  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
+  const groqInstances = groqKeys.map(key => new Groq({ apiKey: key }));
 
   // ── 1. Query Personas ─────────────────────────────────────────
   fastify.post('/api/ai/query-personas', async (request, reply) => {
@@ -109,7 +123,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
       try {
         const text = await generateWithFallback(
           genaiInstances, 
-          groq, 
+          groqInstances, 
           systemPrompt, 
           `Personas:\n${personaListStr}\n\nMarketer Goal: "${goal}"`, 
           0.1,
@@ -198,7 +212,7 @@ export async function aiRoutes(fastify: FastifyInstance) {
       try {
         const text = await generateWithFallback(
           genaiInstances, 
-          groq, 
+          groqInstances, 
           systemPrompt, 
           `Persona: ${persona_name}, Channel: ${channel}`, 
           0.7,
@@ -408,7 +422,7 @@ Generate the 3 persuasion strategies.`;
       try {
         const text = await generateWithFallback(
           genaiInstances, 
-          groq, 
+          groqInstances, 
           systemPrompt, 
           userPrompt, 
           0.2,
@@ -460,7 +474,7 @@ Example format:
       try {
         const text = await generateWithFallback(
           genaiInstances, 
-          groq, 
+          groqInstances, 
           systemPrompt, 
           "Generate 3 campaign goal suggestions.", 
           0.7,

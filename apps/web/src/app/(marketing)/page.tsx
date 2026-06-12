@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
-import DotGrid from '../../components/DotGrid';
+import DotGrid from '@/components/ui/DotGrid';
 import { clsx } from 'clsx';
 import { Search, Spark, ArrowRight, ArrowUp, ArrowDown } from 'iconoir-react';
 

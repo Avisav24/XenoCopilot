@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { 
   strategizeCampaign, 
   launchCampaign,
@@ -15,7 +15,16 @@ import { Spark, Check, Send, User, WarningTriangle, ShieldCheck, Xmark } from 'i
 import { clsx } from 'clsx';
 
 export default function CommandCenterPage() {
+  return (
+    <React.Suspense fallback={<div className="p-8 text-muted">Loading copilot...</div>}>
+      <CommandCenterContent />
+    </React.Suspense>
+  );
+}
+
+function CommandCenterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   
   const { data: suggestions, isLoading: isLoadingSuggestions } = useQuery({
     queryKey: ['dynamic-suggestions'],
@@ -27,7 +36,7 @@ export default function CommandCenterPage() {
     queryFn: getDynamicPersonas,
   });
 
-  const [goal, setGoal] = useState('');
+  const [goal, setGoal] = useState(searchParams?.get('goal') || '');
   const [isProcessing, setIsProcessing] = useState(false);
   const [aiReport, setAiReport] = useState<any | null>(null);
   
@@ -144,10 +153,14 @@ export default function CommandCenterPage() {
                 <Xmark height={20} width={20} />
               </button>
             </div>
-            <div className="p-6">
-              <p className="text-[15px] text-ink leading-relaxed whitespace-pre-wrap font-medium">
-                {previewVariant.message}
-              </p>
+            <div className="p-6 bg-canvas">
+              <div className="bg-white p-5 rounded-xl border border-hairline shadow-sm relative">
+                {/* Tail for chat bubble effect */}
+                <div className="absolute -left-2 top-4 w-4 h-4 bg-white border-l border-b border-hairline transform rotate-45"></div>
+                <p className="text-[15px] text-ink leading-relaxed whitespace-pre-wrap font-medium relative z-10">
+                  {previewVariant.message}
+                </p>
+              </div>
             </div>
             <div className="p-4 border-t border-hairline bg-surface-soft flex justify-end">
                <button 
@@ -194,7 +207,7 @@ export default function CommandCenterPage() {
             <h2 className="text-[18px] font-semibold text-ink">Objective & Audience</h2>
             <div className="flex flex-col md:flex-row gap-4">
               <select 
-                className="input-field bg-surface-card md:w-1/3 text-[15px]"
+                className="bg-white border-2 border-primary/20 hover:border-primary/50 focus:border-primary shadow-sm rounded-xl py-4 px-4 text-[15px] outline-none transition-all text-ink md:w-1/3 cursor-pointer"
                 value={selectedPersonaId}
                 onChange={(e) => setSelectedPersonaId(e.target.value)}
                 disabled={isProcessing || aiReport !== null}
@@ -223,9 +236,9 @@ export default function CommandCenterPage() {
                 <button 
                   onClick={() => handleStartWorkflow()}
                   disabled={isProcessing || !goal.trim() || !selectedPersonaId || aiReport !== null} 
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary text-white rounded flex items-center justify-center hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-sm"
                 >
-                  <Spark height={20} width={20} />
+                  <Send height={20} width={20} className="ml-1" />
                 </button>
               </div>
             </div>
