@@ -31,8 +31,6 @@ export default function IntelligencePage() {
   const [page, setPage] = useState(0);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'directory' | 'audience'>('directory');
-  const [nlSegmentQuery, setNlSegmentQuery] = useState('');
-  const [nlResult, setNlResult] = useState<any>(null);
   const LIMIT = 20;
 
   const { data: stats, isLoading: isStatsLoading } = useQuery({
@@ -53,22 +51,6 @@ export default function IntelligencePage() {
   const customers = listData?.customers || [];
   const sortedCustomers = [...customers].sort((a, b) => a.health_score - b.health_score);
   const total = listData?.total || 0;
-
-  const handleNlSegmentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nlSegmentQuery) return;
-    setNlResult('loading');
-    setTimeout(() => {
-      setNlResult({
-        filters: [
-          { field: 'Total Spend', operator: '>', value: '₹5000' },
-          { field: 'Last Purchase', operator: '>', value: '90 Days' }
-        ],
-        audienceSize: 428,
-        revenuePotential: '₹1.72L'
-      });
-    }, 1200);
-  };
 
   return (
     <div className="flex flex-col gap-8 w-full pb-24 relative">
@@ -272,89 +254,38 @@ export default function IntelligencePage() {
           {/* Left: Segment Builder */}
           <div className="lg:col-span-1 flex flex-col gap-8">
 
-            {/* NL Builder */}
+            {/* Segment Builder */}
             <div className="flex flex-col gap-4">
               <h2 className="text-[16px] font-semibold text-ink">Segment Builder</h2>
-              <div className="border border-hairline rounded-xl bg-canvas shadow-sm p-5 flex flex-col gap-4 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-1 h-full bg-ink" />
-                <form onSubmit={handleNlSegmentSubmit} className="flex flex-col gap-3">
-                  <label className="text-[13px] font-bold text-ink flex items-center gap-1.5">
-                    <Filter height={16} width={16} className="text-ink" /> Natural Language Query
-                  </label>
-                  <textarea
-                    value={nlSegmentQuery}
-                    onChange={e => setNlSegmentQuery(e.target.value)}
-                    placeholder="e.g., Customers who spent more than ₹5000 and haven't purchased in 90 days."
-                    className="w-full bg-canvas-soft border border-hairline rounded-lg px-4 py-3 text-[14px] text-ink focus:outline-none focus:border-ink-muted min-h-[100px] resize-none"
-                  />
-                  <button
-                    type="submit"
-                    disabled={nlResult === 'loading' || !nlSegmentQuery.trim()}
-                    className="bg-ink hover:bg-ink/80 disabled:opacity-50 text-canvas font-bold px-4 py-2.5 rounded-lg transition-colors text-[14px]"
-                  >
-                    {nlResult === 'loading' ? 'Analyzing Query...' : 'Generate Audience'}
-                  </button>
-                </form>
-
-                {nlResult && nlResult !== 'loading' && (
-                  <div className="mt-2 border-t border-hairline pt-4 flex flex-col gap-4">
-                    <div className="flex flex-col gap-2">
-                      <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Detected Filters</span>
-                      {nlResult.filters.map((f: any, idx: number) => (
-                        <div key={idx} className="bg-canvas-soft border border-hairline px-3 py-2 rounded-md flex items-center gap-2 text-[13px] font-mono">
-                          <span className="font-bold text-ink">{f.field}</span>
-                          <span className="text-ink-muted font-bold">{f.operator}</span>
-                          <span className="font-bold text-ink">{f.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[11px] font-semibold text-ink-muted uppercase">Audience Size</span>
-                        <span className="text-[18px] font-bold text-ink font-mono-numbers">{nlResult.audienceSize}</span>
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[11px] font-semibold text-ink-muted uppercase">Revenue Potential</span>
-                        <span className="text-[18px] font-bold text-semantic-success font-mono-numbers">{nlResult.revenuePotential}</span>
-                      </div>
-                    </div>
-                    <button onClick={() => router.push('/chat')} className="w-full bg-ink hover:bg-ink/80 text-canvas font-bold py-2.5 rounded-lg transition-colors text-[13px]">
-                      Generate Campaign
-                    </button>
+              <div className="border border-hairline rounded-xl bg-canvas shadow-sm p-5 flex flex-col gap-4">
+                <span className="text-[13px] font-bold text-ink uppercase">Rule-Based Segment</span>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] flex-1">
+                      <option>Total Spend</option>
+                    </select>
+                    <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-16 text-center">
+                      <option>&gt;</option>
+                    </select>
+                    <input type="text" defaultValue="₹5000" readOnly className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Rule-Based Builder */}
-            <div className="border border-hairline rounded-xl bg-canvas shadow-sm p-5 flex flex-col gap-4">
-              <span className="text-[13px] font-bold text-ink uppercase">Rule-Based Segment</span>
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] flex-1">
-                    <option>Total Spend</option>
-                  </select>
-                  <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-16 text-center">
-                    <option>&gt;</option>
-                  </select>
-                  <input type="text" defaultValue="₹5000" readOnly className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
+                  <div className="flex items-center gap-2 pl-4 border-l-2 border-hairline ml-2 py-1">
+                    <span className="text-[11px] font-bold text-ink-muted">AND</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] flex-1">
+                      <option>Last Purchase</option>
+                    </select>
+                    <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-16 text-center">
+                      <option>&gt;</option>
+                    </select>
+                    <input type="text" defaultValue="60 Days" readOnly className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 pl-4 border-l-2 border-hairline ml-2 py-1">
-                  <span className="text-[11px] font-bold text-ink-muted">AND</span>
+                <div className="flex justify-between mt-2 pt-4 border-t border-hairline">
+                  <button className="text-[13px] font-bold text-ink-muted hover:text-ink transition-colors">Save Segment</button>
+                  <button className="text-[13px] font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">Preview <FastArrowRight height={14} width={14} /></button>
                 </div>
-                <div className="flex items-center gap-2">
-                  <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] flex-1">
-                    <option>Last Purchase</option>
-                  </select>
-                  <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-16 text-center">
-                    <option>&gt;</option>
-                  </select>
-                  <input type="text" defaultValue="60 Days" readOnly className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
-                </div>
-              </div>
-              <div className="flex justify-between mt-2 pt-4 border-t border-hairline">
-                <button className="text-[13px] font-bold text-ink-muted hover:text-ink transition-colors">Save Segment</button>
-                <button className="text-[13px] font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">Preview <FastArrowRight height={14} width={14} /></button>
               </div>
             </div>
           </div>
