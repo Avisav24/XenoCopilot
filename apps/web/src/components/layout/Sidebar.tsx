@@ -9,7 +9,7 @@ const navGroups = [
   {
     label: 'Growth',
     items: [
-      { href: '/revenue', label: 'Growth OS', icon: <GraphUp height={18} width={18} /> },
+      { href: '/revenue', label: 'Revenue Operations', icon: <GraphUp height={18} width={18} /> },
       { href: '/chat', label: 'Campaign Studio', icon: <Spark height={18} width={18} /> },
     ]
   },
