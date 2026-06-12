@@ -1,5 +1,5 @@
 {
-  "name": "@xenocopilot/api",
+  "name": "@xenocopilot/backend",
   "version": "1.0.0",
   "description": "XenoCopilot CRM API — Fastify backend",
   "main": "dist/index.js",

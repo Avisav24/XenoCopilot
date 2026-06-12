@@ -9,8 +9,8 @@
   "scripts": {
     "dev": "pnpm --parallel -r dev",
     "build": "pnpm -r build",
-    "seed": "pnpm --filter @xenocopilot/api seed",
-    "db:migrate": "pnpm --filter @xenocopilot/api db:migrate",
-    "db:generate": "pnpm --filter @xenocopilot/api db:generate"
+    "seed": "pnpm --filter @xenocopilot/backend seed",
+    "db:migrate": "pnpm --filter @xenocopilot/backend db:migrate",
+    "db:generate": "pnpm --filter @xenocopilot/backend db:generate"
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@xenocopilot/web",
+  "name": "@xenocopilot/frontend",
   "version": "1.0.0",
   "description": "XenoCopilot Frontend — Next.js 14",
   "private": true,
