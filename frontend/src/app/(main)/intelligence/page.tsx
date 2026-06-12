@@ -608,7 +608,14 @@ export default function IntelligencePage() {
                               </div>
                             </td>
                             <td className="py-4 px-5">
-                              <span className={clsx("text-[11px] font-bold px-2 py-1 rounded uppercase", isCritical ? "bg-red-100 text-red-800" : isHigh ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-700")}>{priorityStr}</span>
+                              <span className={clsx(
+                                "text-[11px] font-bold px-2 py-1 rounded uppercase", 
+                                (priorityStr === 'Critical' || priorityStr === 'High') ? "bg-red-100 text-red-800" : 
+                                priorityStr === 'Medium' ? "bg-amber-100 text-amber-800" : 
+                                "bg-blue-100 text-blue-800"
+                              )}>
+                                {priorityStr}
+                              </span>
                             </td>
                             <td className="py-4 px-5">
                               <div className="flex flex-col gap-0.5">

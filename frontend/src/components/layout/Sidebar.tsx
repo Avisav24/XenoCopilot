@@ -7,22 +7,22 @@ import { Spark, Group, Megaphone, StatsReport, Settings, GraphUp, DatabaseScript
 
 const navGroups = [
   {
-    label: 'Growth',
+    label: 'Overview',
     items: [
       { href: '/revenue', label: 'Revenue Operations', icon: <GraphUp height={18} width={18} /> },
-      { href: '/chat', label: 'Campaign Studio', icon: <Spark height={18} width={18} /> },
     ]
   },
   {
-    label: 'Customers',
+    label: 'Audience',
     items: [
       { href: '/intelligence', label: 'Customer 360', icon: <Group height={18} width={18} /> },
     ]
   },
   {
-    label: 'Execution',
+    label: 'Campaigns',
     items: [
-      { href: '/engagement', label: 'Campaigns', icon: <Megaphone height={18} width={18} /> },
+      { href: '/chat', label: 'Campaign Studio', icon: <Spark height={18} width={18} /> },
+      { href: '/engagement', label: 'All Campaigns', icon: <Megaphone height={18} width={18} /> },
     ]
   },
   {

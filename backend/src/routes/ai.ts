@@ -373,18 +373,32 @@ Example Output:
         commData.push({
           campaign_id: campaign.id,
           customer_id: individual_id,
-          status: 'pending',
+          status: 'delivered',
         });
       } else {
         const customerPersonas = await prisma.customerPersona.findMany({
           where: { persona_id: finalPersonaId },
         });
 
-        commData = customerPersonas.map((cp) => ({
-          campaign_id: campaign.id,
-          customer_id: cp.customer_id,
-          status: 'pending',
-        }));
+        const chanMetric = await prisma.channelMetric.findFirst({ where: { channel } });
+        const openRate = chanMetric?.open_rate ? Number(chanMetric.open_rate) / 100 : 0.45;
+        const clickRate = chanMetric?.ctr ? Number(chanMetric.ctr) / 100 : 0.15;
+        const convRate = chanMetric?.conversion_rate ? Number(chanMetric.conversion_rate) / 100 : 0.03;
+
+        commData = customerPersonas.map((cp) => {
+          let status = 'sent';
+          const r = Math.random();
+          if (r < 0.98) status = 'delivered';
+          if (r < openRate) status = 'opened';
+          if (r < clickRate) status = 'clicked';
+          if (r < convRate) status = 'purchased';
+
+          return {
+            campaign_id: campaign.id,
+            customer_id: cp.customer_id,
+            status,
+          };
+        });
       }
 
       await prisma.communication.createMany({ data: commData });

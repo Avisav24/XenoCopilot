@@ -52,23 +52,24 @@ function CampaignStudioContent() {
   useEffect(() => {
     if (audienceParam && !hasAutoSubmitted.current && !isGenerating && !submittedGoal) {
       hasAutoSubmitted.current = true;
-      handleCommandSubmit();
+      handleCommandSubmit(undefined, audienceParam);
     }
   }, [audienceParam]);
   const [selectedChannel, setSelectedChannel] = useState('WhatsApp');
   const [isLaunching, setIsLaunching] = useState(false);
   const [strategyResult, setStrategyResult] = useState<any>(null);
 
-  const handleCommandSubmit = async (e?: React.FormEvent) => {
+  const handleCommandSubmit = async (e?: React.FormEvent, overrideGoal?: string) => {
     if (e) e.preventDefault();
-    if (!goal.trim() || isGenerating) return;
+    const targetGoal = overrideGoal || goal;
+    if (!targetGoal.trim() || isGenerating) return;
     setIsGenerating(true);
 
     try {
       // 1. Dynamic Segmentation & SQL Query
       const segmentRes = await fetchAPI<any>('/api/ai/segment', {
         method: 'POST',
-        body: JSON.stringify({ goal })
+        body: JSON.stringify({ goal: targetGoal })
       });
       
       const count = segmentRes.count;
@@ -87,6 +88,10 @@ function CampaignStudioContent() {
         expectedPurchasers: segmentRes.expectedPurchasers,
         conversionRate: segmentRes.conversionRate,
         audienceMatch: segmentRes.audienceMatch,
+        aov: segmentRes.aov,
+        risk: segmentRes.risk,
+        revenue: segmentRes.revenue,
+        goal: segmentRes.goal,
         variants: [
           { version: 'A', text: msgRes.variantA || "Your favorite products are back in stock." },
           { version: 'B', text: msgRes.variantB || "Special offer inside for our best customers." }
@@ -262,14 +267,14 @@ function CampaignStudioContent() {
                  
                  <span className="text-[12px] font-bold text-blue-800 uppercase tracking-wider mb-1">Why this campaign?</span>
                  
-                 <p className="text-[15px] text-slate-800 font-medium">
-                   <span className="font-bold text-slate-900">{strategyResult?.count || 0}</span> {strategyResult?.persona?.name?.toLowerCase() || 'customers'} have not purchased in 90+ days.
+                 <p className="text-[14px] text-slate-800 font-medium">
+                   We identified <span className="font-bold text-slate-900">{strategyResult?.count || 0}</span> customers matching the <span className="font-bold text-slate-900">{strategyResult?.goal || 'target'}</span> criteria.
                  </p>
-                 <p className="text-[15px] text-slate-800 font-medium">
-                   Historical recovery campaigns generated <span className="font-bold text-slate-900">₹8.4L</span>.
+                 <p className="text-[14px] text-slate-800 font-medium">
+                   This segment exhibits a <span className="font-bold text-slate-900">{strategyResult?.risk || 'Low'}</span> churn risk with an Average Order Value of <span className="font-bold text-emerald-700">{strategyResult?.aov || '₹0'}</span>.
                  </p>
-                 <p className="text-[15px] text-slate-800 font-medium">
-                   Estimated opportunity: <span className="font-bold text-emerald-700">₹{(strategyResult?.expectedRevenue || 0).toLocaleString('en-IN')}</span>.
+                 <p className="text-[14px] text-slate-800 font-medium">
+                   Based on a <span className="font-bold text-blue-700">{strategyResult?.conversionRate || 0}%</span> expected conversion rate via <span className="font-bold text-slate-900">{strategyResult?.channel || 'your channel'}</span>, the total opportunity is <span className="font-bold text-emerald-700">₹{(strategyResult?.expectedRevenue || 0).toLocaleString('en-IN')}</span>.
                  </p>
                  
                  <div className="mt-3">
@@ -529,7 +534,7 @@ function CampaignStudioContent() {
                           {[
                             { icon: '🚚', label: 'Free Shipping' },
                             { icon: '✅', label: '100% Authentic' },
-                            { icon: 'â†©ï¸', label: 'Easy Returns' },
+                            { icon: '↩️', label: 'Easy Returns' },
                           ].map(b => (
                             <div key={b.label} className="flex flex-col items-center gap-1">
                               <span className="text-[18px]">{b.icon}</span>
