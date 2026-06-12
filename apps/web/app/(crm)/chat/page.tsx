@@ -132,7 +132,7 @@ export default function CommandCenterPage() {
     : personas?.find((p: any) => p.id === selectedPersonaId)?.name;
 
   return (
-    <div className="p-10 w-full flex flex-col min-h-screen bg-canvas pb-24" style={{ gap: '24px' }}>
+    <div className="w-full flex flex-col pb-24 gap-6">
       
       {/* Full Message Modal */}
       {previewVariant && (
@@ -168,7 +168,7 @@ export default function CommandCenterPage() {
       <div className="flex flex-col border-b border-hairline pb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[36px] tracking-tight">Campaign Copilot</h1>
+            <h1>Campaign Copilot</h1>
             <p className="text-[15px] text-muted max-w-2xl leading-relaxed mt-1">
               Business command center for campaign strategy and revenue forecasting.
             </p>
@@ -176,7 +176,7 @@ export default function CommandCenterPage() {
           {(aiReport || isProcessing) && (
             <button 
               onClick={resetSession} 
-              className="btn-ghost"
+              className="btn-secondary"
             >
               Reset Session
             </button>
@@ -200,13 +200,15 @@ export default function CommandCenterPage() {
                 disabled={isProcessing || aiReport !== null}
               >
                 <option value="">Select Target Audience...</option>
-                <option value="all-customers">All Customers (12,500 users)</option>
+                <option value="all-customers">
+                  All Customers ({personas ? personas.reduce((acc: number, p: any) => acc + p.customerCount, 0).toLocaleString() : '...'} users)
+                </option>
                 {personas?.map((p: any) => (
                   <option key={p.id} value={p.id}>{p.name} ({p.customerCount} users)</option>
                 ))}
               </select>
 
-              <div className="relative flex-1">
+              <div className="relative flex-1 mt-1 mb-2">
                 <input
                   type="text"
                   value={goal}
@@ -215,15 +217,15 @@ export default function CommandCenterPage() {
                     if (e.key === 'Enter') handleStartWorkflow();
                   }}
                   placeholder="e.g. Recover dormant spenders with an aggressive win-back..."
-                  className="input-field bg-surface-card w-full py-3 pr-14 text-[15px]"
+                  className="w-full bg-white border-2 border-primary/20 hover:border-primary/50 focus:border-primary shadow-sm rounded-xl py-4 pl-4 pr-16 text-[15px] outline-none transition-all placeholder:text-muted/70 text-ink"
                   disabled={isProcessing || aiReport !== null}
                 />
                 <button 
                   onClick={() => handleStartWorkflow()}
                   disabled={isProcessing || !goal.trim() || !selectedPersonaId || aiReport !== null} 
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-primary text-white rounded flex items-center justify-center hover:bg-primary-press disabled:opacity-50 transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-primary text-white rounded flex items-center justify-center hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-sm"
                 >
-                  <Spark height={16} width={16} />
+                  <Spark height={20} width={20} />
                 </button>
               </div>
             </div>
@@ -271,11 +273,11 @@ export default function CommandCenterPage() {
                    </div>
                    <div className="p-4 bg-surface-card border border-hairline rounded-lg flex flex-col gap-1">
                       <span className="text-[13px] font-medium text-muted uppercase tracking-wider">Potential Revenue</span>
-                      <span className="text-[28px] font-mono-numbers font-semibold text-semantic-up">₹{aiReport.opportunityAnalysis?.potentialRevenue?.toLocaleString() || 0}</span>
+                      <span className="text-[28px] font-mono-numbers font-semibold text-semantic-success">₹{aiReport.opportunityAnalysis?.potentialRevenue?.toLocaleString() || 0}</span>
                    </div>
                    <div className="p-4 bg-surface-card border border-hairline rounded-lg flex flex-col gap-1">
                       <span className="text-[13px] font-medium text-muted uppercase tracking-wider">Revenue At Risk</span>
-                      <span className="text-[28px] font-mono-numbers font-semibold text-semantic-down">₹{aiReport.opportunityAnalysis?.revenueAtRisk?.toLocaleString() || 0}</span>
+                      <span className="text-[28px] font-mono-numbers font-semibold text-semantic-danger">₹{aiReport.opportunityAnalysis?.revenueAtRisk?.toLocaleString() || 0}</span>
                    </div>
                    <div className="p-4 bg-surface-card border border-hairline rounded-lg flex flex-col gap-1">
                       <span className="text-[13px] font-medium text-muted uppercase tracking-wider">Audience Size</span>
@@ -316,7 +318,7 @@ export default function CommandCenterPage() {
                      <div className="grid grid-cols-3 gap-4 border-t border-hairline pt-4 mt-2">
                         <div className="flex flex-col gap-1">
                            <span className="text-[13px] text-muted">Revenue</span>
-                           <span className="text-[20px] font-mono-numbers font-semibold text-semantic-up">₹{aiReport.aiRecommendation.expectedOutcome?.revenue?.toLocaleString() || 0}</span>
+                           <span className="text-[20px] font-mono-numbers font-semibold text-semantic-success">₹{aiReport.aiRecommendation.expectedOutcome?.revenue?.toLocaleString() || 0}</span>
                         </div>
                         <div className="flex flex-col gap-1">
                            <span className="text-[13px] text-muted">Purchases</span>
@@ -358,7 +360,7 @@ export default function CommandCenterPage() {
                          <div className="grid grid-cols-2 gap-4">
                             <div className="flex flex-col gap-1">
                                <span className="text-[12px] font-medium text-muted uppercase tracking-wider">Expected Revenue</span>
-                               <span className="text-[20px] font-mono-numbers font-semibold text-semantic-up">₹{variant.expectedRevenue?.toLocaleString() || 0}</span>
+                               <span className="text-[20px] font-mono-numbers font-semibold text-semantic-success">₹{variant.expectedRevenue?.toLocaleString() || 0}</span>
                             </div>
                             <div className="grid grid-cols-3 gap-2 border-l border-hairline pl-4">
                                <div className="flex flex-col gap-1">
@@ -402,7 +404,7 @@ export default function CommandCenterPage() {
                            <p className="text-[14px] text-ink leading-relaxed line-clamp-3 italic">"{variant.message}"</p>
                          </div>
                          <div className="flex items-center gap-2 mt-2">
-                           <button onClick={() => setPreviewVariant(variant)} className="btn-ghost flex-1 text-[13px]">View Full</button>
+                           <button onClick={() => setPreviewVariant(variant)} className="btn-secondary flex-1 text-[13px]">View Full</button>
                            <button onClick={() => setSelectedVariantId(variant.id)} className={clsx("flex-1 text-[13px]", selectedVariantId === variant.id ? "btn-primary opacity-50 cursor-not-allowed" : "btn-primary")}>
                              {selectedVariantId === variant.id ? 'Selected' : 'Use Variant'}
                            </button>
@@ -443,7 +445,7 @@ export default function CommandCenterPage() {
                       
                       <div className="flex flex-col gap-1">
                         <span className="text-[12px] font-medium text-muted uppercase tracking-wider">Expected Revenue</span>
-                        <span className="text-[24px] font-mono-numbers font-semibold text-semantic-up">
+                        <span className="text-[24px] font-mono-numbers font-semibold text-semantic-success">
                           ₹{sim.expectedRevenue.toLocaleString()}
                         </span>
                       </div>
@@ -503,7 +505,7 @@ export default function CommandCenterPage() {
                   <div className="flex flex-col gap-3 py-5 border-b border-hairline">
                      <div className="flex justify-between items-center">
                         <span className="text-[13px] text-muted">Expected Revenue</span>
-                        <span className="text-[16px] font-mono-numbers font-bold text-semantic-up">₹{selectedSim?.expectedRevenue?.toLocaleString() || 0}</span>
+                        <span className="text-[16px] font-mono-numbers font-bold text-semantic-success">₹{selectedSim?.expectedRevenue?.toLocaleString() || 0}</span>
                      </div>
                      <div className="flex justify-between items-center">
                         <span className="text-[13px] text-muted">Opportunity Score</span>
@@ -518,7 +520,7 @@ export default function CommandCenterPage() {
                   <div className="flex flex-col gap-3 py-5">
                      <div className="flex justify-between items-center">
                         <span className="text-[13px] text-muted">Launch Risk</span>
-                        <span className="text-[13px] font-medium text-semantic-up px-2 py-0.5 bg-semantic-up/10 rounded">Low</span>
+                        <span className="text-[13px] font-medium text-semantic-success px-2 py-0.5 bg-semantic-success/10 rounded">Low</span>
                      </div>
                      <div className="flex justify-between items-center">
                         <span className="text-[13px] text-muted">Estimated Duration</span>

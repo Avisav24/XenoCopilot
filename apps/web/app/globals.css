@@ -5,130 +5,70 @@
 @layer base {
   body {
     @apply bg-canvas text-ink;
-    font-family: 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   h1 {
-    @apply text-[48px] font-bold tracking-[-0.04em] leading-tight;
+    @apply text-[48px] font-bold text-ink;
   }
   h2 {
-    @apply text-[20px] font-semibold;
+    @apply text-[24px] font-bold text-ink;
   }
   h3 {
-    @apply text-[16px] font-semibold;
+    @apply text-[18px] font-bold text-ink;
   }
-  p, span {
-    @apply text-[14px] font-normal;
-  }
-  .label-text {
-    @apply text-[11px] font-semibold text-muted uppercase tracking-[0.08em];
-  }
-  .metric-standard {
-    @apply text-[36px] font-bold;
-  }
-  .metric-large {
-    @apply text-[40px] font-bold;
-  }
-  .desc-text {
-    @apply text-[14px] font-normal;
+  p {
+    @apply text-[15px] text-ink-muted leading-[1.6];
   }
 }
 
 @layer components {
-  /* Enterprise Sidebar */
-  .sidebar {
-    @apply bg-canvas text-ink min-h-screen w-[260px] flex-shrink-0 border-r border-hairline;
-  }
-
-  /* Dense Cards */
+  /* Enterprise Cards */
   .card {
-    @apply bg-surface-card rounded-xl border border-hairline transition-colors duration-200;
+    @apply bg-canvas rounded-[12px] border border-hairline p-6;
   }
   
-  .card:hover {
-    @apply border-hairline-input;
-  }
-
-  /* Enterprise Primary CTA */
-  .btn-primary {
-    @apply bg-primary text-on-primary px-4 py-2 rounded-lg font-medium text-[14px] leading-none tracking-normal
-           hover:bg-primary-press transition-colors duration-200 
-           disabled:opacity-50 disabled:cursor-not-allowed
-           flex items-center justify-center;
-  }
-
-  .btn-primary-large {
-    @apply btn-primary px-6 py-3 h-[48px] text-[15px];
-  }
-
-  /* Secondary / Ghost */
-  .btn-ghost {
-    @apply bg-surface-card text-ink px-4 py-2 rounded-lg font-medium text-[14px] border border-hairline
-           hover:bg-surface-strong transition-colors duration-200;
-  }
-
-  /* Persona Badge */
-  .badge-persona {
-    @apply inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-hairline bg-surface-soft text-[12px] font-medium text-ink;
-  }
-
-  .status-badge {
-    @apply bg-surface-strong text-ink rounded-md px-2 py-1 text-[12px] font-medium border border-hairline;
-  }
-
-  .input-field {
-    @apply w-full px-3 py-2 h-[40px] rounded-lg border border-hairline 
-           bg-surface-card text-ink placeholder-muted
-           focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary
-           transition-colors duration-200;
-  }
-
-  .skeleton {
-    @apply bg-surface-strong rounded-md animate-pulse;
-  }
-
-  /* Enterprise Tables */
+  /* Tables */
   .table-container {
-    @apply w-full overflow-x-auto rounded-xl border border-hairline bg-surface-card;
+    @apply w-full overflow-x-auto border border-hairline rounded-[8px] bg-canvas;
   }
-  
   .table-enterprise {
     @apply w-full text-left border-collapse;
   }
-
   .table-enterprise th {
-    @apply px-4 py-3 text-[12px] font-medium text-muted border-b border-hairline bg-surface-soft whitespace-nowrap;
+    @apply px-4 py-3 text-[12px] font-bold text-ink-muted border-b border-hairline bg-canvas-soft whitespace-nowrap uppercase tracking-wider;
   }
-
   .table-enterprise td {
-    @apply px-4 py-3 text-[14px] text-ink border-b border-hairline whitespace-nowrap;
+    @apply px-4 py-4 text-[14px] text-ink border-b border-hairline whitespace-nowrap;
   }
-
   .table-enterprise tr:hover td {
-    @apply bg-surface-soft/50;
+    @apply bg-canvas-soft/50;
   }
-  
   .table-enterprise tr:last-child td {
     @apply border-b-0;
+  }
+
+  /* Enterprise Buttons */
+  .btn-primary {
+    @apply bg-primary text-white px-4 py-2 rounded-md font-medium text-[14px] leading-none hover:bg-primary-press transition-colors flex items-center justify-center gap-2;
+  }
+  .btn-secondary {
+    @apply bg-canvas text-ink border border-hairline px-4 py-2 rounded-md font-medium text-[14px] leading-none hover:bg-canvas-soft transition-colors flex items-center justify-center gap-2;
+  }
+
+  /* Persona Badges */
+  .badge-persona {
+    @apply inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-hairline bg-canvas-soft text-[12px] font-medium text-ink;
+  }
+
+  /* Status Badges */
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-hairline bg-canvas-soft text-[12px] font-medium text-ink;
   }
 }
 
 @layer utilities {
-  .nav-item {
-    @apply flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] font-medium
-           text-muted hover:text-ink hover:bg-surface-strong
-           transition-colors duration-150 cursor-pointer;
-  }
-
-  .nav-item-active {
-    @apply text-primary bg-primary-soft font-medium;
-  }
-  
-  .font-display {
-    font-family: 'Inter', sans-serif;
-  }
   .font-mono-numbers {
     font-variant-numeric: tabular-nums;
   }

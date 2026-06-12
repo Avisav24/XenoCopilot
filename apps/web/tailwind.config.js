@@ -8,77 +8,39 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        display: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['var(--font-sohne-mono)', 'monospace'],
+        sans: ['var(--font-inter)', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
         primary: {
           DEFAULT: '#2563EB',
-          press: '#1D4ED8',
           soft: '#EFF6FF',
-          bgSubduedHover: '#EFF6FF',
-        },
-        brand: {
-          dark: '#111827',
+          press: '#1D4ED8',
         },
         ink: {
-          DEFAULT: '#111827',
-          secondary: '#6B7280',
-        },
-        muted: {
-          DEFAULT: '#9CA3AF',
-          soft: '#E5E7EB',
+          DEFAULT: '#0F172A',
+          muted: '#64748B',
         },
         hairline: {
-          DEFAULT: '#E5E7EB',
-          input: '#D1D5DB',
+          DEFAULT: '#E2E8F0',
         },
         canvas: {
-          DEFAULT: '#FAFAFA',
-          soft: '#F9FAFB',
-          cream: '#FAFAFA',
-        },
-        surface: {
-          soft: '#F9FAFB',
-          card: '#FFFFFF',
-          strong: '#F3F4F6',
-          dark: '#111827',
-          darkElevated: '#1F2937',
-        },
-        on: {
-          primary: '#FFFFFF',
-          dark: '#FFFFFF',
-          darkSoft: '#9CA3AF',
+          DEFAULT: '#FFFFFF',
+          soft: '#F8FAFC',
         },
         semantic: {
-          up: '#10B981',
-          down: '#EF4444', 
-          warning: '#F59E0B'
-        },
-        accent: {
-          yellow: '#F59E0B', 
-          pink: '#2563EB', 
-        },
-        shadow: {
-          blue: '#2563EB',
+          success: '#10B981',
+          warning: '#F59E0B',
+          danger: '#EF4444',
         }
       },
       borderRadius: {
         none: '0px',
-        xs: '4px',
-        sm: '6px',
+        sm: '4px',
         md: '8px',
-        lg: '10px',
-        xl: '12px',
-        '2xl': '16px',
-        pill: '9999px',
+        lg: '12px',
+        xl: '16px',
         full: '9999px',
       },
-      boxShadow: {
-        card: 'none',
-        'card-hover': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-      }
     },
   },
   plugins: [require('@tailwindcss/typography')],

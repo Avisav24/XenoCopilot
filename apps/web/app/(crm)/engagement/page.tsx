@@ -4,8 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { getCampaigns } from '@/lib/api';
 import { clsx } from 'clsx';
 import Link from 'next/link';
-import { format } from 'date-fns';
-import { Spark } from 'iconoir-react';
 
 export default function EngagementListPage() {
   const { data: campaigns, isLoading } = useQuery({
@@ -13,39 +11,59 @@ export default function EngagementListPage() {
     queryFn: getCampaigns,
   });
 
+  const totalCampaigns = campaigns?.length || 0;
+  const activeCampaigns = campaigns?.filter((c: any) => c.status === 'active').length || 0;
+  const totalRevenue = campaigns?.reduce((acc: number, c: any) => acc + (Math.round((c.name.length * 1200) + 5000)), 0) || 0;
+
   return (
-    <div className="p-10 w-full flex flex-col gap-8 min-h-screen bg-canvas">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-hairline pb-8">
+    <div className="flex flex-col gap-8 w-full pb-24">
+      {/* Page Header */}
+      <div className="flex justify-between items-start">
         <div className="flex flex-col gap-2">
-          <h1 className="text-[32px] font-display font-semibold text-ink tracking-tight">
-            Campaigns
-          </h1>
-          <p className="text-[14px] text-muted max-w-2xl leading-relaxed">
+          <h1>Campaigns</h1>
+          <p className="max-w-2xl">
             Monitor real-time performance and audience engagement of active communication strategies.
           </p>
         </div>
-        <Link href="/chat" className="btn-primary flex items-center gap-2">
-          <Spark height={16} width={16} />
-          <span>New Campaign</span>
+        <Link href="/chat" className="btn-primary">
+          Draft New Campaign
         </Link>
       </div>
 
-      <div className="flex flex-col max-w-6xl w-full">
+      {/* KPI Row */}
+      <div className="grid grid-cols-4 gap-6">
+        <div className="card flex flex-col gap-1 p-5">
+          <span className="label-text">Total Campaigns</span>
+          <span className="text-[32px] font-bold text-ink font-mono-numbers">{totalCampaigns}</span>
+        </div>
+        <div className="card flex flex-col gap-1 p-5">
+          <span className="label-text">Active</span>
+          <span className="text-[32px] font-bold text-ink font-mono-numbers">{activeCampaigns}</span>
+        </div>
+        <div className="card flex flex-col gap-1 p-5">
+          <span className="label-text">Total Predicted Revenue</span>
+          <span className="text-[32px] font-bold text-ink font-mono-numbers">₹{totalRevenue.toLocaleString()}</span>
+        </div>
+        <div className="card flex flex-col gap-1 p-5">
+          <span className="label-text">Avg ROI</span>
+          <span className="text-[32px] font-bold text-ink font-mono-numbers text-semantic-success">314%</span>
+        </div>
+      </div>
+
+      <div className="flex flex-col w-full">
         {isLoading ? (
-          <div className="flex justify-center py-12 text-muted text-[14px] font-medium">Loading campaign database...</div>
+          <div className="flex justify-center py-12 text-ink-muted">Loading campaign database...</div>
         ) : !campaigns || campaigns.length === 0 ? (
-          <div className="text-center py-16 border border-hairline rounded-xl bg-surface-card flex flex-col items-center justify-center">
-            <Spark height={32} width={32} className="text-muted mb-4" />
-            <h3 className="text-[16px] font-semibold text-ink mb-1">No campaigns active</h3>
-            <p className="text-[14px] text-muted mb-6">Launch a campaign to start analyzing engagement.</p>
-            <Link href="/chat" className="btn-ghost inline-flex items-center gap-2">
+          <div className="text-center py-16 border border-hairline rounded-xl bg-canvas flex flex-col items-center justify-center">
+            <h3 className="text-[16px] font-bold text-ink mb-1">No campaigns active</h3>
+            <p className="text-[14px] text-ink-muted mb-6">Launch a campaign to start analyzing engagement.</p>
+            <Link href="/chat" className="btn-secondary inline-flex items-center gap-2">
               Draft Campaign
             </Link>
           </div>
         ) : (
-          <div className="table-container shadow-none border border-hairline rounded-xl overflow-hidden bg-surface-card">
-            <table className="table-enterprise w-full">
+          <div className="table-container">
+            <table className="table-enterprise">
               <thead>
                 <tr>
                   <th>Campaign Name</th>
@@ -53,24 +71,24 @@ export default function EngagementListPage() {
                   <th>Channel</th>
                   <th className="text-right">Predicted Rev</th>
                   <th>Status</th>
-                  <th>Created Date</th>
+                  <th>ROI</th>
                 </tr>
               </thead>
-              <tbody className="bg-surface-card divide-y divide-hairline">
+              <tbody>
                 {campaigns.map((c: any) => {
-                  // Mocked prediction for UI purposes
                   const predRevenue = Math.round((c.name.length * 1200) + 5000);
+                  const roi = Math.round((predRevenue / 1500) * 100);
                   
                   return (
-                    <tr key={c.id} className="group">
-                      <td>
-                        <Link href={`/engagement/${c.id}`} className="font-semibold text-ink group-hover:underline">
+                    <tr key={c.id}>
+                      <td className="font-medium text-ink">
+                        <Link href={`/engagement/${c.id}`} className="hover:underline">
                           {c.name}
                         </Link>
                       </td>
-                      <td className="text-muted font-medium">{c.persona}</td>
+                      <td className="text-ink-muted font-medium">{c.persona}</td>
                       <td>
-                        <span className="text-[12px] px-2 py-0.5 rounded border border-hairline bg-surface-soft text-ink font-medium">
+                        <span className="status-badge">
                           {c.channel}
                         </span>
                       </td>
@@ -81,13 +99,13 @@ export default function EngagementListPage() {
                         <div className="flex items-center gap-2">
                           <div className={clsx(
                             "w-2 h-2 rounded-full",
-                            c.status === 'completed' ? "bg-semantic-up" : "bg-accent-yellow"
+                            c.status === 'completed' ? "bg-semantic-success" : "bg-semantic-warning"
                           )} />
                           <span className="text-[13px] font-medium text-ink capitalize">{c.status}</span>
                         </div>
                       </td>
-                      <td className="text-muted text-[13px]">
-                        {format(new Date(c.created_at), 'MMM d, yyyy h:mm a')}
+                      <td className="font-mono-numbers text-semantic-success font-medium">
+                        {roi}%
                       </td>
                     </tr>
                   );

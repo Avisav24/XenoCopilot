@@ -3,11 +3,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { getDynamicPersonas } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { Spark, ArrowRight, WarningTriangle, ArrowUp, ArrowDown } from 'iconoir-react';
+import { Spark, ArrowUp, ArrowDown, Xmark } from 'iconoir-react';
+import { useState } from 'react';
 import { clsx } from 'clsx';
 
 export default function PersonasPage() {
   const router = useRouter();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { data: personas, isLoading } = useQuery({
     queryKey: ['dynamic-personas'],
@@ -16,118 +18,161 @@ export default function PersonasPage() {
 
   if (isLoading) {
     return (
-      <div className="p-12 min-h-screen flex items-center justify-center gap-3 text-muted font-medium">
-        <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="flex items-center justify-center min-h-[500px] text-ink-muted">
         Generating dynamic behavioral personas...
       </div>
     );
   }
 
+  const totalPersonas = personas?.length || 0;
+  const totalAudience = personas?.reduce((acc: number, p: any) => acc + (p.customerCount || 0), 0) || 0;
+  const highestRevenue = personas?.reduce((max: any, p: any) => (p.revenueContribution || 0) > (max.revenueContribution || 0) ? p : max, personas?.[0]);
+  const highestRisk = personas?.find((p: any) => p.churnRisk === 'High') || personas?.[0];
+
+  const selectedPersona = personas?.find((p: any) => p.id === selectedId);
+
   return (
-    <div className="p-10 w-full flex flex-col gap-10 min-h-screen bg-canvas pb-24">
+    <div className="flex flex-col gap-8 w-full pb-24 relative">
       
+      {/* Side Drawer */}
+      {selectedPersona && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-ink/20 backdrop-blur-sm">
+          <div className="w-[450px] bg-canvas border-l border-hairline shadow-2xl h-full flex flex-col overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-hairline bg-canvas-soft">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-[20px] font-semibold text-ink tracking-tight">{selectedPersona.name}</h2>
+                <span className="text-[13px] text-ink-muted">{selectedPersona.customerCount.toLocaleString()} Customers</span>
+              </div>
+              <button onClick={() => setSelectedId(null)} className="p-1 hover:bg-hairline rounded transition-colors text-ink-muted hover:text-ink">
+                <Xmark height={20} width={20} />
+              </button>
+            </div>
+            
+            <div className="p-6 flex flex-col gap-8">
+               <div className="flex flex-col gap-2">
+                 <span className="label-text">Persona Profile</span>
+                 <div className="bg-canvas border border-hairline rounded-lg p-4 flex flex-col gap-4 text-[14px]">
+                    <div className="flex justify-between border-b border-hairline pb-2">
+                      <span className="text-ink-muted">Revenue Generated</span>
+                      <span className="font-mono-numbers font-medium text-ink">₹{selectedPersona.revenueContribution.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-hairline pb-2">
+                      <span className="text-ink-muted">Monthly Trend</span>
+                      <span className={clsx("font-medium", selectedPersona.monthlyTrend.startsWith('-') ? "text-semantic-danger" : "text-semantic-success")}>
+                        {selectedPersona.monthlyTrend}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-b border-hairline pb-2">
+                      <span className="text-ink-muted">Risk Exposure</span>
+                      <span className={clsx("font-medium", selectedPersona.churnRisk.includes('High') ? "text-semantic-danger" : selectedPersona.churnRisk === 'Medium' ? "text-semantic-warning" : "text-semantic-success")}>
+                         {selectedPersona.churnRisk}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-2 pt-2">
+                       <span className="text-ink-muted">AI Summary</span>
+                       <p className="text-ink text-[13px] leading-relaxed">{selectedPersona.aiSummary}</p>
+                    </div>
+                 </div>
+               </div>
+
+               <div className="flex flex-col gap-2">
+                 <span className="label-text">Action Plan</span>
+                 <div className="bg-primary-soft border border-primary/20 rounded-lg p-4 flex flex-col gap-4 text-[14px]">
+                    <div className="flex flex-col gap-1 border-b border-primary/10 pb-3">
+                      <span className="text-primary font-medium">Recommended Action</span>
+                      <span className="font-bold text-ink">{selectedPersona.recommendedAction}</span>
+                    </div>
+                    <div className="flex justify-between items-center border-b border-primary/10 pb-3">
+                      <span className="text-primary font-medium">Revenue Opportunity</span>
+                      <span className="font-mono-numbers font-bold text-semantic-success">₹{selectedPersona.revenueOpportunity?.toLocaleString()}</span>
+                    </div>
+                    <button onClick={() => router.push('/chat')} className="btn-primary w-full mt-2">
+                      Strategize Campaign
+                    </button>
+                 </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col gap-2 border-b border-hairline pb-8">
-        <h1>Persona Discovery Engine</h1>
-        <p className="text-[14px] text-muted max-w-2xl leading-relaxed mt-2">
+        <h1>Persona Discovery</h1>
+        <p className="max-w-2xl">
           The AI engine analyzes behavioral data to generate dynamic customer segments and uncover their business story.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 w-full max-w-5xl">
-        {personas?.map((p: any) => {
-          const expectedGain = p.expectedImpact || p.revenueOpportunity || 0;
-          const expectedLoss = Math.round(expectedGain * 0.38); // Mocking risk multiplier
-          const netImpact = expectedGain + expectedLoss;
-          
-          return (
-          <div key={p.id} className="flex flex-col border-t border-hairline pt-8 transition-colors overflow-hidden hover:bg-[#F8FAFC]">
-            
-            <div className="flex flex-col gap-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-[24px] font-bold text-ink tracking-tight flex items-center gap-3">
-                    {p.name}
-                  </h3>
-                  <div className="flex items-center gap-4 mt-2">
-                    <span className="text-[13px] font-medium text-muted">Audience: <span className="text-ink font-semibold">{p.customerCount.toLocaleString()}</span></span>
-                  </div>
-                </div>
-              </div>
+      {/* KPI Row */}
+      <div className="grid grid-cols-4 gap-6">
+        <div className="card flex flex-col gap-1 p-5">
+          <span className="label-text">Total Personas</span>
+          <span className="text-[32px] font-bold text-ink font-mono-numbers">{totalPersonas}</span>
+        </div>
+        <div className="card flex flex-col gap-1 p-5">
+          <span className="label-text">Addressable Audience</span>
+          <span className="text-[32px] font-bold text-ink font-mono-numbers">{totalAudience.toLocaleString()}</span>
+        </div>
+        <div className="card flex flex-col gap-1 p-5">
+          <span className="label-text">Highest Revenue Segment</span>
+          <span className="text-[32px] font-bold text-ink truncate" title={highestRevenue?.name}>{highestRevenue?.name || '-'}</span>
+        </div>
+        <div className="card flex flex-col gap-1 p-5">
+          <span className="label-text">Highest Risk Segment</span>
+          <span className="text-[32px] font-bold text-semantic-danger truncate" title={highestRisk?.name}>{highestRisk?.name || '-'}</span>
+        </div>
+      </div>
 
-              {/* Persona Story Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 py-4 border-y border-hairline">
-                 <div className="flex flex-col gap-1">
-                    <span className="label-text">Revenue Generated</span>
-                    <span className="text-[20px] font-mono-numbers font-semibold text-ink">₹{p.revenueContribution.toLocaleString()}</span>
-                 </div>
-                 <div className="flex flex-col gap-1">
-                    <span className="label-text">Revenue Growth</span>
-                    <div className="flex items-center gap-2">
-                       <span className={clsx("text-[20px] font-mono-numbers font-semibold", p.monthlyTrend.startsWith('-') ? "text-semantic-down" : "text-semantic-up")}>
-                          {p.monthlyTrend}
-                       </span>
-                       {p.monthlyTrend.startsWith('-') ? <ArrowDown height={16} width={16} className="text-semantic-down" /> : <ArrowUp height={16} width={16} className="text-semantic-up" />}
-                    </div>
-                 </div>
-                 <div className="flex flex-col gap-1">
-                    <span className="label-text">Risk Exposure</span>
-                    <span className={clsx("text-[20px] font-semibold", p.churnRisk.includes('High') ? "text-semantic-down" : p.churnRisk === 'Medium' ? "text-semantic-warning" : "text-semantic-up")}>
-                       {p.churnRisk}
-                    </span>
-                 </div>
-                 <div className="flex flex-col gap-1">
-                    <span className="label-text text-primary">Revenue Potential</span>
-                    <span className="text-[20px] font-mono-numbers font-semibold text-primary">₹{p.revenueOpportunity.toLocaleString()}</span>
-                 </div>
-              </div>
-
-              {/* Persona Economics */}
-              <div className="flex flex-col md:flex-row gap-12 mt-2">
-                <div className="flex-1 flex flex-col gap-4">
-                  <span className="label-text">Persona Economics</span>
-                  <div className="flex flex-col gap-2 text-[14px]">
-                    <div className="flex justify-between border-b border-hairline pb-2">
-                      <span className="text-muted">If No Action (Loss)</span>
-                      <span className="font-medium text-semantic-down">₹{expectedLoss.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-hairline pb-2">
-                      <span className="text-muted">If Recommended Action (Gain)</span>
-                      <span className="font-medium text-semantic-up">₹{expectedGain.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-hairline pb-2">
-                      <span className="text-muted">Net Impact</span>
-                      <span className="font-medium text-primary font-bold">₹{netImpact.toLocaleString()}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex-1 flex flex-col gap-4">
-                  <span className="label-text">Action Plan</span>
-                  <div className="flex flex-col gap-2 text-[14px]">
-                    <span className="font-medium text-ink">{p.recommendedAction}</span>
-                    <span className="text-muted">{p.aiSummary}</span>
-                    <button 
-                      onClick={() => router.push('/chat')}
-                      className="btn-primary w-fit mt-2"
-                    >
-                      Strategize Campaign <ArrowRight height={16} width={16} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        )})}
-
+      <div className="flex flex-col w-full">
         {!personas || personas.length === 0 ? (
-          <div className="p-16 border border-hairline rounded-xl bg-surface-card text-center flex flex-col items-center justify-center gap-4">
-            <Spark height={32} width={32} className="text-muted" />
-            <p className="text-[15px] text-ink font-medium">No personas generated yet.</p>
+          <div className="p-16 border border-hairline rounded-xl bg-canvas text-center flex flex-col items-center justify-center gap-4">
+            <Spark height={32} width={32} className="text-ink-muted" />
+            <p className="text-[15px] text-ink font-bold">No personas generated yet.</p>
           </div>
-        ) : null}
+        ) : (
+          <div className="table-container">
+            <table className="table-enterprise">
+              <thead>
+                <tr>
+                  <th>Persona Name</th>
+                  <th>Audience Size</th>
+                  <th className="text-right">Revenue Generated</th>
+                  <th>Growth</th>
+                  <th>Risk</th>
+                  <th>Recommended Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {personas.map((p: any) => {
+                  return (
+                    <tr key={p.id} onClick={() => setSelectedId(p.id)} className="cursor-pointer">
+                      <td className="font-medium text-ink max-w-[200px] truncate" title={p.name}>{p.name}</td>
+                      <td className="font-mono-numbers">{p.customerCount.toLocaleString()}</td>
+                      <td className="text-right font-mono-numbers font-medium text-ink">₹{p.revenueContribution.toLocaleString()}</td>
+                      <td>
+                        <div className="flex items-center gap-1">
+                          <span className={clsx("font-mono-numbers", p.monthlyTrend.startsWith('-') ? "text-semantic-danger" : "text-semantic-success")}>
+                            {p.monthlyTrend}
+                          </span>
+                          {p.monthlyTrend.startsWith('-') ? <ArrowDown height={12} width={12} className="text-semantic-danger" /> : <ArrowUp height={12} width={12} className="text-semantic-success" />}
+                        </div>
+                      </td>
+                      <td>
+                        <span className={clsx("font-medium text-[13px]", p.churnRisk.includes('High') ? "text-semantic-danger" : p.churnRisk === 'Medium' ? "text-semantic-warning" : "text-semantic-success")}>
+                           {p.churnRisk}
+                        </span>
+                      </td>
+                      <td className="max-w-[200px] truncate text-ink-muted text-[13px]" title={p.recommendedAction}>
+                        {p.recommendedAction}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
     </div>

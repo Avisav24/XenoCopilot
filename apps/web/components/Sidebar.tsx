@@ -1,16 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
-import { Spark, Group, Megaphone, StatsReport, User, Settings, Database } from 'iconoir-react';
+import { Spark, Group, Megaphone, StatsReport, User, Settings, GraphUp } from 'iconoir-react';
 
 const navGroups = [
   {
     label: 'Growth',
     items: [
-      { href: '/opportunities', label: 'Revenue Opportunities', icon: <Spark height={18} width={18} /> },
+      { href: '/opportunities', label: 'Revenue Opportunities', icon: <GraphUp height={18} width={18} /> },
       { href: '/chat', label: 'Campaign Copilot', icon: <Spark height={18} width={18} /> },
     ]
   },
@@ -40,14 +39,13 @@ export function Sidebar() {
 
   return (
     <>
-      <div className="flex-shrink-0 w-[260px] hidden md:block" />
-      <aside className="sidebar fixed top-0 left-0 h-full z-40 flex flex-col justify-between bg-canvas border-r border-hairline w-[260px]">
+      <div className="flex-shrink-0 w-[280px] hidden md:block" />
+      <aside className="sidebar fixed top-0 left-0 h-full z-40 flex flex-col justify-between bg-canvas border-r border-hairline w-[280px]">
         
         <nav className="flex flex-col gap-1 p-4 pt-6 flex-1">
           <div className="flex items-center px-3 mb-8 mt-2">
             <Link href="/" className="flex items-center gap-2 w-full">
-              <Image src="/logo.png?v=3" alt="XenoCopilot Logo" width={32} height={32} className="rounded" />
-              <span className="text-[28px] font-semibold text-primary tracking-tight">
+              <span className="text-[20px] font-bold text-ink tracking-tight">
                 XenoCopilot
               </span>
             </Link>
@@ -56,7 +54,7 @@ export function Sidebar() {
           <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-6">
             {navGroups.map((group) => (
               <div key={group.label} className="flex flex-col gap-1">
-                <span className="label-text px-3 mb-1">{group.label}</span>
+                <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider px-3 mb-2">{group.label}</span>
                 {group.items.map((item) => {
                   const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
                   
@@ -65,13 +63,13 @@ export function Sidebar() {
                       key={item.href} 
                       href={item.href}
                       className={clsx(
-                        'flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] font-medium transition-colors duration-150 mb-1 border border-transparent',
+                        'flex items-center gap-3 px-3 py-2 rounded-md text-[14px] font-medium transition-colors duration-150',
                         isActive 
-                          ? 'text-primary bg-[#EFF6FF] border-[#DBEAFE]' 
-                          : 'text-muted hover:bg-[#F8FAFC] hover:text-ink'
+                          ? 'text-primary bg-primary-soft' 
+                          : 'text-ink-muted hover:bg-canvas-soft hover:text-ink'
                       )}
                     >
-                      <div className={clsx("flex-shrink-0", isActive ? "text-primary" : "opacity-70")}>
+                      <div className={clsx("flex-shrink-0", isActive ? "text-primary" : "text-ink-muted")}>
                         {item.icon}
                       </div>
                       <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
@@ -83,15 +81,19 @@ export function Sidebar() {
           </div>
         </nav>
 
-        {/* Workspace Switcher / User Profile */}
-        <div className="p-4 border-t border-hairline w-full">
-          <div className="flex items-center gap-3 px-3 py-2 hover:bg-surface-strong rounded-lg cursor-pointer transition-colors w-full">
-            <div className="w-6 h-6 rounded-md bg-surface-strong flex items-center justify-center text-ink text-[10px] font-bold border border-hairline flex-shrink-0">
+        {/* Workspace / User / Settings */}
+        <div className="p-4 border-t border-hairline w-full flex flex-col gap-2">
+          <div className="flex items-center gap-3 px-3 py-2 hover:bg-canvas-soft rounded-md cursor-pointer transition-colors w-full text-[14px] font-medium text-ink-muted hover:text-ink">
+            <Settings height={18} width={18} />
+            <span>Settings</span>
+          </div>
+          <div className="flex items-center gap-3 px-3 py-2 hover:bg-canvas-soft rounded-md cursor-pointer transition-colors w-full">
+            <div className="w-8 h-8 rounded-md bg-canvas-soft flex items-center justify-center text-ink text-[12px] font-bold border border-hairline flex-shrink-0">
               D
             </div>
             <div className="overflow-hidden whitespace-nowrap flex-1">
-              <p className="text-ink text-[13px] font-semibold leading-tight">Drape & Co.</p>
-              <p className="text-muted text-[11px] font-medium">Free Plan</p>
+              <p className="text-ink text-[14px] font-bold leading-tight">Workspace</p>
+              <p className="text-ink-muted text-[12px] font-medium">Drape & Co.</p>
             </div>
           </div>
         </div>
