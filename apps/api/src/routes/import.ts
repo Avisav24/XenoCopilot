@@ -4,7 +4,20 @@ import { parse } from 'csv-parse/sync';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 
-const CustomerCsvRow = z.object({
+const CustomerCsvRow = z.preprocess((val: any) => {
+  if (typeof val === 'object' && val !== null) {
+    if (!val.customer_id) {
+      val.customer_id = val.id || val.user_id || val.client_id || val.buyer_id || '';
+    }
+    if (!val.name) {
+      val.name = val.full_name || val.customer_name || val.first_name || '';
+    }
+    if (!val.signup_date) {
+      val.signup_date = val.created_at || val.join_date || val.date || '';
+    }
+  }
+  return val;
+}, z.object({
   customer_id: z.string().min(1),
   name: z.string().min(1),
   email: z.string().email().optional().or(z.literal('')),
@@ -12,16 +25,36 @@ const CustomerCsvRow = z.object({
   city: z.string().optional().or(z.literal('')),
   gender: z.string().optional().or(z.literal('')),
   signup_date: z.string().optional().or(z.literal(''))
-});
+}));
 
-const OrderCsvRow = z.object({
+const OrderCsvRow = z.preprocess((val: any) => {
+  if (typeof val === 'object' && val !== null) {
+    // Fallbacks for amount column
+    if (!val.amount) {
+      val.amount = val.total || val.price || val.order_value || val.revenue || val.amount_paid || val.grand_total || '';
+    }
+    // Fallbacks for order_id
+    if (!val.order_id) {
+      val.order_id = val.id || val.order_number || val.transaction_id || '';
+    }
+    // Fallbacks for customer_id
+    if (!val.customer_id) {
+      val.customer_id = val.user_id || val.client_id || val.buyer_id || '';
+    }
+    // Fallbacks for order_date
+    if (!val.order_date) {
+      val.order_date = val.date || val.created_at || val.timestamp || '';
+    }
+  }
+  return val;
+}, z.object({
   order_id: z.string().min(1),
   customer_id: z.string().min(1),
   amount: z.string().min(1),
   category: z.string().optional().or(z.literal('')),
   channel: z.string().optional().or(z.literal('')),
   order_date: z.string().optional().or(z.literal(''))
-});
+}));
 
 export async function importRoutes(fastify: FastifyInstance) {
   // Register multipart plugin to parse uploaded CSV files
@@ -35,7 +68,12 @@ export async function importRoutes(fastify: FastifyInstance) {
       const buffer = await data.toBuffer();
       const csvString = buffer.toString('utf-8');
 
-      const records = parse(csvString, { columns: true, skip_empty_lines: true, bom: true, trim: true });
+      const records = parse(csvString, { 
+        columns: (headers) => headers.map((h: string) => h.trim().toLowerCase().replace(/\s+/g, '_')), 
+        skip_empty_lines: true, 
+        bom: true, 
+        trim: true 
+      });
       
       let validCount = 0;
       let rejectedCount = 0;
@@ -96,7 +134,12 @@ export async function importRoutes(fastify: FastifyInstance) {
       const buffer = await data.toBuffer();
       const csvString = buffer.toString('utf-8');
 
-      const records = parse(csvString, { columns: true, skip_empty_lines: true, bom: true, trim: true });
+      const records = parse(csvString, { 
+        columns: (headers) => headers.map((h: string) => h.trim().toLowerCase().replace(/\s+/g, '_')), 
+        skip_empty_lines: true, 
+        bom: true, 
+        trim: true 
+      });
       
       let validCount = 0;
       let rejectedCount = 0;
