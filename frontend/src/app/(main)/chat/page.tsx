@@ -252,35 +252,31 @@ function CampaignStudioContent() {
             <div className="col-span-8 flex flex-col gap-8 pb-12">
 
               {/* Command Bar Intent */}
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 flex items-center shadow-sm justify-between">
-                 <div className="flex gap-8 items-center">
-                   <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
-                      <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Campaign Goal</span>
-                      <span className="text-[14px] font-bold text-slate-900 line-clamp-1">{goal}</span>
-                   </div>
-                   <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
-                      <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Primary Segment</span>
-                      <span className="text-[14px] font-medium text-slate-800">{strategyResult?.persona?.name || 'Loading...'}</span>
-                   </div>
-                   <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
-                      <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Business Trigger</span>
-                      <span className="text-[14px] font-medium text-slate-800">LTV declining 11% over 30 days</span>
-                   </div>
-                   <div className="flex flex-col gap-1 border-r border-blue-200 pr-8">
-                      <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Opportunity</span>
-                      <span className="text-[14px] font-medium text-slate-800">₹{(strategyResult?.expectedRevenue || 0).toLocaleString('en-IN')} recoverable revenue</span>
-                   </div>
-                   <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider">Recommended Action</span>
-                      <span className="text-[14px] font-medium text-slate-800">Launch retention campaign</span>
-                   </div>
-                 </div>
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col gap-3 shadow-sm relative overflow-hidden">
                  <button 
                    onClick={handleReset} 
-                   className="bg-blue-100/70 hover:bg-blue-200 text-blue-700 font-bold px-3 py-1.5 rounded-lg text-[12px] transition-colors flex items-center gap-1.5 shadow-sm ml-4 whitespace-nowrap"
+                   className="absolute top-4 right-4 bg-white border border-blue-200 hover:bg-blue-100 text-blue-700 font-bold px-3 py-1.5 rounded-lg text-[12px] transition-colors flex items-center gap-1.5 shadow-sm whitespace-nowrap z-10"
                  >
                    <Xmark height={14} width={14} /> Reset Session
                  </button>
+                 
+                 <span className="text-[12px] font-bold text-blue-800 uppercase tracking-wider mb-1">Why this campaign?</span>
+                 
+                 <p className="text-[15px] text-slate-800 font-medium">
+                   <span className="font-bold text-slate-900">{strategyResult?.count || 0}</span> {strategyResult?.persona?.name?.toLowerCase() || 'customers'} have not purchased in 90+ days.
+                 </p>
+                 <p className="text-[15px] text-slate-800 font-medium">
+                   Historical recovery campaigns generated <span className="font-bold text-slate-900">₹8.4L</span>.
+                 </p>
+                 <p className="text-[15px] text-slate-800 font-medium">
+                   Estimated opportunity: <span className="font-bold text-emerald-700">₹{(strategyResult?.expectedRevenue || 0).toLocaleString('en-IN')}</span>.
+                 </p>
+                 
+                 <div className="mt-3">
+                   <button className="bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold px-5 py-2.5 rounded-lg transition-colors shadow-sm">
+                     Open Audience
+                   </button>
+                 </div>
               </div>
 
               {/* Strategy Summary */}
@@ -292,8 +288,10 @@ function CampaignStudioContent() {
                     <span className="text-[20px] font-bold text-slate-900 font-mono">{strategyResult?.count || 0}</span>
                   </div>
                   <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase">Potential Revenue</span>
-                    <span className="text-[20px] font-bold text-emerald-600 font-mono">₹{(strategyResult?.expectedRevenue || 0).toLocaleString('en-IN')}</span>
+                    <span className="text-[11px] font-semibold text-slate-500 uppercase">Expected ROI</span>
+                    <span className="text-[20px] font-bold text-emerald-600 font-mono">
+                      {strategyResult ? ((strategyResult.expectedRevenue || 0) / (strategyResult.channel === 'WhatsApp' ? 4500 : strategyResult.channel === 'SMS' ? 1200 : 120)).toFixed(1) : 0}x
+                    </span>
                   </div>
                   <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
                     <span className="text-[11px] font-semibold text-slate-500 uppercase">Recommended Channel</span>
@@ -305,7 +303,9 @@ function CampaignStudioContent() {
                   </div>
                   <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
                     <span className="text-[11px] font-semibold text-slate-500 uppercase">Campaign Cost</span>
-                    <span className="text-[20px] font-bold text-slate-900 font-mono">₹120</span>
+                    <span className="text-[20px] font-bold text-slate-900 font-mono">
+                      ₹{strategyResult ? (strategyResult.channel === 'WhatsApp' ? '4,500' : strategyResult.channel === 'SMS' ? '1,200' : '120') : '0'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -318,19 +318,20 @@ function CampaignStudioContent() {
                     <thead className="bg-slate-50 border-b border-slate-200">
                       <tr>
                         <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Channel</th>
-                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Expected Revenue</th>
-                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Expected Conv.</th>
-                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Audience Match</th>
-                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Cost Estimate</th>
+                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Revenue</th>
+                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Conversion</th>
+                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Cost</th>
+                        <th className="py-2.5 px-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">ROI</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {[
-                        { ch: 'WhatsApp', icon: MessageText, color: 'text-[#25D366]', rev: strategyResult?.expectedRevenue || 0, conv: strategyResult && strategyResult.count > 0 ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100) : 0, match: 'High', cost: '₹4,500' },
-                        { ch: 'Email',    icon: Mail, color: 'text-[#7C3AED]', rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.4), conv: strategyResult && strategyResult.count > 0 ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.4) : 0, match: 'Medium', cost: '₹120' },
-                        { ch: 'SMS',      icon: SmartphoneDevice, color: 'text-[#2563EB]', rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.2), conv: strategyResult && strategyResult.count > 0 ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.2) : 0, match: 'Low', cost: '₹1,200' },
+                        { ch: 'WhatsApp', icon: MessageText, color: 'text-[#25D366]', rev: strategyResult?.expectedRevenue || 0, conv: strategyResult && strategyResult.count > 0 ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100) : 0, costRaw: 4500, cost: '₹4,500' },
+                        { ch: 'Email',    icon: Mail, color: 'text-[#7C3AED]', rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.4), conv: strategyResult && strategyResult.count > 0 ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.4) : 0, costRaw: 120, cost: '₹120' },
+                        { ch: 'SMS',      icon: SmartphoneDevice, color: 'text-[#2563EB]', rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.2), conv: strategyResult && strategyResult.count > 0 ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.2) : 0, costRaw: 1200, cost: '₹1,200' },
                       ].map(row => {
                         const isRecommended = row.ch === (strategyResult?.channel || 'WhatsApp');
+                        const roi = row.costRaw > 0 ? (row.rev / row.costRaw).toFixed(1) : 0;
                         return (
                           <tr key={row.ch} className={clsx(selectedChannel === row.ch ? 'bg-blue-50/30' : 'hover:bg-slate-50/60', 'cursor-pointer transition-colors')} onClick={() => setSelectedChannel(row.ch)}>
                             <td className="py-3 px-4 text-[13px] font-bold text-slate-900 flex items-center gap-2">
@@ -340,8 +341,8 @@ function CampaignStudioContent() {
                             </td>
                             <td className="py-3 px-4 text-[13px] font-bold text-slate-900 font-mono text-right">₹{row.rev.toLocaleString('en-IN')}</td>
                             <td className="py-3 px-4 text-[13px] font-bold text-slate-900 font-mono text-right">{row.conv.toFixed(1)}%</td>
-                            <td className="py-3 px-4 text-[13px] font-bold text-slate-500 font-mono text-right">{row.match}</td>
                             <td className="py-3 px-4 text-[13px] font-bold text-slate-500 font-mono text-right">{row.cost}</td>
+                            <td className="py-3 px-4 text-[13px] font-bold text-emerald-600 font-mono text-right">{roi}x</td>
                           </tr>
                         );
                       })}
@@ -693,25 +694,24 @@ function CampaignStudioContent() {
 
             </div>
 
-            {/* ── IMPROVEMENT 6: Campaign Control Center — Full Height Sticky Panel ── */}
-            <div className="col-span-4">
-              <div
+            {/* �              <div
                 className="bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden"
-                style={{ position: 'sticky', top: '24px', height: 'calc(100vh - 48px)' }}
+                style={{ position: 'sticky', top: '24px' }}
               >
                 {/* Panel Header */}
                 <div className="bg-slate-50 border-b border-slate-200 px-5 py-4 flex-shrink-0">
                   <span className="text-[13px] font-bold text-slate-900 uppercase tracking-wider">Campaign Control Center</span>
                 </div>
 
-                {/* Metadata rows — flex-1 so they fill space */}
-                <div className="flex flex-col p-5 gap-4 flex-1 overflow-y-auto">
+                {/* Metadata rows */}
+                <div className="flex flex-col p-5 gap-4">
                   {[
                     { label: 'Status',           value: 'Draft',                badge: true },
                     { label: 'Target Audience',  value: strategyResult?.persona?.name || '...' },
                     { label: 'Selected Channel', value: selectedChannel },
-                    { label: 'Launch Risk',      value: strategyResult?.risk || 'Low', risk: true },
                     { label: 'Schedule',         value: 'Immediate' },
+                    { label: 'Variant',          value: `Variant ${activeVariant}` },
+                  ].map(row => (diate' },
                     { label: 'Variant',          value: `Variant ${activeVariant}` },
                   ].map(row => (
                     <div key={row.label} className="flex justify-between items-center border-b border-slate-50 pb-3 last:border-0 last:pb-0">
