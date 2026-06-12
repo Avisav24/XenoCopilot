@@ -246,7 +246,7 @@ export default function CampaignStudioPage() {
                   </div>
                   <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
                     <span className="text-[11px] font-semibold text-slate-500 uppercase">Expected Conversion</span>
-                    <span className="text-[20px] font-bold text-slate-900 font-mono">{strategyResult ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100).toFixed(1) : 0}%</span>
+                    <span className="text-[20px] font-bold text-slate-900 font-mono">{strategyResult ? (strategyResult.count > 0 ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100).toFixed(1) : 0) : 0}%</span>
                   </div>
                 </div>
               </div>
@@ -267,9 +267,9 @@ export default function CampaignStudioPage() {
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {[
-                        { ch: 'WhatsApp', rev: strategyResult?.expectedRevenue || 0, conv: strategyResult ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100) : 0, match: 'High', cost: '₹4,500' },
-                        { ch: 'Email',    rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.4), conv: strategyResult ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.4) : 0, match: 'Medium', cost: '₹120' },
-                        { ch: 'SMS',      rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.2), conv: strategyResult ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.2) : 0, match: 'Low', cost: '₹1,200' },
+                        { ch: 'WhatsApp', rev: strategyResult?.expectedRevenue || 0, conv: strategyResult && strategyResult.count > 0 ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100) : 0, match: 'High', cost: '₹4,500' },
+                        { ch: 'Email',    rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.4), conv: strategyResult && strategyResult.count > 0 ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.4) : 0, match: 'Medium', cost: '₹120' },
+                        { ch: 'SMS',      rev: Math.round((strategyResult?.expectedRevenue || 0) * 0.2), conv: strategyResult && strategyResult.count > 0 ? (((strategyResult.expectedPurchasers / strategyResult.count) * 100) * 0.2) : 0, match: 'Low', cost: '₹1,200' },
                       ].map(row => {
                         const isRecommended = row.ch === (strategyResult?.channel || 'WhatsApp');
                         return (
@@ -355,7 +355,7 @@ export default function CampaignStudioPage() {
                     </div>
                     <div className="flex flex-col pl-6 border-l border-slate-200">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase">Expected Conversion</span>
-                      <span className="text-[14px] font-bold text-slate-900 font-mono">{strategyResult ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100).toFixed(1) : 0}%</span>
+                      <span className="text-[14px] font-bold text-slate-900 font-mono">{strategyResult ? (strategyResult.count > 0 ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100).toFixed(1) : 0) : 0}%</span>
                     </div>
                     <div className="flex flex-col pl-6 border-l border-slate-200">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase">Audience Match</span>
@@ -651,7 +651,7 @@ export default function CampaignStudioPage() {
                     { label: 'Target Audience',  value: strategyResult?.persona?.name || '...' },
                     { label: 'Selected Channel', value: selectedChannel },
                     { label: 'Predicted Revenue', value: `₹${strategyResult?.expectedRevenue?.toLocaleString('en-IN') || 0}`, mono: true },
-                    { label: 'Conversion Rate',  value: `${strategyResult ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100).toFixed(1) : 0}%`, mono: true },
+                    { label: 'Conversion Rate',  value: `${strategyResult ? (strategyResult.count > 0 ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100).toFixed(1) : 0) : 0}%`, mono: true },
                     { label: 'Audience Match',   value: 'High', mono: true },
                     { label: 'Launch Risk',      value: 'Low', risk: true },
                     { label: 'Schedule',         value: 'Immediate' },

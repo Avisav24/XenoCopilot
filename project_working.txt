@@ -1,0 +1,113 @@
+XENOCOPILOT - COMPREHENSIVE FEATURE-BY-FEATURE ARCHITECTURE & WORKFLOW
+======================================================================
+
+This document breaks down XenoCopilot into its individual features, explaining exactly how the frontend user interface, backend APIs, artificial intelligence layer, and database interact for each module.
+
+--------------------------------------------------------------------------------
+1. GLOBAL ARCHITECTURE & NAVIGATION
+--------------------------------------------------------------------------------
+- Frontend: Next.js 14 App Router.
+- Routing: All CRM features are grouped under `frontend/src/app/(main)`. The `layout.tsx` file provides the `Sidebar` component which handles global navigation.
+- Database: Neon Serverless PostgreSQL, managed via Prisma ORM (`backend/prisma/schema.prisma`).
+- API Layer: Fastify Node.js backend running on port 3001. The frontend communicates with it via a universal wrapper `fetchAPI()` located in `frontend/src/lib/api/core.ts`.
+
+--------------------------------------------------------------------------------
+2. DATA IMPORT (/import)
+--------------------------------------------------------------------------------
+Purpose: Ingesting raw CSV data (Customers and Orders) to populate the CRM.
+Frontend Flow (`frontend/src/app/(main)/import/page.tsx`):
+- Users drag-and-drop CSV files.
+- The UI parses the files using `papaparse`.
+- The data is sent to the backend via POST `/api/import/upload`.
+
+Backend Logic (`backend/src/routes/import.ts`):
+- The API receives the batch of rows and uses Zod schemas to rigorously validate types (e.g., ensuring emails are valid, numbers are parsed).
+- Valid Customer rows are upserted into the `Customer` table using `prisma.customer.upsert()`. LTV (Lifetime Value) tiers and Health Scores are assigned.
+- Valid Order rows verify that the associated Customer exists, then they are inserted into the `Order` table.
+- A summary report of Valid vs. Rejected rows is sent back to the frontend.
+
+--------------------------------------------------------------------------------
+3. REVENUE OPERATIONS DASHBOARD (/revenue)
+--------------------------------------------------------------------------------
+Purpose: The home screen for marketing teams, displaying top-level KPIs and immediate actionable insights.
+Frontend Flow (`frontend/src/app/(main)/revenue/page.tsx`):
+- Displays high-level cards: Total Revenue, Database Health Score, Active Campaigns.
+- Fetches two core dynamic AI endpoints on load.
+
+Backend Logic:
+- GET `/api/ai/suggestions`: The backend queries the average database health score and passes it to the LLM. The LLM generates 3 short, punchy recommended actions (e.g., "Launch Win-Back Campaign for Dormant Users").
+- GET `/api/ai/opportunities`: The backend queries demographic data and generates highly detailed "Revenue Opportunities" ranked by impact. Each opportunity highlights the potential revenue, audience size, and why the AI recommends taking action (e.g., "Historical reactivation rate is 3.1%"). Clicking an opportunity sends the user to the Campaign Studio with the goal pre-filled.
+
+--------------------------------------------------------------------------------
+4. CAMPAIGN STUDIO - AI COPILOT (/chat)
+--------------------------------------------------------------------------------
+Purpose: Translating a natural language goal into a fully structured, multi-channel marketing campaign.
+Frontend Flow (`frontend/src/app/(main)/chat/page.tsx`):
+- The user inputs a goal into the command bar (e.g., "Recover dormant high spenders").
+- The UI enters a loading state while calling three sequential AI endpoints.
+
+Backend Logic (`backend/src/routes/ai.ts`):
+1. POST `/api/ai/query-personas`:
+   - The backend retrieves all available `Personas` from the database.
+   - It sends the list and the user's goal to the LLM (Gemini or Groq).
+   - The LLM responds with a strict JSON object identifying the `persona_id` that best matches the goal.
+   
+2. POST `/api/ai/recommend-campaign`:
+   - Using the identified `persona_id`, the backend queries the database for all matched `CustomerPersona` records.
+   - It aggregates the historical order data of those customers to find their Average Order Value (AOV).
+   - It references `ChannelMetric` data to find the channel with the best historical conversion rate.
+   - It calculates Expected Purchasers and Expected Revenue. (Note: It includes guardrails to default to a 5% baseline if historical data is zero).
+   
+3. POST `/api/ai/draft-messages`:
+   - The backend passes the persona name and the recommended channel to the LLM.
+   - The LLM acts as a copywriter and generates tailored message variants (Variant A and Variant B) optimized for the specific constraints of the channel (e.g., short SMS, rich Email, conversational WhatsApp).
+
+Result: The UI displays the Target Audience, Projected Revenue, a Channel Planner table, and interactive previews of the drafted messages on an iPhone mockup.
+
+--------------------------------------------------------------------------------
+5. CAMPAIGN EXECUTION & DELIVERY SIMULATOR (/engagement)
+--------------------------------------------------------------------------------
+Purpose: Launching the campaign, tracking live delivery statuses, and viewing engagement metrics.
+Launch Flow (`frontend/src/app/(main)/chat/page.tsx`):
+- The user clicks "Approve & Launch".
+- POST `/api/ai/launch-campaign`: The backend creates a new `Campaign` record. It generates individual `Communication` records for every customer in the audience with a status of `pending`.
+
+Simulation & Delivery Loop (`services/channel-sim/`):
+- The backend makes an HTTP POST request to the external Channel Simulator service running on port 3002.
+- The Channel Simulator accepts the massive array of recipients.
+- Instead of actually sending WhatsApps or Emails, the simulator queues asynchronous `setTimeout` callbacks (delaying 1-5 seconds per message to simulate network jitter).
+- When a timeout expires, the simulator fires a POST request back to the Fastify backend's Webhook endpoint (`POST /api/webhook`).
+
+Webhook Processing (`backend/src/routes/webhooks.ts`):
+- The backend receives the simulated receipt (`status: delivered` or `read`).
+- It updates the database `Communication` row to reflect the new status.
+- It updates global aggregate `ChannelMetric` tallies.
+
+Real-Time Engagement UI (`frontend/src/app/(main)/engagement/[id]/page.tsx`):
+- The frontend continuously polls the `GET /api/campaigns/:id` endpoint.
+- The user watches the progress bars dynamically update as the messages transition from Pending -> Delivered -> Read -> Clicked.
+
+--------------------------------------------------------------------------------
+6. CUSTOMER 360 & DYNAMIC PERSONAS (/intelligence)
+--------------------------------------------------------------------------------
+Purpose: Viewing customer cohorts and building specific audiences.
+Frontend Flow (`frontend/src/app/(main)/intelligence/page.tsx`):
+- Features an Audience Definition builder allowing users to create strict rule-based segments.
+- Displays "Dynamic Personas".
+
+Backend Logic (`backend/src/routes/ai.ts`):
+- GET `/api/ai/dynamic-personas`: Instead of using predefined static lists, the backend iterates over live customer transactions.
+- It calculates Recency, Frequency, and Monetary (RFM) metrics on the fly.
+- It categorizes customers into dynamic buckets (e.g., "Lapsed High-Spenders" if spend > 500 and last purchase > 90 days).
+- It provides these real-time metrics along with an AI-generated strategic summary of how to treat the cohort.
+
+--------------------------------------------------------------------------------
+7. AI FAILOVER MECHANISM
+--------------------------------------------------------------------------------
+Purpose: Ensuring absolute 100% uptime for the Copilot even if an AI provider goes down.
+Backend Logic (`generateWithFallback` in `ai.ts`):
+1. The backend maintains an array of multiple Gemini API keys.
+2. It attempts to hit Google Gemini 2.5 Flash.
+3. If the request fails (e.g., 429 Rate Limit), the `catch` block intercepts it and retries with the next Gemini key.
+4. If all Gemini keys fail, it seamlessly connects to the Groq API using Llama-3.3-70b-versatile.
+5. If Groq also fails, a hardcoded deterministic fallback JSON is returned so the user interface never breaks.

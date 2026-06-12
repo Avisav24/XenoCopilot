@@ -181,7 +181,14 @@ export async function aiRoutes(fastify: FastifyInstance) {
       }
 
       const aov = totalOrders > 0 ? totalRevenue / totalOrders : 1500;
-      const expectedPurchasers = Math.round(customerPersonas.length * (Number(bestChannel.conversion_rate) / 100));
+      let conversionRate = Number(bestChannel.conversion_rate);
+      if (conversionRate === 0) {
+        conversionRate = 5; // Default to 5% if no historical data exists
+      }
+      let expectedPurchasers = Math.round(customerPersonas.length * (conversionRate / 100));
+      if (customerPersonas.length > 0 && expectedPurchasers === 0) {
+        expectedPurchasers = 1; // Ensure at least 1 expected purchaser if audience > 0
+      }
       const expectedRevenue = Math.round(expectedPurchasers * aov);
 
       return reply.send({
