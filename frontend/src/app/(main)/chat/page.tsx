@@ -6,6 +6,38 @@ import { fetchAPI } from '@/lib/api';
 import { Search, Play, EditPencil, Clock, CheckCircle, Plus, Filter, LayoutRight, MessageText, ArrowRight, ShieldCheck, Mail, SmartphoneDevice, HeadsetHelp, Phone, VideoCamera, MoreHoriz, Emoji, Camera, Attachment, SendDiagonal, Xmark } from 'iconoir-react';
 import { clsx } from 'clsx';
 
+function HighlightedMessage({ text }: { text: string }) {
+  if (!text) return null;
+  const parts = text.split(/(\{\{[^}]+\}\})/g);
+  
+  const mockDataMap: Record<string, string> = {
+    first_name: 'Rahul',
+    favorite_category: 'Skincare Serums',
+    last_purchase_days: '64',
+  };
+
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith('{{') && part.endsWith('}}')) {
+          const variable = part.slice(2, -2).trim();
+          const mockValue = mockDataMap[variable] || '...';
+          return (
+            <span
+              key={i}
+              className="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded border border-blue-200 font-semibold text-[0.95em] mx-0.5 whitespace-nowrap"
+              title={`Variable: {{${variable}}}`}
+            >
+              {mockValue}
+            </span>
+          );
+        }
+        return <React.Fragment key={i}>{part}</React.Fragment>;
+      })}
+    </>
+  );
+}
+
 function CampaignStudioContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -244,7 +276,7 @@ function CampaignStudioContent() {
                   </div>
                   <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
                     <span className="text-[11px] font-semibold text-slate-500 uppercase">Potential Revenue</span>
-                    <span className="text-[20px] font-bold text-emerald-600 font-mono">₹{strategyResult?.expectedRevenue?.toLocaleString() || 0}</span>
+                    <span className="text-[20px] font-bold text-emerald-600 font-mono">₹{(strategyResult?.expectedRevenue || 0).toLocaleString()}</span>
                   </div>
                   <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
                     <span className="text-[11px] font-semibold text-slate-500 uppercase">Recommended Channel</span>
@@ -357,7 +389,7 @@ function CampaignStudioContent() {
                   <div className="flex items-center gap-6 bg-slate-50 rounded-lg p-3 border border-slate-100">
                     <div className="flex flex-col">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase">Revenue Potential</span>
-                      <span className="text-[14px] font-bold text-slate-900 font-mono">₹{strategyResult?.expectedRevenue?.toLocaleString('en-IN') || 0}</span>
+                      <span className="text-[14px] font-bold text-slate-900 font-mono">₹{(strategyResult?.expectedRevenue || 0).toLocaleString('en-IN')}</span>
                     </div>
                     <div className="flex flex-col pl-6 border-l border-slate-200">
                       <span className="text-[11px] font-semibold text-slate-500 uppercase">Expected Conversion</span>
@@ -405,7 +437,7 @@ function CampaignStudioContent() {
                         {/* Incoming bubble */}
                         <div className="self-start bg-white rounded-xl rounded-tl-sm p-3 max-w-[85%] shadow-sm flex flex-col gap-2">
                           <p className="text-[13px] text-slate-800 leading-relaxed whitespace-pre-wrap">
-                            {strategyResult?.variants?.find((v: any) => v.version === activeVariant)?.text || "Your favorite products are back in stock."}
+                            <HighlightedMessage text={strategyResult?.variants?.find((v: any) => v.version === activeVariant)?.text || "Your favorite products are back in stock."} />
                           </p>
                           <button className="w-full bg-[#25D366] hover:bg-[#1da851] text-white font-bold py-2 rounded-lg text-[13px] transition-colors">
                             Shop Now
@@ -460,7 +492,7 @@ function CampaignStudioContent() {
                       {/* Email Body */}
                       <div className="p-8 flex flex-col gap-5 items-center">
                         <p className="text-[14px] text-slate-700 leading-relaxed max-w-md text-center whitespace-pre-wrap">
-                          {strategyResult?.variants?.find((v: any) => v.version === activeVariant)?.text || "Your favorite products are back in stock."}
+                          <HighlightedMessage text={strategyResult?.variants?.find((v: any) => v.version === activeVariant)?.text || "Your favorite products are back in stock."} />
                         </p>
                         <button className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-bold py-3 px-10 rounded-lg text-[14px] transition-colors shadow-sm">
                           Shop Now
@@ -517,7 +549,7 @@ function CampaignStudioContent() {
                             <div className="self-start max-w-[85%]">
                               <div className="bg-[#e9e9eb] rounded-2xl rounded-bl-sm px-3 py-2.5">
                                 <p className="text-[13px] text-slate-900 leading-relaxed whitespace-pre-wrap">
-                                  {strategyResult?.variants?.find((v: any) => v.version === activeVariant)?.text || "Your favorite products are back in stock."}
+                                  <HighlightedMessage text={strategyResult?.variants?.find((v: any) => v.version === activeVariant)?.text || "Your favorite products are back in stock."} />
                                 </p>
                               </div>
                               <span className="text-[10px] text-slate-400 mt-1 block pl-1">Delivered</span>
@@ -656,7 +688,7 @@ function CampaignStudioContent() {
                     { label: 'Status',           value: 'Draft',                badge: true },
                     { label: 'Target Audience',  value: strategyResult?.persona?.name || '...' },
                     { label: 'Selected Channel', value: selectedChannel },
-                    { label: 'Predicted Revenue', value: `₹${strategyResult?.expectedRevenue?.toLocaleString('en-IN') || 0}`, mono: true },
+                    { label: 'Predicted Revenue', value: `₹${(strategyResult?.expectedRevenue || 0).toLocaleString('en-IN')}`, mono: true },
                     { label: 'Conversion Rate',  value: `${strategyResult ? (strategyResult.count > 0 ? ((strategyResult.expectedPurchasers / strategyResult.count) * 100).toFixed(1) : 0) : 0}%`, mono: true },
                     { label: 'Audience Match',   value: strategyResult?.audienceMatch || 'High', mono: true },
                     { label: 'Launch Risk',      value: strategyResult?.risk || 'Low', risk: true },
