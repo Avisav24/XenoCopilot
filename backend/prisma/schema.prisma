@@ -115,11 +115,11 @@ model ChannelMetric {
 }
 
 model Segment {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name            String
-  criteria        String
-  customer_count  Int      @default(0)
-  created_at      DateTime @default(now())
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name           String
+  criteria       String
+  customer_count Int      @default(0)
+  created_at     DateTime @default(now())
 
   @@map("segments")
 }

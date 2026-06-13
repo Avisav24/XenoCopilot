@@ -255,8 +255,8 @@ function CampaignStudioContent() {
           /* Active State: 12-Column Grid Layout */
           <div className="grid grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
 
-            {/* ── 8-Column Campaign Workspace ── */}
-            <div className="col-span-8 flex flex-col gap-8 pb-12">
+            {/* ── Campaign Workspace ── */}
+            <div className={clsx(strategyResult?.count > 0 ? "col-span-8" : "col-span-12 max-w-4xl", "flex flex-col gap-8 pb-12")}>
 
               {/* AI Copilot Response */}
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col gap-3 shadow-sm relative overflow-hidden">
@@ -288,17 +288,21 @@ function CampaignStudioContent() {
                  )}
                  
                  <div className="mt-3">
-                    <button 
-                      onClick={() => router.push('/intelligence')}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold px-5 py-2.5 rounded-lg transition-colors shadow-sm"
-                    >
-                      Open Audience
-                    </button>
+                    {strategyResult?.count > 0 && (
+                      <button 
+                        onClick={() => router.push('/intelligence')}
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold px-5 py-2.5 rounded-lg transition-colors shadow-sm"
+                      >
+                        Open Audience
+                      </button>
+                    )}
                  </div>
               </div>
 
-              {/* Strategy Summary */}
-              <div className="flex flex-col gap-3">
+              {strategyResult?.count > 0 && (
+                <>
+                  {/* Strategy Summary */}
+                  <div className="flex flex-col gap-3">
                 <span className="text-[12px] font-bold text-slate-900 uppercase tracking-wider">Strategy Summary</span>
                 <div className="grid grid-cols-5 gap-4">
                   <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm">
@@ -710,8 +714,11 @@ function CampaignStudioContent() {
                 </div>
               </div>
 
+              </div>
+              )}
             </div>
 
+            {strategyResult?.count > 0 && (
             <div className="col-span-4">
               <div
                 className="bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden"
@@ -780,6 +787,7 @@ function CampaignStudioContent() {
                 </div>
               </div>
             </div>
+            )}
 
           </div>
         )}

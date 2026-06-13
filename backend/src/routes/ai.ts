@@ -102,14 +102,14 @@ export async function aiRoutes(fastify: FastifyInstance) {
   const genaiInstances = geminiKeys.map(key => new GoogleGenAI({ apiKey: key }));
   const groqInstances = groqKeys.map(key => new Groq({ apiKey: key }));
 
-  // ── 1.5 Dynamic Segmentation (Filters) ─────────────────────────────────────────
+  // ── 1.5 Universal CRM Copilot ─────────────────────────────────────────
   fastify.post('/api/ai/segment', async (request, reply) => {
     try {
       const { goal } = request.body as { goal: string };
       
-      // Step 1: Intermediate Structure & JSON Filters Extraction
-      const step1Prompt = `You are a CRM Data Extraction AI. 
-Extract filters from the marketer's natural language goal.
+      // STEP 1: QUERY PLANNER
+      const queryPlannerPrompt = `You are the XenoCopilot Query Planner.
+Your job is to understand the marketer's natural language goal and determine the required data.
 The "customers" table supports ONLY these filters:
 - city (string)
 - gender (string)
@@ -120,179 +120,180 @@ The "customers" table supports ONLY these filters:
 
 Rules:
 - Output ONLY a JSON object containing:
+  "goal_category": One of ["Audience Discovery", "Revenue Analysis", "Campaign Recommendation", "General Insight"]
   "filters": { "city": "Delhi", "min_spent": 5000 }
-  "channel": The best channel (WhatsApp, Email, or SMS).
-  "goal_type": A short 1-word category (Discovery, Win-back, Expansion).
-  "detectedIntent": e.g., "Audience Discovery"
   "unsupported_filters": A list of requested filters that DO NOT exist in the allowed list (e.g. "age", "birthday").
-- If the query is completely generic, return empty filters.`;
+- If the query is about revenue dropping, trends, or generic business advice, use "Revenue Analysis" or "General Insight" and return empty filters.`;
 
-      const step1Text = await generateWithFallback(
+      const plannerText = await generateWithFallback(
         genaiInstances, 
         groqInstances, 
-        step1Prompt, 
+        queryPlannerPrompt, 
         `Goal: "${goal}"`, 
         0.1,
         true
       );
 
-      const parsed = JSON.parse(step1Text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
-
+      const parsed = JSON.parse(plannerText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
+      const hasUnsupportedFilters = parsed.unsupported_filters && parsed.unsupported_filters.length > 0;
+      
+      let aiResponseText = '';
       let count = 0;
       let totalRevenue = 0;
       let aov = 0;
-      let risk = 'Low';
-      const channelName = parsed.channel || 'Email';
-      let expectedPurchasers = 0;
       let convRate = 5;
-      let audienceMatch = 'High';
-
-      const hasUnsupportedFilters = parsed.unsupported_filters && parsed.unsupported_filters.length > 0;
-      let aiResponseText = '';
+      let risk = 'Low';
+      let expectedPurchasers = 0;
+      const channelName = 'WhatsApp'; // Default fallback
+      let databaseMetrics: any = {};
 
       if (hasUnsupportedFilters) {
-        aiResponseText = "No matching customers found for the selected criteria.";
+        aiResponseText = "No matching data found for the selected criteria.";
       } else {
-        // Build Prisma WHERE clause dynamically
-        let prismaWhere: any = {};
-        if (parsed.filters) {
-          if (parsed.filters.city) prismaWhere.city = { contains: parsed.filters.city, mode: 'insensitive' };
-          if (parsed.filters.gender) prismaWhere.gender = { equals: parsed.filters.gender, mode: 'insensitive' };
-          
-          if (parsed.filters.min_spent || parsed.filters.max_spent) {
-            prismaWhere.total_spent = {};
-            if (parsed.filters.min_spent) prismaWhere.total_spent.gte = parsed.filters.min_spent;
-            if (parsed.filters.max_spent) prismaWhere.total_spent.lte = parsed.filters.max_spent;
+        // STEP 2: DATA RETRIEVAL
+        if (parsed.goal_category === "Audience Discovery" || !parsed.goal_category) {
+          let prismaWhere: any = {};
+          if (parsed.filters) {
+            if (parsed.filters.city) prismaWhere.city = { contains: parsed.filters.city, mode: 'insensitive' };
+            if (parsed.filters.gender) prismaWhere.gender = { equals: parsed.filters.gender, mode: 'insensitive' };
+            if (parsed.filters.min_spent || parsed.filters.max_spent) {
+              prismaWhere.total_spent = {};
+              if (parsed.filters.min_spent) prismaWhere.total_spent.gte = parsed.filters.min_spent;
+              if (parsed.filters.max_spent) prismaWhere.total_spent.lte = parsed.filters.max_spent;
+            }
+            if (parsed.filters.days_since_last_order) {
+              const date = new Date();
+              date.setDate(date.getDate() - parsed.filters.days_since_last_order);
+              prismaWhere.last_order_date = { lte: date };
+            }
+            if (parsed.filters.health_score_less_than) {
+              prismaWhere.health_score = { lt: parsed.filters.health_score_less_than };
+            }
           }
 
-          if (parsed.filters.days_since_last_order) {
-            const date = new Date();
-            date.setDate(date.getDate() - parsed.filters.days_since_last_order);
-            prismaWhere.last_order_date = { lte: date };
+          const customers = await prisma.customer.findMany({ where: prismaWhere });
+          count = customers.length;
+          totalRevenue = customers.reduce((sum, c) => sum + Number(c.total_spent), 0);
+          aov = count > 0 ? Math.round(totalRevenue / count) : 0;
+          
+          if (count > 0) {
+            const channelMetric = await prisma.channelMetric.findFirst({ where: { channel: channelName } });
+            convRate = channelMetric ? Number(channelMetric.conversion_rate) : 5;
+            expectedPurchasers = Math.max(1, Math.round(count * (convRate / 100)));
           }
-          if (parsed.filters.health_score_less_than) {
-            prismaWhere.health_score = { lt: parsed.filters.health_score_less_than };
-          }
+
+          databaseMetrics = {
+            audienceSize: count,
+            potentialRevenue: totalRevenue,
+            averageOrderValue: aov
+          };
+        } else if (parsed.goal_category === "Revenue Analysis") {
+          const allCustomers = await prisma.customer.findMany();
+          totalRevenue = allCustomers.reduce((sum, c) => sum + Number(c.total_spent), 0);
+          databaseMetrics = {
+            totalDatabaseRevenue: totalRevenue,
+            insight: "Overall CRM health is stable. Revenue drops usually correlate with dormant VIPs."
+          };
+        } else if (parsed.goal_category === "Campaign Recommendation") {
+          const opportunities = await prisma.opportunity.findMany({ take: 3, orderBy: { potential_revenue: 'desc' } });
+          databaseMetrics = { topOpportunities: opportunities };
+        } else {
+          databaseMetrics = { status: "System Operational" };
         }
 
-        // Run Prisma Query Safely
-        const customers = await prisma.customer.findMany({ where: prismaWhere });
-        count = customers.length;
-        totalRevenue = customers.reduce((sum, c) => sum + Number(c.total_spent), 0);
-        aov = count > 0 ? Math.round(totalRevenue / count) : 0;
-
-        if (parsed.filters?.days_since_last_order > 60) risk = 'High';
-        else if (parsed.filters?.days_since_last_order > 30) risk = 'Medium';
-
-        const channelMetric = await prisma.channelMetric.findFirst({
-          where: { channel: channelName }
-        });
-        convRate = channelMetric ? Number(channelMetric.conversion_rate) : 5;
-        expectedPurchasers = Math.max(1, Math.round(count * (convRate / 100)));
-
-        if (count < 50) audienceMatch = 'Low';
-        else if (count < 200) audienceMatch = 'Medium';
-
-        if (count === 0) {
-           aiResponseText = "No matching customers found for the selected criteria.";
+        // Apply Fallback Rule if Audience Discovery returned 0
+        if (parsed.goal_category === "Audience Discovery" && count === 0) {
+          aiResponseText = "No matching data found for the selected criteria.";
         } else {
-           // Step 2: Generate XenoCopilot Revenue Intelligence Text
-           const step2Prompt = `# XenoCopilot Revenue Intelligence System Prompt
+          // STEP 3: MASTER SYSTEM PROMPT
+          const universalPrompt = `# XenoCopilot Universal CRM Copilot
 
 You are XenoCopilot.
-An AI Revenue Growth Copilot embedded inside a CRM.
+An enterprise CRM operating system for marketers.
 You are not a chatbot.
-You are not a search engine.
-You are a marketing strategist, CRM analyst, customer intelligence engine, and campaign planner.
+You are not an intent classifier.
+You are a business reasoning engine.
 
-Your job is to help marketers answer:
-* Who should I target?
-* Why should I target them?
-* What should I send?
-* Which channel should I use?
-* How much revenue can I generate?
+Your responsibility is to understand ANY marketer request and convert it into a useful business action.
 
 ---
 
-CORE RULE
-Never simply classify a query.
-Always transform the user's request into a business action.
-
-Bad:
-Intent: Segmentation
-Segment: Customers
-
-Good:
-Audience:
-Customers above 30 years
-
-Audience Size:
-428
-
-Potential Revenue:
-₹2.8L
-
-Recommended Campaign:
-Premium Product Promotion
-
-Reason:
-Customers above 30 contribute 38% of total revenue and have higher repeat purchase rates.
+PRIMARY GOAL
+Help marketers answer:
+Who should I target?
+Why should I target them?
+What should I send?
+Which channel should I use?
+When should I send it?
+How much revenue can I generate?
+What action should I take next?
 
 ---
 
-QUERY UNDERSTANDING
-For every query:
-1. Understand the business goal.
-2. Extract filters.
-3. Build the audience.
-4. Estimate business value.
-5. Recommend action.
-6. Recommend channel.
-7. Generate campaign idea.
+NEVER FORCE INTENTS
+Do not force user input into internal concepts like "Segmentation", "Retention". 
+Understand the request naturally.
 
 ---
 
-MESSAGE GENERATION
-Whenever a campaign is recommended, generate 2 message variants.
-Variant A: Direct conversion focused.
-Variant B: Relationship and retention focused.
-Keep messages short and realistic.
-Use customer name, category preferences, and behavioral context when available.
+STEP 1: UNDERSTAND USER GOAL
+Determine what the user is trying to achieve (Find audience, Analyze revenue, Recommend campaigns).
+
+STEP 2: EXTRACT ENTITIES (Done by Query Planner)
+STEP 3: BUILD QUERY (Done by Query Planner)
+
+STEP 4: FETCH DATA (Provided in context)
+Use customer records, campaign records, revenue records.
+Never invent numbers. Never assume results.
+
+STEP 5: GENERATE BUSINESS INSIGHT
+Return:
+Audience (if applicable)
+Size (if applicable)
+Revenue Potential (if applicable)
+Top Channel (if applicable)
+Risk (if applicable)
+Opportunity (if applicable)
+Recommended Action
+
+Only include fields relevant to the question.
+
+STEP 6: RECOMMEND NEXT ACTION
+Every response should end with: What should happen next.
 
 ---
 
-TONE
-Sound like: Braze, HubSpot, Mixpanel, Salesforce Marketing Cloud
-Not ChatGPT. Not a chatbot. Not an AI assistant.
-Every response should help a marketer make a revenue decision.`;
+USER EXPERIENCE RULE
+Always answer the actual business question.
+Never return: Intent:, Segment:, Entity:. Provide business answers.
 
-           const intermediateStructure = {
-             userQuery: goal,
-             detectedIntent: parsed.detectedIntent || "Audience Discovery",
-             filters: parsed.filters || {},
-             expectedOutput: "audience_recommendation",
-             databaseMetrics: {
-               audienceSize: count,
-               potentialRevenue: totalRevenue,
-               averageOrderValue: aov,
-               recommendedChannel: channelName
-             }
-           };
+FAILURE RULE
+If data genuinely does not exist:
+"No matching data found for the selected criteria."
+Never show fake numbers. Never show ₹0 opportunities. Never force unrelated recommendations.`;
 
-           aiResponseText = await generateWithFallback(
-             genaiInstances, 
-             groqInstances, 
-             step2Prompt, 
-             `Context Structure:\n${JSON.stringify(intermediateStructure, null, 2)}\n\nGenerate the intelligence response.`, 
-             0.5,
-             false
-           );
+          const contextPayload = {
+            userQuery: goal,
+            goalCategory: parsed.goal_category,
+            extractedFilters: parsed.filters,
+            databaseMetrics
+          };
+
+          aiResponseText = await generateWithFallback(
+            genaiInstances, 
+            groqInstances, 
+            universalPrompt, 
+            `Context:\n${JSON.stringify(contextPayload, null, 2)}\n\nGenerate the business insight.`, 
+            0.5,
+            false
+          );
         }
       }
 
+      // Return unified structure
       return reply.send({
         id: 'dyn_' + Date.now(),
-        name: parsed.goal_type || 'Custom Segment',
+        name: parsed.goal_category || 'Audience Discovery',
         description: goal,
         count: count,
         revenue: '₹' + (totalRevenue > 100000 ? (totalRevenue/100000).toFixed(2) + 'L' : totalRevenue.toLocaleString('en-IN')),
@@ -300,12 +301,12 @@ Every response should help a marketer make a revenue decision.`;
         expectedRevenue: Math.round(expectedPurchasers * aov),
         expectedPurchasers: expectedPurchasers,
         conversionRate: convRate,
-        audienceMatch: audienceMatch,
+        audienceMatch: count > 200 ? 'High' : (count > 50 ? 'Medium' : 'Low'),
         aov: '₹' + aov.toLocaleString('en-IN'),
         risk: risk,
         channel: channelName,
-        goal: parsed.goal_type || 'Conversion',
-        ai_response_text: step2Text // The new Copilot conversational response!
+        goal: parsed.goal_category || 'Insight',
+        ai_response_text: aiResponseText
       });
 
     } catch (err) {
