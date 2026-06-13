@@ -570,8 +570,8 @@ export default function IntelligencePage() {
                </div>
             </div>
 
-            <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
-              <table className="w-full text-left border-collapse">
+            <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
                     <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Customer</th>
