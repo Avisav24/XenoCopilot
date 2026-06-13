@@ -577,6 +577,7 @@ export default function IntelligencePage() {
                     <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Customer</th>
                     <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Priority</th>
                     <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Health Score</th>
+                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Days Since Last Purchase</th>
                     <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Primary Personas</th>
                     <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider text-right">Next Action</th>
                     <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider text-right">Revenue Potential</th>
@@ -588,16 +589,39 @@ export default function IntelligencePage() {
                         <tr key={i}><td colSpan={6} className="px-4 py-4"><div className="h-4 skeleton rounded w-full" /></td></tr>
                       ))
                     : sortedCustomers.map((c: any) => {
-                        const isCritical = c.health_score < 40;
-                        const isHigh = c.health_score >= 40 && c.health_score < 60;
-                        const isLow = c.health_score > 85;
-
-                        const priorityStr = isCritical ? 'Critical' : isHigh ? 'High' : isLow ? 'Low' : 'Medium';
-                        const priorityColor = isCritical ? 'text-semantic-danger font-bold' : isHigh ? 'text-semantic-warning font-semibold' : 'text-ink font-medium';
+                        const daysSince = c.last_order_date
+                          ? Math.floor((Date.now() - new Date(c.last_order_date).getTime()) / (1000 * 60 * 60 * 24))
+                          : 999;
+                          
+                        const isVIP = c.personas.includes('VIP Customer');
                         
-                        const actionText = isCritical ? 'Launch Win-Back' : isLow ? 'VIP Early Access' : isHigh ? 'Cross-Sell Serum' : 'Monitor';
-                        const confidence = isCritical ? '92%' : isLow ? '84%' : isHigh ? '72%' : '45%';
-                        const expectedRec = isCritical ? 1850 : isLow ? 540 : isHigh ? 230 : 120;
+                        // Priority Logic
+                        let priorityStr = 'Low';
+                        if (isVIP && c.health_score < 40) priorityStr = 'Critical';
+                        else if (c.health_score < 40 && daysSince > 90) priorityStr = 'High';
+                        else if (c.health_score >= 40 && c.health_score <= 70) priorityStr = 'Medium';
+                        else if (isVIP) priorityStr = 'High Value';
+                        else if (c.health_score > 70 && daysSince <= 30) priorityStr = 'Low';
+                        
+                        // Health Sub-Label
+                        let healthLabel = '';
+                        if (c.health_score >= 91) healthLabel = 'Very Loyal';
+                        else if (c.health_score >= 76) healthLabel = 'Healthy';
+                        else if (c.health_score >= 51) healthLabel = 'Needs Attention';
+                        else if (c.health_score >= 31) healthLabel = 'At Risk';
+                        else healthLabel = 'Critical';
+                        
+                        // Next Best Action based on Persona
+                        let actionText = 'Monitor Engagement';
+                        const primaryPersona = c.personas[0] || '';
+                        if (isVIP && c.health_score < 40) actionText = 'Launch Win-Back Campaign';
+                        else if (primaryPersona === 'Beauty Loyalist') actionText = 'Recommend New Arrivals';
+                        else if (primaryPersona === 'Discount Hunter') actionText = 'Flash Sale Campaign';
+                        else if (primaryPersona === 'VIP Customer') actionText = 'Early Access Campaign';
+                        else if (primaryPersona === 'New Customer') actionText = 'Welcome Journey';
+
+                        const confidence = priorityStr === 'Critical' ? '92%' : priorityStr === 'High Value' ? '88%' : priorityStr === 'High' ? '81%' : '65%';
+                        const expectedRec = c.health_score < 40 ? 1850 : c.health_score > 85 ? 540 : 230;
                         
                         return (
                           <tr key={c.id} onClick={() => setSelectedCustomerId(c.id)} className="cursor-pointer hover:bg-slate-50/50 transition-colors">
@@ -609,10 +633,12 @@ export default function IntelligencePage() {
                             </td>
                             <td className="py-4 px-5">
                               <span className={clsx(
-                                "text-[11px] font-bold px-2 py-1 rounded uppercase", 
-                                (priorityStr === 'Critical' || priorityStr === 'High') ? "bg-red-100 text-red-800" : 
-                                priorityStr === 'Medium' ? "bg-amber-100 text-amber-800" : 
-                                "bg-blue-100 text-blue-800"
+                                "text-[11px] font-bold px-2.5 py-1 rounded uppercase tracking-wider", 
+                                priorityStr === 'Critical' ? "bg-red-100 text-red-800 border border-red-200" : 
+                                priorityStr === 'High' ? "bg-orange-100 text-orange-800 border border-orange-200" : 
+                                priorityStr === 'Medium' ? "bg-amber-100 text-amber-800 border border-amber-200" : 
+                                priorityStr === 'High Value' ? "bg-purple-100 text-purple-800 border border-purple-200" : 
+                                "bg-slate-100 text-slate-600 border border-slate-200"
                               )}>
                                 {priorityStr}
                               </span>
@@ -623,23 +649,26 @@ export default function IntelligencePage() {
                                   {c.health_score}
                                 </span>
                                 <div className="flex items-center gap-1 text-[11px]">
-                                  <span className="text-slate-500 font-semibold uppercase">{c.health_score > 85 ? 'Very Loyal' : c.health_score > 60 ? 'Active' : 'At Risk'}</span>
-                                  <span className={c.health_score < 40 ? "text-red-600 font-bold" : c.health_score > 85 ? "text-emerald-600 font-bold" : "text-slate-500"}>
-                                    {c.health_score < 40 ? '↓↓ Urgent' : c.health_score > 85 ? '↑ Stable' : '↓ Declining'}
-                                  </span>
+                                  <span className="text-slate-500 font-semibold uppercase">{healthLabel}</span>
                                 </div>
                               </div>
                             </td>
                             <td className="py-4 px-5">
+                               <span className="text-[14px] font-medium text-slate-700">
+                                 {daysSince === 999 ? 'Never' : `${daysSince} Days`}
+                               </span>
+                            </td>
+                            <td className="py-4 px-5">
                               <div className="flex gap-2 flex-wrap items-center">
+                                {c.personas.length === 0 && <span className="text-[12px] text-slate-400 font-medium italic">No Persona</span>}
                                 {c.personas.slice(0, 2).map((p: string) => (
-                                  <div key={p} className="badge-persona">
+                                  <div key={p} className="badge-persona border border-slate-200 bg-white shadow-sm">
                                     <span className={`w-1.5 h-1.5 rounded-full ${getDotColor(p)}`} />
                                     {p}
                                   </div>
                                 ))}
                                 {c.personas.length > 2 && (
-                                  <span className="text-[10px] text-slate-500 font-bold">+{c.personas.length - 2}</span>
+                                  <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">+{c.personas.length - 2}</span>
                                 )}
                               </div>
                             </td>

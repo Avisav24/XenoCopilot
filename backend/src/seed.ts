@@ -79,6 +79,7 @@ async function main() {
   const weekendShoppers = await prisma.persona.create({ data: { name: 'Weekend Shopper', description: '70%+ purchases occur Saturday or Sunday' } });
   const vipCustomers = await prisma.persona.create({ data: { name: 'VIP Customer', description: 'Top 5% spenders' } });
   const atRiskCustomers = await prisma.persona.create({ data: { name: 'At Risk Customer', description: 'Health Score below 40' } });
+  const newCustomers = await prisma.persona.create({ data: { name: 'New Customer', description: 'Recent first-time buyer' } });
 
   console.log('📈 Seeding channel metrics...');
   await prisma.channelMetric.createMany({
@@ -206,38 +207,64 @@ async function main() {
     if (orders.length === 0) continue;
 
     const totalSpent = orders.reduce((sum, o) => sum + Number(o.amount), 0);
-    const maxDate = new Date(Math.max(...orders.map(o => o.order_date.getTime())));
-    
-    const daysSinceLastOrder = Math.floor((Date.now() - maxDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    // Health Score Logic (0-100)
+    // Enforce realistic health score distribution:
+    // 10% Critical (0-30), 20% At Risk (31-50), 30% Moderate (51-75), 30% Healthy (76-90), 10% Loyal (91-100)
+    const randHealth = Math.random();
     let health = 100;
-    if (daysSinceLastOrder > 30) health -= 20;
-    if (daysSinceLastOrder > 60) health -= 20;
-    if (daysSinceLastOrder > 90) health -= 30; // Churn risk!
-    if (orders.length < 2) health -= 10;
-    if (totalSpent > vipThreshold) health += 20; 
-    health = Math.max(0, Math.min(100, health));
+    let targetDaysSince = 0;
+    
+    if (randHealth < 0.1) {
+      health = Math.floor(Math.random() * 31); // 0-30
+      targetDaysSince = 120 + Math.floor(Math.random() * 100);
+    } else if (randHealth < 0.3) {
+      health = Math.floor(31 + Math.random() * 20); // 31-50
+      targetDaysSince = 60 + Math.floor(Math.random() * 40);
+    } else if (randHealth < 0.6) {
+      health = Math.floor(51 + Math.random() * 25); // 51-75
+      targetDaysSince = 30 + Math.floor(Math.random() * 25);
+    } else if (randHealth < 0.9) {
+      health = Math.floor(76 + Math.random() * 15); // 76-90
+      targetDaysSince = 15 + Math.floor(Math.random() * 14);
+    } else {
+      health = Math.floor(91 + Math.random() * 10); // 91-100
+      targetDaysSince = Math.floor(Math.random() * 14);
+    }
+
+    // Force the max order date to match the target days since last purchase
+    const forcedMaxDate = new Date(Date.now() - targetDaysSince * 24 * 60 * 60 * 1000);
+    
+    // Update the database orders so the actual max date matches
+    const latestOrder = orders.sort((a, b) => b.order_date.getTime() - a.order_date.getTime())[0];
+    if (latestOrder) {
+       await prisma.order.update({
+         where: { id: latestOrder.id },
+         data: { order_date: forcedMaxDate }
+       });
+    }
 
     await prisma.customer.update({
       where: { id: customer.id },
       data: {
         total_spent: totalSpent,
-        last_order_date: maxDate,
+        last_order_date: forcedMaxDate,
         health_score: health
       }
     });
+
+    let assignedPersonaCount = 0;
 
     // Beauty Loyalist
     const beautyOrders = orders.filter(o => o.category === 'Beauty').length;
     if (beautyOrders / orders.length >= 0.7) {
       await prisma.customerPersona.create({ data: { customer_id: customer.id, persona_id: beautyLoyalists.id } });
+      assignedPersonaCount++;
     }
 
     // Discount Hunter
     const discountOrders = orders.filter(o => o.discount_used).length;
     if (discountOrders / orders.length >= 0.6) {
       await prisma.customerPersona.create({ data: { customer_id: customer.id, persona_id: discountHunters.id } });
+      assignedPersonaCount++;
     }
 
     // Weekend Shopper
@@ -247,16 +274,24 @@ async function main() {
     }).length;
     if (weekendOrders / orders.length >= 0.7) {
       await prisma.customerPersona.create({ data: { customer_id: customer.id, persona_id: weekendShoppers.id } });
+      assignedPersonaCount++;
     }
 
     // VIP Customer
     if (totalSpent >= vipThreshold) {
       await prisma.customerPersona.create({ data: { customer_id: customer.id, persona_id: vipCustomers.id } });
+      assignedPersonaCount++;
     }
 
     // At Risk Customer
     if (health < 40) {
       await prisma.customerPersona.create({ data: { customer_id: customer.id, persona_id: atRiskCustomers.id } });
+      assignedPersonaCount++;
+    }
+    
+    // Fallback: Ensure no blank personas
+    if (assignedPersonaCount === 0) {
+       await prisma.customerPersona.create({ data: { customer_id: customer.id, persona_id: newCustomers.id } });
     }
   }
 
