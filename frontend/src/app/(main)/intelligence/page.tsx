@@ -6,6 +6,7 @@ import { getCustomers, getCustomerStats, getDynamicPersonas } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { Search, Xmark, Mail, Phone, MapPin, Group, WarningTriangle, GraphUp, Strategy, Filter, FastArrowRight } from 'iconoir-react';
 import { clsx } from 'clsx';
+import { setCampaignContext } from '@/lib/campaignContext';
 
 const PERSONA_COLORS: Record<string, string> = {
   'VIP Customer': 'bg-primary',
