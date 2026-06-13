@@ -1,236 +1,292 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ShieldCheck, CheckCircle, GraphUp, Spark, WarningCircle, ArrowRight, Activity, Flash } from 'iconoir-react';
+import React, { useState } from 'react';
+import { Search, Spark, Play, ShieldCheck, Activity, ArrowRight, WarningCircle, CheckCircle, RefreshDouble, NavArrowDown } from 'iconoir-react';
 import { clsx } from 'clsx';
+import { fetchAPI } from '@/lib/api';
 
 export default function CommandCenter() {
-  const [ledger, setLedger] = useState<any>(null);
-  const [leaks, setLeaks] = useState<any[]>([]);
-  const [opportunities, setOpportunities] = useState<any[]>([]);
-  const [simResults, setSimResults] = useState<any>(null);
-  const [isSimulating, setIsSimulating] = useState(false);
+  const [goal, setGoal] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [plan, setPlan] = useState<any>(null);
+  const [isApproved, setIsApproved] = useState(false);
+  const [activeSimulation, setActiveSimulation] = useState<number | null>(null);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [ledgerRes, leaksRes, oppsRes] = await Promise.all([
-          fetch('/api/revenue/ledger'),
-          fetch('/api/revenue/leaks'),
-          fetch('/api/revenue/opportunities')
-        ]);
-        
-        if (ledgerRes.ok) setLedger(await ledgerRes.json());
-        if (leaksRes.ok) setLeaks(await leaksRes.json());
-        if (oppsRes.ok) setOpportunities(await oppsRes.json());
-      } catch (err) {
-        console.error("Failed to load RCC data:", err);
-      }
-    }
-    fetchData();
-  }, []);
+  const handleGenerate = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!goal.trim() || isGenerating) return;
+    
+    setIsGenerating(true);
+    setPlan(null);
+    setIsApproved(false);
 
-  const runSimulation = async (audienceName: string) => {
-    setIsSimulating(true);
     try {
-      const res = await fetch('/api/revenue/simulate', {
+      const response = await fetch('/api/ai/revenue-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scenarios: [
-            { name: "Scenario A", audienceName, channel: "WhatsApp", discount: "10" },
-            { name: "Scenario B", audienceName, channel: "Email", discount: "15" },
-            { name: "Scenario C", audienceName, channel: "SMS", discount: "0" }
-          ]
-        })
+        body: JSON.stringify({ goal })
       });
-      if (res.ok) {
-        setSimResults(await res.json());
+      if (response.ok) {
+        const data = await response.json();
+        setPlan(data);
+      } else {
+        alert("Failed to generate plan.");
       }
     } catch (err) {
       console.error(err);
+      alert("Error generating plan.");
     } finally {
-      setIsSimulating(false);
+      setIsGenerating(false);
     }
   };
 
+  const handleApprove = () => {
+    setIsApproved(true);
+    // Real implementation would queue the campaigns here.
+  };
+
   return (
-    <div className="flex-1 p-8 overflow-y-auto w-full max-w-[1200px] mx-auto pb-24">
-      {/* HUD Header */}
-      <div className="mb-12">
-        <h1 className="text-[28px] font-bold text-ink tracking-tight mb-2 flex items-center gap-3">
-          <Activity className="text-primary" />
-          Revenue Command Center
-        </h1>
-        <p className="text-[16px] text-ink-muted font-medium italic">
-          "XenoCopilot does not optimize campaigns. XenoCopilot optimizes revenue decisions."
-        </p>
+    <div className="flex w-full h-full bg-slate-50">
+      {/* Main Column */}
+      <div className="flex-1 overflow-y-auto px-10 py-12">
+        <div className="max-w-[800px] mx-auto flex flex-col gap-8">
 
-        {ledger && (
-          <div className="mt-8 grid grid-cols-3 gap-6">
-            <div className="bg-canvas-soft border border-hairline p-5 rounded-lg shadow-sm">
-              <p className="text-[12px] uppercase font-bold text-ink-muted tracking-wider mb-1 flex items-center gap-2">
-                <ShieldCheck height={16} width={16} /> System Accuracy
-              </p>
-              <p className="text-[24px] font-bold text-ink">{ledger.systemAccuracy}</p>
-            </div>
-            <div className="bg-canvas-soft border border-hairline p-5 rounded-lg shadow-sm">
-              <p className="text-[12px] uppercase font-bold text-ink-muted tracking-wider mb-1 flex items-center gap-2">
-                <CheckCircle height={16} width={16} /> Revenue Prediction Accuracy
-              </p>
-              <p className="text-[24px] font-bold text-success">{ledger.revenuePredictionAccuracy.toFixed(1)}%</p>
-            </div>
-            <div className="bg-canvas-soft border border-hairline p-5 rounded-lg shadow-sm">
-              <p className="text-[12px] uppercase font-bold text-ink-muted tracking-wider mb-1 flex items-center gap-2">
-                <Activity height={16} width={16} /> Predictions Audited
-              </p>
-              <p className="text-[24px] font-bold text-ink">{ledger.totalPredictionsAudited}</p>
-            </div>
+          {/* Header */}
+          <div className="flex flex-col gap-2">
+            <h1 className="text-[28px] font-bold text-slate-900 tracking-tight flex items-center gap-3">
+              <Spark className="text-blue-600" /> AI Revenue Commander
+            </h1>
+            <p className="text-[15px] text-slate-500">
+              Define a business outcome. The AI determines who to target, what to run, and how to execute.
+            </p>
           </div>
-        )}
-      </div>
 
-      <div className="grid grid-cols-2 gap-8 mb-12">
-        {/* LEAK ENGINE */}
-        <div>
-          <h2 className="text-[18px] font-bold text-ink mb-4 flex items-center gap-2 border-b border-hairline pb-2">
-            <WarningCircle className="text-danger" /> Revenue Leak Engine
-          </h2>
-          <div className="flex flex-col gap-4">
-            {leaks.map((leak, idx) => (
-              <div key={idx} className="bg-canvas-soft border border-hairline rounded-lg p-5">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-bold text-ink text-[16px]">{leak.leakName}</h3>
-                    <p className="text-danger font-medium text-[14px]">₹{leak.revenueAtRisk.toLocaleString()} At Risk</p>
-                  </div>
-                  <span className="bg-canvas border border-hairline px-3 py-1 rounded-full text-[12px] font-bold text-ink-muted">
-                    {leak.confidence}% Confidence
-                  </span>
-                </div>
-                
-                <div className="bg-canvas rounded p-3 mb-4 border border-hairline">
-                  <p className="text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-2">Recommendation Provenance</p>
-                  <ul className="flex flex-col gap-1">
-                    {leak.evidence.map((ev: string, i: number) => (
-                      <li key={i} className="text-[13px] text-ink flex items-start gap-2">
-                        <span className="text-primary font-bold">Source {i+1}:</span> {ev}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+          {/* Massive Command Input */}
+          <div className="relative group shadow-sm transition-all rounded-2xl">
+            <form onSubmit={handleGenerate}>
+              <Search height={24} width={24} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+              <input
+                type="text"
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                placeholder="What revenue outcome do you want? (e.g. Generate ₹10 lakh additional revenue this month)"
+                disabled={isGenerating || (plan && isApproved)}
+                className="w-full bg-white border-2 border-slate-200 focus:border-blue-600 focus:ring-0 rounded-2xl pl-16 pr-32 py-6 text-[18px] text-slate-900 font-medium placeholder-slate-400 outline-none transition-all disabled:bg-slate-50 disabled:text-slate-500"
+              />
+              <button
+                type="submit"
+                disabled={!goal.trim() || isGenerating || (plan && isApproved)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:text-slate-500 text-white px-5 py-3 rounded-xl text-[14px] font-bold transition-all shadow-sm flex items-center gap-2"
+              >
+                {isGenerating ? (
+                  <>
+                    <RefreshDouble className="animate-spin" height={18} width={18} /> Strategizing...
+                  </>
+                ) : (
+                  <>Generate Plan <ArrowRight height={18} width={18} /></>
+                )}
+              </button>
+            </form>
+          </div>
 
-                <div className="flex justify-between items-center mt-2 pt-4 border-t border-hairline">
-                  <div>
-                    <p className="text-[11px] font-bold text-ink-muted uppercase">Recommended Action</p>
-                    <p className="text-[14px] font-medium text-ink">{leak.recommendedAction}</p>
+          {/* Generating State */}
+          {isGenerating && (
+            <div className="flex flex-col gap-4 py-8 animate-in fade-in duration-500">
+              <div className="flex items-center gap-3 text-blue-600 font-medium">
+                <RefreshDouble className="animate-spin" height={20} width={20} />
+                <span className="text-[15px]">Analyzing Customers, Orders, and Historical Campaigns...</span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-400 font-medium animate-pulse delay-150">
+                <span className="w-5 h-5 rounded-full border-2 border-slate-300"></span>
+                <span className="text-[15px]">Identifying High-Probability Revenue Opportunities...</span>
+              </div>
+              <div className="flex items-center gap-3 text-slate-400 font-medium animate-pulse delay-300">
+                <span className="w-5 h-5 rounded-full border-2 border-slate-300"></span>
+                <span className="text-[15px]">Estimating ROI and Confidence...</span>
+              </div>
+            </div>
+          )}
+
+          {/* The Revenue Plan */}
+          {plan && !isGenerating && (
+            <div className="flex flex-col gap-8 animate-in slide-in-from-bottom-4 fade-in duration-500">
+              
+              {/* Plan Summary */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex justify-between items-center">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Revenue Objective</span>
+                  <span className="text-[20px] font-bold text-slate-900">{plan.revenueObjective}</span>
+                </div>
+                <div className="flex items-center gap-8">
+                  <div className="flex flex-col items-end">
+                    <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Projected Revenue</span>
+                    <span className="text-[24px] font-bold text-emerald-600 font-mono tracking-tight">₹{plan.projectedTotalRevenue.toLocaleString()}</span>
                   </div>
-                  <button className="bg-ink text-canvas px-4 py-2 rounded-md text-[13px] font-bold flex items-center gap-2 hover:bg-ink-muted transition-colors">
-                    Launch
-                  </button>
+                  <div className="flex flex-col items-end">
+                    <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Status</span>
+                    <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-[13px] font-bold mt-1">
+                      {plan.status}
+                    </span>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* OPPORTUNITY ENGINE */}
-        <div>
-          <h2 className="text-[18px] font-bold text-ink mb-4 flex items-center gap-2 border-b border-hairline pb-2">
-            <GraphUp className="text-success" /> Revenue Opportunity Engine
-          </h2>
-          <div className="flex flex-col gap-4">
-            {opportunities.map((opp, idx) => (
-              <div key={idx} className="bg-canvas-soft border border-hairline rounded-lg p-5">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-bold text-ink text-[16px]">{opp.opportunity}</h3>
-                    <p className="text-success font-medium text-[14px]">₹{opp.potentialRevenue.toLocaleString()} Potential</p>
-                  </div>
-                  <span className="bg-canvas border border-hairline px-3 py-1 rounded-full text-[12px] font-bold text-ink-muted">
-                    {opp.confidence}% Confidence
-                  </span>
-                </div>
+              {/* Recommended Campaigns Stack */}
+              <div className="flex flex-col gap-4">
+                <h3 className="text-[14px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                  <Activity height={18} width={18} /> Recommended Campaigns
+                </h3>
                 
-                <div className="bg-canvas rounded p-3 mb-4 border border-hairline">
-                  <p className="text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-2">Recommendation Provenance</p>
-                  <ul className="flex flex-col gap-1">
-                    {opp.reasoning.map((reason: string, i: number) => (
-                      <li key={i} className="text-[13px] text-ink flex items-start gap-2">
-                        <span className="text-primary font-bold">Source {i+1}:</span> {reason}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {plan.campaigns.map((camp: any, idx: number) => (
+                  <div key={idx} className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden group">
+                    {/* Campaign Header */}
+                    <div className="p-6 pb-4 border-b border-slate-100">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-[14px]">
+                            {idx + 1}
+                          </div>
+                          <h4 className="text-[18px] font-bold text-slate-900">{camp.name}</h4>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider block">Projected Revenue</span>
+                          <span className="text-[18px] font-bold text-emerald-600 font-mono">₹{camp.projectedRevenue.toLocaleString()}</span>
+                        </div>
+                      </div>
 
-                <div className="flex justify-between items-center mt-2 pt-4 border-t border-hairline">
-                  <button 
-                    onClick={() => runSimulation(opp.opportunity)}
-                    disabled={isSimulating}
-                    className="bg-canvas border border-hairline px-4 py-2 rounded-md text-[13px] font-bold flex items-center gap-2 hover:bg-canvas-soft transition-colors disabled:opacity-50"
-                  >
-                    <Spark height={16} width={16} /> Simulate Multi-Scenario
-                  </button>
-                  <button className="bg-primary text-white px-4 py-2 rounded-md text-[13px] font-bold flex items-center gap-2 hover:bg-primary-soft transition-colors">
-                    Execute <ArrowRight height={16} width={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+                      {/* Metrics Row */}
+                      <div className="grid grid-cols-3 gap-4 mb-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-bold text-slate-500 uppercase">Audience</span>
+                          <span className="text-[15px] font-bold text-slate-900">{camp.audienceSize} customers</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-bold text-slate-500 uppercase">Channel</span>
+                          <span className="text-[15px] font-bold text-slate-900">{camp.channel}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-bold text-slate-500 uppercase">Confidence</span>
+                          <span className="text-[15px] font-bold text-slate-900">{camp.confidence}%</span>
+                        </div>
+                      </div>
 
-      {/* SIMULATOR HUD */}
-      {simResults && (
-        <div className="bg-canvas-soft border border-hairline rounded-lg p-6 shadow-sm mb-12">
-          <h2 className="text-[20px] font-bold text-ink mb-2 flex items-center gap-2">
-            <Flash className="text-warning" /> Multi-Scenario Decision Simulator
-          </h2>
-          <p className="text-[14px] text-ink-muted mb-6">Evaluating multiple execution paths based on historical memory ranking.</p>
-
-          <div className="grid grid-cols-3 gap-6">
-            {simResults.scenarios.map((scenario: any, idx: number) => {
-              const isBest = scenario.scenarioName === simResults.bestOption;
-              return (
-                <div key={idx} className={clsx(
-                  "border rounded-lg p-5 relative",
-                  isBest ? "border-primary bg-primary/5 shadow-md" : "border-hairline bg-canvas"
-                )}>
-                  {isBest && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
-                      Best Option
+                      {/* Provenance */}
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase flex items-center gap-1.5">
+                          <ShieldCheck height={14} width={14} /> Recommendation Provenance
+                        </span>
+                        <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          {camp.provenance.map((prov: string, i: number) => (
+                            <li key={i} className="text-[12px] text-slate-600 bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 flex items-start gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
+                              {prov}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
-                  )}
-                  <h3 className="font-bold text-[16px] text-ink mb-4">{scenario.scenarioName}</h3>
-                  <div className="flex flex-col gap-3">
-                    <div className="flex justify-between items-center border-b border-hairline pb-2">
-                      <span className="text-[13px] text-ink-muted">Expected Revenue</span>
-                      <span className="font-bold text-ink">₹{Math.round(scenario.expectedRevenue).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-hairline pb-2">
-                      <span className="text-[13px] text-ink-muted">Expected Profit</span>
-                      <span className={clsx("font-bold", isBest ? "text-success" : "text-ink")}>
-                        ₹{Math.round(scenario.expectedProfit).toLocaleString()}
+
+                    {/* Simulation Toggle */}
+                    <div className="bg-slate-50 px-6 py-3 flex justify-between items-center cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => setActiveSimulation(activeSimulation === idx ? null : idx)}>
+                      <span className="text-[13px] font-bold text-slate-700 flex items-center gap-2">
+                        <Activity height={16} width={16} /> Decision Simulation
                       </span>
+                      <NavArrowDown height={16} width={16} className={clsx("text-slate-500 transition-transform", activeSimulation === idx && "rotate-180")} />
                     </div>
-                    <div className="flex justify-between items-center pb-2">
-                      <span className="text-[13px] text-ink-muted">Conversion Rate</span>
-                      <span className="font-bold text-ink">{scenario.expectedConversion.toFixed(1)}%</span>
-                    </div>
+
+                    {/* Simulation Panel */}
+                    {activeSimulation === idx && (
+                      <div className="p-6 bg-slate-900 text-white animate-in slide-in-from-top-2 fade-in duration-200">
+                        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-4">What happens if...</span>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+                            <span className="text-[13px] font-medium text-slate-300 block mb-2">We change channel to Email?</span>
+                            <div className="flex justify-between items-end">
+                              <span className="text-[18px] font-bold text-emerald-400 font-mono">₹{camp.simulation.ifChannelEmail.revenue.toLocaleString()}</span>
+                              <span className="text-[12px] text-red-400 font-bold bg-red-400/10 px-2 py-0.5 rounded">Drops by {Math.round((1 - camp.simulation.ifChannelEmail.revenue / camp.projectedRevenue) * 100)}%</span>
+                            </div>
+                          </div>
+                          <div className="bg-slate-800 border border-slate-700 rounded-xl p-4">
+                            <span className="text-[13px] font-medium text-slate-300 block mb-2">We increase discount by 5%?</span>
+                            <div className="flex justify-between items-end">
+                              <span className="text-[18px] font-bold text-emerald-400 font-mono">₹{camp.simulation.ifDiscountIncreased.revenue.toLocaleString()}</span>
+                              <span className="text-[12px] text-emerald-400 font-bold bg-emerald-400/10 px-2 py-0.5 rounded">Increases, but ROI falls to {camp.simulation.ifDiscountIncreased.roi}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-4 pt-4 border-t border-hairline">
-                    <p className="text-[11px] font-bold text-ink-muted uppercase mb-2">Memory Provenance</p>
-                    <ul className="text-[12px] text-ink-muted list-disc pl-4">
-                      {scenario.reasoning.map((r: string, i: number) => <li key={i}>{r}</li>)}
-                    </ul>
-                  </div>
+                ))}
+              </div>
+
+              {/* One Click Execution Bottom Bar */}
+              <div className="sticky bottom-8 mt-4 bg-white border border-slate-200 rounded-2xl p-4 shadow-xl flex items-center justify-between">
+                <div className="flex flex-col ml-2">
+                  <span className="text-[15px] font-bold text-slate-900">Total Execution Plan</span>
+                  <span className="text-[13px] text-slate-500">{plan.campaigns.length} Campaigns · {plan.timeline}</span>
                 </div>
-              );
-            })}
-          </div>
+                {isApproved ? (
+                  <div className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-6 py-3 rounded-xl flex items-center gap-2 font-bold shadow-sm">
+                    <CheckCircle height={20} width={20} /> Campaigns Queued Successfully
+                  </div>
+                ) : (
+                  <button 
+                    onClick={handleApprove}
+                    className="bg-slate-900 hover:bg-slate-800 text-white px-8 py-3 rounded-xl text-[15px] font-bold transition-all shadow-md flex items-center gap-2"
+                  >
+                    <Play height={18} width={18} /> Approve Strategy
+                  </button>
+                )}
+              </div>
+
+            </div>
+          )}
+
         </div>
-      )}
+      </div>
+
+      {/* Right Column: Ledger */}
+      <div className="w-[360px] bg-white border-l border-slate-200 flex flex-col h-full sticky top-0">
+        <div className="p-6 border-b border-slate-100 bg-slate-50">
+          <h2 className="text-[15px] font-bold text-slate-900 flex items-center gap-2 uppercase tracking-wider">
+            <ShieldCheck height={18} width={18} className="text-blue-600" /> Revenue Decision Ledger
+          </h2>
+          <p className="text-[13px] text-slate-500 mt-1">Real-time accuracy tracking.</p>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Overall System Accuracy</span>
+            <span className="text-[32px] font-bold text-emerald-600 font-mono">94.2%</span>
+            <span className="text-[12px] text-emerald-700 font-medium bg-emerald-50 self-start px-2 py-0.5 rounded mt-1">+1.2% this month</span>
+          </div>
+
+          <div className="border-t border-slate-100 my-2"></div>
+
+          <span className="text-[12px] font-bold text-slate-900 uppercase tracking-wider">Recent Executions</span>
+          
+          <div className="flex flex-col gap-3">
+            {[
+              { name: "Cart Abandonment", pred: "₹1.2L", act: "₹1.15L", acc: "96%" },
+              { name: "Winback Flow", pred: "₹2.4L", act: "₹2.5L", acc: "98%" },
+              { name: "VIP Early Access", pred: "₹8.0L", act: "₹7.1L", acc: "89%" }
+            ].map((exec, i) => (
+              <div key={i} className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex flex-col gap-2">
+                <span className="text-[13px] font-bold text-slate-900">{exec.name}</span>
+                <div className="flex justify-between text-[12px] font-mono text-slate-600">
+                  <span>Pred: {exec.pred}</span>
+                  <span>Act: {exec.act}</span>
+                </div>
+                <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1">
+                  <div className="bg-blue-500 h-full" style={{ width: exec.acc }}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+        </div>
+      </div>
 
     </div>
   );
