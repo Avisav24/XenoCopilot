@@ -2,18 +2,18 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getCustomers, getCustomerStats, getDynamicPersonas } from '@/lib/api';
+import { getCustomers } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { Search, Xmark, Mail, Phone, MapPin, Group, WarningTriangle, GraphUp, Strategy, Filter, FastArrowRight } from 'iconoir-react';
+import { Search, FastArrowRight, Spark, ArrowRight } from 'iconoir-react';
 import { clsx } from 'clsx';
 import { setCampaignContext } from '@/lib/campaignContext';
 
 const PERSONA_COLORS: Record<string, string> = {
-  'VIP Customer': 'bg-primary',
-  'Beauty Loyalist': 'bg-pink-500',
-  'Discount Hunter': 'bg-semantic-warning',
-  'Weekend Shopper': 'bg-emerald-500',
-  'Dormant': 'bg-muted',
+  'VIP Customer': 'bg-blue-600',
+  'Beauty Loyalist': 'bg-pink-600',
+  'Discount Hunter': 'bg-amber-600',
+  'Weekend Shopper': 'bg-emerald-600',
+  'Dormant': 'bg-slate-400',
 };
 
 function getDotColor(persona: string) {
@@ -22,728 +22,309 @@ function getDotColor(persona: string) {
   for (let i = 0; i < persona.length; i++) {
     hash = persona.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const colors = ['bg-primary', 'bg-emerald-500', 'bg-purple-500', 'bg-orange-500', 'bg-teal-500'];
+  const colors = ['bg-blue-600', 'bg-emerald-600', 'bg-purple-600', 'bg-orange-600', 'bg-teal-600'];
   return colors[Math.abs(hash) % colors.length];
 }
 
 export default function IntelligencePage() {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [selectedPersona, setSelectedPersona] = useState<string>('');
   const [page, setPage] = useState(0);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'directory' | 'audience'>('directory');
-  const [audienceDesc, setAudienceDesc] = useState('Customers inactive for 60+ days with spend > ₹5000');
-  const [audienceResult, setAudienceResult] = useState<any>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const LIMIT = 20;
 
-  const handleAnalyzeAudience = async () => {
-    if (!audienceDesc.trim() || isAnalyzing) return;
-    setIsAnalyzing(true);
-    try {
-      const res = await fetch('/api/ai/segment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goal: audienceDesc })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAudienceResult(data);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const { data: stats, isLoading: isStatsLoading } = useQuery({
-    queryKey: ['customer-stats-full'],
-    queryFn: getCustomerStats,
-  });
-
   const { data: listData, isLoading: isListLoading } = useQuery({
-    queryKey: ['customers', search, selectedPersona, page],
-    queryFn: () => getCustomers({ limit: LIMIT, offset: page * LIMIT, search: search || undefined, persona: selectedPersona || undefined }) as any,
-  });
-
-  const { data: personas } = useQuery({
-    queryKey: ['dynamic-personas'],
-    queryFn: getDynamicPersonas,
+    queryKey: ['customers', search, '', page],
+    queryFn: () => getCustomers({ limit: LIMIT, offset: page * LIMIT, search: search || undefined }) as any,
   });
 
   const customers = listData?.customers || [];
   const sortedCustomers = [...customers].sort((a, b) => a.health_score - b.health_score);
   const total = listData?.total || 0;
 
+  const handleLaunchCampaign = (name: string, desc: string, audienceSize: number, channel: string) => {
+    setCampaignContext({ audienceName: name, recommendedAction: desc, audienceSize, recommendedChannel: channel });
+    router.push('/chat');
+  };
+
   return (
-    <div className="flex flex-col gap-8 w-full pb-24 relative">
+    <div className="flex flex-col w-full min-h-screen bg-slate-50 pb-24">
       
-      {/* Account Intelligence Drawer */}
-      {selectedCustomerId && (() => {
-        const sc = customers.find((c: any) => c.id === selectedCustomerId);
-        if (!sc) return null;
-        
-        const daysSince = sc.last_order_date
-          ? Math.floor((Date.now() - new Date(sc.last_order_date).getTime()) / (1000 * 60 * 60 * 24))
-          : null;
-        
-        const actionText = sc.health_score < 40 ? 'Launch Win-Back Campaign' : sc.health_score > 85 ? 'VIP Early Access' : sc.health_score > 60 ? 'Cross-Sell Serum' : 'Monitor';
-        const expectedRec = sc.health_score < 40 ? 1850 : sc.health_score > 85 ? 540 : sc.health_score > 60 ? 230 : 120;
-        const confidence = sc.health_score < 40 ? '92%' : sc.health_score > 85 ? '84%' : sc.health_score > 60 ? '72%' : '45%';
-        
-        return (
-          <div className="fixed inset-0 z-50 flex justify-end bg-ink/20 backdrop-blur-sm">
-            <div className="w-[450px] bg-canvas border-l border-hairline shadow-2xl h-full flex flex-col overflow-y-auto">
-              <div className="flex justify-between p-6 border-b border-hairline bg-canvas-soft">
-                <div className="flex flex-col gap-2">
-                  <h2 className="text-[20px] font-semibold text-ink tracking-tight mb-1">{sc.name}</h2>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[13px] text-ink-muted flex items-center gap-2">
-                      <Mail height={14} width={14} /> {sc.email}
-                    </span>
-                    <span className="text-[13px] text-ink-muted flex items-center gap-2">
-                      <Phone height={14} width={14} /> {sc.phone || '+1 (415) 555-0198'}
-                    </span>
-                    <span className="text-[13px] text-ink-muted flex items-center gap-2">
-                      <MapPin height={14} width={14} /> {sc.location || 'San Francisco, CA'}
-                    </span>
+      {/* SECTION 1: CUSTOMER INTELLIGENCE HERO */}
+      <div className="bg-white border-b border-slate-200 px-10 py-12">
+        <div className="max-w-[1200px] mx-auto flex flex-col gap-6">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-[28px] font-bold text-slate-900 tracking-tight">Customer Intelligence</h1>
+            <p className="text-[15px] text-slate-500">Highest priority revenue opportunities based on real-time customer behavior.</p>
+          </div>
+
+          <div className="border border-emerald-200 bg-emerald-50/50 rounded-2xl p-8 flex flex-col gap-6 relative overflow-hidden shadow-sm mt-4">
+            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+              <Spark height={120} width={120} className="text-emerald-600" />
+            </div>
+            
+            <div className="flex justify-between items-start z-10">
+              <div className="flex flex-col gap-2">
+                <span className="bg-emerald-100 text-emerald-800 text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full w-fit">🔥 Highest Revenue Opportunity</span>
+                <h2 className="text-[32px] font-bold text-slate-900 tracking-tight leading-none mt-2">Dormant VIP Recovery</h2>
+                <div className="flex items-center gap-6 mt-3">
+                  <div className="flex flex-col">
+                    <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Audience Size</span>
+                    <span className="text-[18px] font-medium text-slate-900">428 Customers</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Potential Revenue</span>
+                    <span className="text-[18px] font-bold text-emerald-600 font-mono tracking-tight">₹1.72L</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Recommended Channel</span>
+                    <span className="text-[18px] font-medium text-slate-900">WhatsApp</span>
                   </div>
                 </div>
-                <button onClick={() => setSelectedCustomerId(null)} className="p-1 hover:bg-hairline rounded transition-colors text-ink-muted hover:text-ink self-start">
-                  <Xmark height={20} width={20} />
-                </button>
               </div>
-              
-              <div className="p-6 flex flex-col gap-8">
-                 <div className="flex flex-col gap-2">
-                   <span className="text-[13px] font-bold text-slate-900 uppercase tracking-wider">Account Brief</span>
-                   <div className="bg-canvas border border-hairline rounded-lg p-4 flex flex-col gap-4 text-[14px]">
-                      <div className="flex justify-between border-b border-hairline pb-2">
-                        <span className="text-ink-muted">Health Trend</span>
-                        <span className={clsx("font-medium", sc.health_score < 40 ? "text-semantic-danger" : sc.health_score > 85 ? "text-semantic-success" : "text-ink")}>
-                          {sc.health_score < 40 ? 'Declining' : sc.health_score > 85 ? 'Stable' : 'Active'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between border-b border-hairline pb-2">
-                        <span className="text-ink-muted">Purchase Velocity</span>
-                        <span className={clsx("font-medium", sc.health_score < 40 ? "text-semantic-danger" : "text-semantic-success")}>
-                          {sc.health_score < 40 ? '-12%' : '+4%'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between border-b border-hairline pb-2">
-                        <span className="text-ink-muted">Last Purchase</span>
-                        <span className="font-medium text-ink">{daysSince !== null ? `${daysSince} Days Ago` : 'Never'}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-hairline pb-2">
-                        <span className="text-ink-muted">Expected Churn Risk</span>
-                        <span className={clsx("font-mono-numbers font-medium", sc.health_score < 40 ? "text-semantic-danger" : "text-ink")}>
-                           {sc.health_score < 40 ? '68%' : sc.health_score > 85 ? '4%' : '22%'}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-2 pt-2">
-                         <span className="text-ink-muted">Persona Membership</span>
-                         <div className="flex gap-2 flex-wrap items-center">
-                            {sc.personas.map((p: string) => (
-                              <div key={p} className="badge-persona">
-                                <span className={`w-1.5 h-1.5 rounded-full ${getDotColor(p)}`} />
-                                {p}
-                              </div>
-                            ))}
-                         </div>
-                      </div>
-                   </div>
-                 </div>
 
-                 <div className="flex flex-col gap-2">
-                   <span className="label-text">Revenue Impact</span>
-                   <div className="bg-primary-soft border border-primary/20 rounded-lg p-4 flex flex-col gap-4 text-[14px]">
-                      <div className="flex justify-between border-b border-primary/10 pb-2">
-                        <span className="text-primary font-medium">Recommended Action</span>
-                        <span className="font-bold text-ink text-right">{actionText}</span>
-                      </div>
-                      <div className="flex justify-between border-b border-primary/10 pb-2">
-                        <span className="text-slate-700 font-medium">Confidence Score</span>
-                        <span className="font-mono-numbers font-bold text-ink text-right">{confidence}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-primary font-medium">Expected Revenue Recovery</span>
-                        <span className="font-mono-numbers font-bold text-semantic-success">₹{expectedRec.toLocaleString('en-IN')}</span>
-                      </div>
-                      <button 
-                        onClick={() => {
-                          setCampaignContext({
-                            sourcePage: 'Customer Directory',
-                            audienceName: sc.name,
-                            audienceSize: 1,
-                            expectedRevenue: `₹${expectedRec.toLocaleString('en-IN')}`,
-                            recommendedChannel: 'WhatsApp',
-                            autoTriggerPrompt: `Create a recovery campaign for ${sc.name} based on dormant behavior and high LTV.`
-                          });
-                          router.push('/chat');
-                        }}
-                        className="mt-2 w-full bg-primary hover:bg-primary/90 text-white font-bold py-2.5 rounded transition-colors text-[13px] shadow-sm flex justify-center items-center gap-1.5"
-                      >
-                        Generate Campaign
-                      </button>
-                   </div>
-                 </div>
-
-                 <div className="flex flex-col gap-2">
-                   <span className="label-text">Contact Channels</span>
-                   <div className="flex gap-2 flex-wrap">
-                     <span className="text-[12px] bg-canvas-soft border border-hairline px-2 py-1 rounded text-ink font-medium">WhatsApp</span>
-                     <span className="text-[12px] bg-canvas-soft border border-hairline px-2 py-1 rounded text-ink font-medium">Email</span>
-                     <span className="text-[12px] bg-canvas-soft border border-hairline px-2 py-1 rounded text-ink font-medium">Outbound Call</span>
-                   </div>
-                 </div>
-
-                 <div className="flex flex-col gap-2">
-                   <span className="label-text">Recent Call Activity</span>
-                   <div className="bg-canvas border border-hairline rounded-lg p-4 flex flex-col gap-3 text-[13px]">
-                     <div className="flex justify-between border-b border-hairline pb-2">
-                       <span className="text-ink-muted">Last Call</span>
-                       <span className="font-medium text-ink">3 days ago</span>
-                     </div>
-                     <div className="flex justify-between border-b border-hairline pb-2">
-                       <span className="text-ink-muted">Outcome</span>
-                       <span className="font-medium text-semantic-success">Interested</span>
-                     </div>
-                     <div className="flex justify-between">
-                       <span className="text-ink-muted">Next Follow Up</span>
-                       <span className="font-medium text-ink">Tomorrow</span>
-                     </div>
-                   </div>
-                 </div>
-
-                 <div className="flex flex-col gap-2">
-                   <span className="label-text">Customer Timeline</span>
-                   <div className="flex flex-col gap-0 border-l-2 border-hairline ml-2 pl-4 py-1 relative">
-                     <div className="relative mb-6">
-                       <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-emerald-500 ring-4 ring-canvas" />
-                       <span className="block text-[13px] font-bold text-emerald-600">Purchased Order #8932 (₹2,100)</span>
-                       <span className="block text-[11px] font-bold text-ink-muted">10:12 AM today • 47 mins after click</span>
-                     </div>
-                     <div className="relative mb-6">
-                       <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-primary ring-4 ring-canvas" />
-                       <span className="block text-[13px] font-medium text-ink">Clicked WhatsApp Link</span>
-                       <span className="block text-[11px] font-bold text-ink-muted">09:45 AM today</span>
-                     </div>
-                     <div className="relative mb-6">
-                       <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-primary ring-4 ring-canvas" />
-                       <span className="block text-[13px] font-medium text-ink">Opened WhatsApp Message</span>
-                       <span className="block text-[11px] font-bold text-ink-muted">09:43 AM today</span>
-                     </div>
-                     <div className="relative mb-6">
-                       <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-muted ring-4 ring-canvas" />
-                       <span className="block text-[13px] font-medium text-ink">Delivered via WhatsApp</span>
-                       <span className="block text-[11px] font-bold text-ink-muted">09:42 AM today</span>
-                     </div>
-                     <div className="relative">
-                       <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-muted ring-4 ring-canvas" />
-                       <span className="block text-[13px] font-medium text-ink">Sent "Dormant VIP Recovery"</span>
-                       <span className="block text-[11px] font-bold text-ink-muted">09:41 AM today</span>
-                     </div>
-                   </div>
-                 </div>
+              <div className="flex flex-col items-end gap-3 mt-4">
+                <button 
+                  onClick={() => handleLaunchCampaign("Dormant VIP Recovery", "Recover high LTV customers inactive for 60+ days", 428, "WhatsApp")}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-xl text-[14px] font-bold transition-all shadow-sm flex items-center gap-2"
+                >
+                  Generate Campaign <FastArrowRight height={18} width={18} />
+                </button>
               </div>
             </div>
           </div>
-        );
-      })()}
-
-      {/* Header */}
-      <div className="flex flex-col gap-4 border-b border-hairline pb-6">
-        <div className="flex flex-col gap-1">
-          <h1>Customer 360</h1>
-          <p className="max-w-2xl">
-            Customer-level operational intelligence. Identify at-risk accounts, build audiences, and generate campaigns.
-          </p>
-        </div>
-        {/* Tab Navigation */}
-        <div className="flex gap-1">
-          <button
-            onClick={() => setActiveTab('directory')}
-            className={clsx(
-              'px-4 py-2 text-[13px] font-semibold rounded-md transition-colors',
-              activeTab === 'directory'
-                ? 'bg-ink text-canvas'
-                : 'text-ink-muted hover:bg-canvas-soft hover:text-ink'
-            )}
-          >
-            Customer Directory
-          </button>
-          <button
-            onClick={() => setActiveTab('audience')}
-            className={clsx(
-              'px-4 py-2 text-[13px] font-semibold rounded-md transition-colors',
-              activeTab === 'audience'
-                ? 'bg-ink text-canvas'
-                : 'text-ink-muted hover:bg-canvas-soft hover:text-ink'
-            )}
-          >
-            Audience Builder
-          </button>
         </div>
       </div>
 
-      {activeTab === 'audience' ? (
-        /* ── AUDIENCE BUILDER TAB ── */
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-          {/* Left: Audience Definition */}
-          <div className="lg:col-span-1 flex flex-col gap-6">
-             <h2 className="text-[16px] font-semibold text-ink">Audience Definition</h2>
-             
-             {/* Audience Details & Filters */}
-             <div className="border border-hairline rounded-xl bg-canvas shadow-sm p-6 flex flex-col gap-6">
-                
-                <div className="flex flex-col gap-4">
-                   <div className="flex flex-col gap-1.5">
-                      <label className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Audience Name</label>
-                      <input type="text" defaultValue="Dormant High Value Customers" className="bg-canvas-soft border border-hairline rounded-lg px-3 py-2 text-[14px] font-bold text-ink w-full focus:outline-none focus:border-ink-muted" />
-                   </div>
-                   
-                   <div className="flex flex-col gap-1.5">
-                      <label className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Description</label>
-                      <textarea 
-                        value={audienceDesc} 
-                        onChange={(e) => setAudienceDesc(e.target.value)}
-                        className="bg-canvas-soft border border-hairline rounded-lg px-3 py-2 text-[13px] text-ink w-full focus:outline-none focus:border-ink-muted resize-none h-16" 
-                      />
-                   </div>
-                </div>
-
-                <div className="border-t border-hairline pt-5 flex flex-col gap-4">
-                   <span className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Filters</span>
-                   
-                   <div className="flex flex-col gap-2">
-                     <div className="flex items-center gap-2">
-                       <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] flex-1 font-medium text-ink">
-                         <option>Total Spend</option>
-                       </select>
-                       <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-16 text-center">
-                         <option>&gt;</option>
-                       </select>
-                       <input type="text" defaultValue="₹5000" className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
-                     </div>
-                     <div className="flex items-center gap-2 pl-4 border-l-2 border-hairline ml-2 py-1">
-                       <span className="text-[11px] font-bold text-ink-muted">AND</span>
-                     </div>
-                     <div className="flex items-center gap-2">
-                       <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] flex-1 font-medium text-ink">
-                         <option>Last Purchase</option>
-                       </select>
-                       <select className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-16 text-center">
-                         <option>&gt;</option>
-                       </select>
-                       <input type="text" defaultValue="60 Days" className="bg-canvas-soft border border-hairline rounded px-2 py-1.5 text-[13px] w-20 font-mono" />
-                     </div>
-                     <button 
-                        onClick={handleAnalyzeAudience}
-                        disabled={isAnalyzing}
-                        className="text-[12px] bg-ink text-canvas px-4 py-2 rounded font-bold hover:bg-ink/90 transition-colors flex items-center justify-center gap-1 mt-2 self-start disabled:opacity-50"
-                     >
-                        {isAnalyzing ? 'Analyzing...' : 'Analyze Segment'}
-                     </button>
-                   </div>
-                </div>
-
-             </div>
-
-             {/* Audience Snapshot */}
-             <div className="border border-hairline rounded-xl bg-canvas shadow-sm p-6 flex flex-col gap-5">
-                <span className="text-[13px] font-bold text-ink uppercase tracking-wider">Audience Snapshot</span>
-                
-                <div className="grid grid-cols-2 gap-y-5 gap-x-4">
-                   <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Customers</span>
-                      <span className="text-[18px] font-bold text-ink font-mono-numbers">{audienceResult ? audienceResult.count : '--'}</span>
-                   </div>
-                   <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Revenue Potential</span>
-                      <span className="text-[18px] font-bold text-semantic-success font-mono-numbers">{audienceResult ? audienceResult.revenue : '--'}</span>
-                   </div>
-                   <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Average Order Value</span>
-                      <span className="text-[16px] font-bold text-ink font-mono-numbers">{audienceResult ? audienceResult.aov : '--'}</span>
-                   </div>
-                   <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Risk Level</span>
-                      <span className="text-[16px] font-bold text-ink font-mono-numbers">{audienceResult ? audienceResult.risk : '--'}</span>
-                   </div>
-                   <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Expected Conversion</span>
-                      <span className="text-[16px] font-bold text-ink font-mono-numbers">{audienceResult ? `${audienceResult.conversionRate}%` : '--'}</span>
-                   </div>
-                   <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Best Channel</span>
-                      <span className="text-[14px] font-bold text-ink">{audienceResult ? audienceResult.channel : '--'}</span>
-                   </div>
-                </div>
-
-                <div className="border-t border-hairline pt-5 mt-1">
-                   <button 
-                      onClick={() => {
-                        setCampaignContext({
-                          sourcePage: 'Audience Builder',
-                          audienceName: audienceDesc,
-                          audienceSize: audienceResult.count,
-                          expectedRevenue: `₹${audienceResult.revenue}`,
-                          recommendedChannel: audienceResult.channel,
-                          autoTriggerPrompt: `Launch campaign for ${audienceDesc}`
-                        });
-                        router.push('/chat');
-                      }}
-                      disabled={!audienceResult}
-                      className="w-full bg-ink hover:bg-ink/90 disabled:opacity-50 text-canvas font-bold py-3.5 rounded-lg transition-colors text-[14px] shadow-sm">
-                      Generate Campaign
-                   </button>
-                </div>
-             </div>
-
-          </div>
-
-          {/* Right: Recommended Audiences */}
-          <div className="lg:col-span-2 flex flex-col gap-6">
-             <h2 className="text-[16px] font-semibold text-ink">Recommended Audiences</h2>
-             
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               {[
-                  {
-                     id: 'dormant_vip',
-                     name: 'Dormant VIP Recovery',
-                     count: 428,
-                     revenue: '₹1.72L',
-                     aov: '₹4200',
-                     risk: 'High',
-                     channel: 'WhatsApp',
-                     goal: 'Win-back'
-                  },
-                  {
-                     id: 'post_purchase',
-                     name: 'Post-Purchase Cross-Sell',
-                     count: 1240,
-                     revenue: '₹94,000',
-                     aov: '₹1850',
-                     risk: 'Low',
-                     channel: 'Email',
-                     goal: 'Expansion'
-                  },
-                  {
-                     id: 'weekend_activation',
-                     name: 'Weekend Activation',
-                     count: 812,
-                     revenue: '₹48,000',
-                     aov: '₹850',
-                     risk: 'Medium',
-                     channel: 'SMS',
-                     goal: 'Conversion'
-                  },
-                  {
-                     id: 'abandoned_cart',
-                     name: 'High-Intent Cart Abandoners',
-                     count: 156,
-                     revenue: '₹2.1L',
-                     aov: '₹8500',
-                     risk: 'High',
-                     channel: 'WhatsApp',
-                     goal: 'Recovery'
-                  }
-               ].map((aud) => (
-                 <div
-                   key={aud.id}
-                   className="border border-hairline rounded-xl bg-canvas shadow-sm p-6 flex flex-col gap-5 hover:border-ink-muted hover:shadow-md transition-all group"
-                 >
-                   <div className="flex justify-between items-start">
-                     <div className="flex flex-col gap-1.5">
-                       <h3 className="text-[16px] font-bold text-ink">{aud.name}</h3>
-                       <span className="text-[12px] font-semibold text-ink-muted uppercase tracking-wider">{aud.count.toLocaleString()} Customers</span>
-                     </div>
-                     <span className={clsx(
-                       'text-[11px] font-bold px-2 py-1 rounded uppercase tracking-wider',
-                       aud.risk === 'High' ? 'bg-red-50 text-red-700 border border-red-100' : aud.risk === 'Medium' ? 'bg-amber-50 text-amber-700 border border-amber-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'
-                     )}>
-                       {aud.risk} Risk
-                     </span>
-                   </div>
-
-                   <div className="grid grid-cols-2 gap-4 bg-canvas-soft rounded-lg p-4 border border-hairline">
-                     <div className="flex flex-col gap-1">
-                       <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Revenue Potential</span>
-                       <span className="text-[18px] font-bold text-semantic-success font-mono-numbers">{aud.revenue}</span>
-                     </div>
-                     <div className="flex flex-col gap-1 pl-4 border-l border-hairline">
-                       <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider">Avg. Order Value</span>
-                       <span className="text-[18px] font-bold text-ink font-mono-numbers">{aud.aov}</span>
-                     </div>
-                   </div>
-
-                   <div className="grid grid-cols-2 gap-4 mt-1">
-                      <div className="flex flex-col gap-1">
-                         <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Best Channel</span>
-                         <span className="text-[13px] font-bold text-ink">{aud.channel}</span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                         <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Primary Goal</span>
-                         <span className="text-[13px] font-bold text-ink">{aud.goal}</span>
-                      </div>
-                   </div>
-
-                   <div className="border-t border-hairline pt-4 mt-1 flex justify-between items-center">
-                     <span className="text-[13px] font-bold text-ink-muted hover:text-ink cursor-pointer transition-colors">
-                        View Audience
-                     </span>
-                     <button onClick={() => {
-                        setCampaignContext({
-                          sourcePage: 'Recommended Audiences',
-                          audienceName: aud.name,
-                          audienceSize: aud.count,
-                          expectedRevenue: aud.revenue,
-                          recommendedChannel: aud.channel,
-                          autoTriggerPrompt: `Generate a ${aud.channel} ${aud.goal} campaign for ${aud.count} customers in the ${aud.name} segment with ${aud.revenue} recoverable revenue.`
-                        });
-                        router.push('/chat');
-                     }} className="text-[13px] font-bold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                       Generate Campaign <FastArrowRight height={14} width={14} />
-                     </button>
-                   </div>
-                 </div>
-               ))}
-             </div>
-          </div>
-
-        </div>
-      ) : isStatsLoading ? (
-        <div className="flex justify-center py-20 text-ink-muted text-[14px] font-medium">Loading intelligence data...</div>
-      ) : stats ? (
-        <div className="flex flex-col w-full gap-8">
+      {/* SECTION 2: RECOMMENDED ACTIONS */}
+      <div className="px-10 py-12">
+        <div className="max-w-[1200px] mx-auto flex flex-col gap-6">
+          <h2 className="text-[20px] font-bold text-slate-900 flex items-center gap-2">
+            Recommended Actions
+          </h2>
           
-          {/* KPI Row */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-white border border-slate-200 rounded-[16px] p-6 hover:-translate-y-[2px] hover:shadow-sm transition-all duration-200 flex flex-col gap-4">
-              <div className="flex items-center gap-2">
-                 <Group height={18} width={18} className="text-slate-500" />
-                 <h3 className="text-[14px] font-medium text-slate-600">Customers</h3>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[40px] font-bold tracking-tight text-slate-950 font-mono-numbers leading-none">{stats.total.toLocaleString()}</span>
-              </div>
-              <div className="flex flex-col gap-1 pt-4 border-t border-slate-100">
-                <span className="text-[13px] text-slate-500 font-medium">100% profiles enriched • ↑ 12% this month</span>
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-[16px] p-6 hover:-translate-y-[2px] hover:shadow-sm transition-all duration-200 flex flex-col gap-4">
-              <div className="flex items-center gap-2">
-                 <WarningTriangle height={18} width={18} className="text-slate-500" />
-                 <h3 className="text-[14px] font-medium text-slate-600">Revenue at Risk</h3>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[40px] font-bold tracking-tight text-slate-950 font-mono-numbers leading-none text-semantic-danger">₹94,500</span>
-              </div>
-              <div className="flex flex-col gap-1 pt-4 border-t border-slate-100">
-                <span className="text-[13px] text-slate-500 font-medium">85 customers require immediate engagement</span>
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-[16px] p-6 hover:-translate-y-[2px] hover:shadow-sm transition-all duration-200 flex flex-col gap-4">
-              <div className="flex items-center gap-2">
-                 <GraphUp height={18} width={18} className="text-slate-500" />
-                 <h3 className="text-[14px] font-medium text-slate-600">VIP Revenue</h3>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[40px] font-bold tracking-tight text-slate-950 font-mono-numbers leading-none">₹3.2M</span>
-              </div>
-              <div className="flex flex-col gap-1 pt-4 border-t border-slate-100">
-                <span className="text-[13px] text-slate-500 font-medium">Top decile retention stable at 94%</span>
-              </div>
-            </div>
-
-            <div className="bg-white border border-slate-200 rounded-[16px] p-6 hover:-translate-y-[2px] hover:shadow-sm transition-all duration-200 flex flex-col gap-4">
-              <div className="flex items-center gap-2">
-                 <Strategy height={18} width={18} className="text-slate-500" />
-                 <h3 className="text-[14px] font-medium text-slate-600">Average LTV</h3>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[40px] font-bold tracking-tight text-slate-950 font-mono-numbers leading-none">₹15,703</span>
-              </div>
-              <div className="flex flex-col gap-1 pt-4 border-t border-slate-100">
-                <span className="text-[13px] text-slate-500 font-medium">↑ 8% vs previous quarter</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Customer Directory Table */}
-          <div className="flex flex-col flex-shrink-0">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            <div className="flex justify-between items-end mb-4">
-               <div className="flex flex-col gap-1">
-                 <span className="text-[14px] font-semibold text-ink">Customer Opportunity Queue</span>
-                 <span className="text-[12px] text-ink-muted">Showing {stats.total} customers • 85 require action • Potential recoverable revenue: <span className="font-medium text-primary">₹94,500</span></span>
-               </div>
-               <div className="flex gap-3 items-center">
-                 <select
-                   value={selectedPersona}
-                   onChange={(e) => { setSelectedPersona(e.target.value); setPage(0); }}
-                   className="input-field h-8 text-[13px] w-48"
-                 >
-                   <option value="">All Personas</option>
-                   {personas?.map((p: any) => (
-                     <option key={p.id} value={p.name}>{p.name}</option>
-                   ))}
-                 </select>
-                 <div className="relative w-64">
-                   <Search height={16} width={16} className="text-ink-muted absolute left-3 top-1/2 -translate-y-1/2" />
-                   <input
-                     type="text"
-                     placeholder="Search customers..."
-                     value={search}
-                     onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-                     className="input-field pl-9 h-8 text-[13px]"
-                   />
-                 </div>
-               </div>
-            </div>
-
-            <div className="border border-slate-200 rounded-xl bg-white shadow-sm overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[900px]">
-                <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr>
-                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Customer</th>
-                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Priority</th>
-                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Health Score</th>
-                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Days Since Last Purchase</th>
-                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Primary Personas</th>
-                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider text-right">Next Action</th>
-                    <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider text-right">Revenue Potential</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {isListLoading
-                    ? Array.from({ length: 5 }).map((_, i) => (
-                        <tr key={i}><td colSpan={6} className="px-4 py-4"><div className="h-4 skeleton rounded w-full" /></td></tr>
-                      ))
-                    : sortedCustomers.map((c: any) => {
-                        const daysSince = c.last_order_date
-                          ? Math.floor((Date.now() - new Date(c.last_order_date).getTime()) / (1000 * 60 * 60 * 24))
-                          : 999;
-                          
-                        const isVIP = c.personas.includes('VIP Customer');
-                        
-                        // Priority Logic
-                        let priorityStr = 'Low';
-                        if (isVIP && c.health_score < 40) priorityStr = 'Critical';
-                        else if (c.health_score < 40 && daysSince > 90) priorityStr = 'High';
-                        else if (c.health_score >= 40 && c.health_score <= 70) priorityStr = 'Medium';
-                        else if (isVIP) priorityStr = 'High Value';
-                        else if (c.health_score > 70 && daysSince <= 30) priorityStr = 'Low';
-                        
-                        // Health Sub-Label
-                        let healthLabel = '';
-                        if (c.health_score >= 91) healthLabel = 'Very Loyal';
-                        else if (c.health_score >= 76) healthLabel = 'Healthy';
-                        else if (c.health_score >= 51) healthLabel = 'Needs Attention';
-                        else if (c.health_score >= 31) healthLabel = 'At Risk';
-                        else healthLabel = 'Critical';
-                        
-                        // Next Best Action based on Persona
-                        let actionText = 'Monitor Engagement';
-                        const primaryPersona = c.personas[0] || '';
-                        if (isVIP && c.health_score < 40) actionText = 'Launch Win-Back Campaign';
-                        else if (primaryPersona === 'Beauty Loyalist') actionText = 'Recommend New Arrivals';
-                        else if (primaryPersona === 'Discount Hunter') actionText = 'Flash Sale Campaign';
-                        else if (primaryPersona === 'VIP Customer') actionText = 'Early Access Campaign';
-                        else if (primaryPersona === 'New Customer') actionText = 'Welcome Journey';
-
-                        const confidence = priorityStr === 'Critical' ? '92%' : priorityStr === 'High Value' ? '88%' : priorityStr === 'High' ? '81%' : '65%';
-                        const expectedRec = c.health_score < 40 ? 1850 : c.health_score > 85 ? 540 : 230;
-                        
-                        return (
-                          <tr key={c.id} onClick={() => setSelectedCustomerId(c.id)} className="cursor-pointer hover:bg-slate-50/50 transition-colors">
-                            <td className="py-4 px-5">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="font-bold text-slate-900 text-[14px]">{c.name}</span>
-                                <span className="text-slate-500 text-[13px]">{c.email}</span>
-                              </div>
-                            </td>
-                            <td className="py-4 px-5">
-                              <span className={clsx(
-                                "text-[11px] font-bold px-2.5 py-1 rounded uppercase tracking-wider whitespace-nowrap", 
-                                priorityStr === 'Critical' ? "bg-red-100 text-red-800 border border-red-200" : 
-                                priorityStr === 'High' ? "bg-red-100 text-red-800 border border-red-200" : 
-                                priorityStr === 'Medium' ? "bg-amber-100 text-amber-800 border border-amber-200" : 
-                                priorityStr === 'High Value' ? "bg-purple-100 text-purple-800 border border-purple-200" : 
-                                "bg-emerald-100 text-emerald-800 border border-emerald-200"
-                              )}>
-                                {priorityStr}
-                              </span>
-                            </td>
-                            <td className="py-4 px-5">
-                              <div className="flex flex-col gap-0.5">
-                                <span className={clsx("font-mono-numbers font-bold text-[14px]", c.health_score < 40 ? "text-red-600" : c.health_score > 85 ? "text-emerald-600" : "text-slate-900")}>
-                                  {c.health_score}
-                                </span>
-                                <div className="flex items-center gap-1 text-[11px]">
-                                  <span className="text-slate-500 font-semibold uppercase">{healthLabel}</span>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="py-4 px-5">
-                               <span className="text-[14px] font-medium text-slate-700">
-                                 {daysSince === 999 ? 'Never' : `${daysSince} Days`}
-                               </span>
-                            </td>
-                            <td className="py-4 px-5">
-                              <div className="flex gap-2 flex-wrap items-center">
-                                {c.personas.length === 0 && <span className="text-[12px] text-slate-400 font-medium italic">No Persona</span>}
-                                {c.personas.slice(0, 2).map((p: string) => (
-                                  <div key={p} className="badge-persona border border-slate-200 bg-white shadow-sm">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${getDotColor(p)}`} />
-                                    {p}
-                                  </div>
-                                ))}
-                                {c.personas.length > 2 && (
-                                  <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">+{c.personas.length - 2}</span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="py-4 px-5 text-right">
-                              <div className="flex flex-col items-end gap-0.5">
-                                <span className="font-bold text-slate-900 text-[14px]">{actionText}</span>
-                                <span className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">{confidence} Confidence</span>
-                              </div>
-                            </td>
-                            <td className="py-4 px-5 text-right">
-                              <div className="flex flex-col items-end gap-0.5">
-                                <span className="font-mono-numbers font-bold text-emerald-600 text-[14px]">₹{expectedRec.toLocaleString('en-IN')}</span>
-                                <span className="text-[11px] text-slate-500 uppercase tracking-wider font-semibold">Expected Impact</span>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            {total > LIMIT && (
-              <div className="mt-4 flex items-center justify-between">
-                <p className="text-[12px] text-ink-muted font-medium">
-                  Showing {page * LIMIT + 1}–{Math.min((page + 1) * LIMIT, total)} of {total}
-                </p>
-                <div className="flex gap-2">
-                  <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0} className="btn-secondary !px-3 !py-1 text-[12px] disabled:opacity-50">Prev</button>
-                  <button onClick={() => setPage(page + 1)} disabled={(page + 1) * LIMIT >= total} className="btn-secondary !px-3 !py-1 text-[12px] disabled:opacity-50">Next</button>
+            {/* Action 1 */}
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between group hover:border-blue-300 transition-colors">
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-[16px] font-bold text-slate-900 leading-tight">Recover Dormant VIPs</h3>
+                  <span className="text-[16px] font-bold text-emerald-600 font-mono">₹1.72L</span>
+                </div>
+                
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 flex flex-col gap-2">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Why This Recommendation?</span>
+                  <ul className="flex flex-col gap-1.5">
+                    <li className="text-[13px] text-slate-600 flex items-start gap-2">
+                      <span className="w-1 h-1 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
+                      428 high-value customers inactive for 60+ days.
+                    </li>
+                    <li className="text-[13px] text-slate-600 flex items-start gap-2">
+                      <span className="w-1 h-1 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
+                      Similar recovery campaign generated ₹1.4L.
+                    </li>
+                    <li className="text-[13px] text-slate-600 flex items-start gap-2">
+                      <span className="w-1 h-1 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
+                      WhatsApp historically converts 2.1x better.
+                    </li>
+                  </ul>
                 </div>
               </div>
-            )}
-            
+              
+              <div className="mt-6">
+                <button 
+                  onClick={() => handleLaunchCampaign("Recover Dormant VIPs", "Target VIPs inactive for 60 days via WhatsApp", 428, "WhatsApp")}
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-lg text-[13px] font-bold transition-all flex items-center justify-center gap-2"
+                >
+                  Launch <ArrowRight height={16} width={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Action 2 */}
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between group hover:border-blue-300 transition-colors">
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-[16px] font-bold text-slate-900 leading-tight">Cross Sell Recent Buyers</h3>
+                  <span className="text-[16px] font-bold text-emerald-600 font-mono">₹94K</span>
+                </div>
+                
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 flex flex-col gap-2">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Why This Recommendation?</span>
+                  <ul className="flex flex-col gap-1.5">
+                    <li className="text-[13px] text-slate-600 flex items-start gap-2">
+                      <span className="w-1 h-1 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
+                      820 customers bought Core Product in last 14 days.
+                    </li>
+                    <li className="text-[13px] text-slate-600 flex items-start gap-2">
+                      <span className="w-1 h-1 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
+                      High correlation (62%) with Accessory purchase.
+                    </li>
+                    <li className="text-[13px] text-slate-600 flex items-start gap-2">
+                      <span className="w-1 h-1 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
+                      Email drives highest incremental AOV.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <button 
+                   onClick={() => handleLaunchCampaign("Cross Sell Recent Buyers", "Email sequence for accessory cross-sell", 820, "Email")}
+                  className="w-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-900 py-2.5 rounded-lg text-[13px] font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
+                >
+                  Launch <ArrowRight height={16} width={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Action 3 */}
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col justify-between group hover:border-blue-300 transition-colors">
+              <div className="flex flex-col gap-4">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-[16px] font-bold text-slate-900 leading-tight">Cart Abandoner Recovery</h3>
+                  <span className="text-[16px] font-bold text-emerald-600 font-mono">₹2.1L</span>
+                </div>
+                
+                <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 flex flex-col gap-2">
+                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Why This Recommendation?</span>
+                  <ul className="flex flex-col gap-1.5">
+                    <li className="text-[13px] text-slate-600 flex items-start gap-2">
+                      <span className="w-1 h-1 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
+                      1,240 high-intent carts abandoned this week.
+                    </li>
+                    <li className="text-[13px] text-slate-600 flex items-start gap-2">
+                      <span className="w-1 h-1 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
+                      SMS reminder generates 3x recovery rate.
+                    </li>
+                    <li className="text-[13px] text-slate-600 flex items-start gap-2">
+                      <span className="w-1 h-1 rounded-full bg-blue-400 mt-2 flex-shrink-0" />
+                      No discount required for 40% of this segment.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="mt-6">
+                <button 
+                  onClick={() => handleLaunchCampaign("Cart Abandoner Recovery", "SMS flow for recent cart abandoners", 1240, "SMS")}
+                  className="w-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-900 py-2.5 rounded-lg text-[13px] font-bold transition-all flex items-center justify-center gap-2 shadow-sm"
+                >
+                  Launch <ArrowRight height={16} width={16} />
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
-      ) : null}
+      </div>
+
+      <div className="max-w-[1200px] mx-auto w-full border-t border-slate-200 my-8"></div>
+
+      {/* SECTION 3: AUDIENCE EXPLORER */}
+      <div className="px-10">
+        <div className="max-w-[1200px] mx-auto flex flex-col gap-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-[20px] font-bold text-slate-900">Audience Explorer</h2>
+            <div className="relative w-[300px]">
+              <Search height={16} width={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search customers..."
+                value={search}
+                onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+                className="w-full bg-white border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
+              />
+            </div>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[900px]">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Customer</th>
+                  <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Health Score</th>
+                  <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Days Since Last Purchase</th>
+                  <th className="py-3 px-5 text-[12px] font-bold text-slate-600 uppercase tracking-wider">Primary Personas</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {isListLoading
+                  ? Array.from({ length: 5 }).map((_, i) => (
+                      <tr key={i}><td colSpan={4} className="px-4 py-4"><div className="h-4 bg-slate-100 animate-pulse rounded w-full" /></td></tr>
+                    ))
+                  : sortedCustomers.map((c: any) => {
+                      const daysSince = c.last_order_date
+                        ? Math.floor((Date.now() - new Date(c.last_order_date).getTime()) / (1000 * 60 * 60 * 24))
+                        : 999;
+                        
+                      let healthLabel = '';
+                      if (c.health_score >= 91) healthLabel = 'Very Loyal';
+                      else if (c.health_score >= 76) healthLabel = 'Healthy';
+                      else if (c.health_score >= 51) healthLabel = 'Needs Attention';
+                      else if (c.health_score >= 31) healthLabel = 'At Risk';
+                      else healthLabel = 'Critical';
+                      
+                      return (
+                        <tr key={c.id} onClick={() => router.push(`/intelligence/${c.id}`)} className="cursor-pointer hover:bg-slate-50 transition-colors">
+                          <td className="py-4 px-5">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="font-bold text-slate-900 text-[14px]">{c.name}</span>
+                              <span className="text-slate-500 text-[13px]">{c.email}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-5">
+                            <div className="flex flex-col gap-0.5">
+                              <span className={clsx("font-mono-numbers font-bold text-[14px]", c.health_score < 40 ? "text-red-600" : c.health_score > 85 ? "text-emerald-600" : "text-slate-900")}>
+                                {c.health_score}
+                              </span>
+                              <div className="flex items-center gap-1 text-[11px]">
+                                <span className="text-slate-500 font-semibold uppercase">{healthLabel}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-5">
+                              <span className="text-[14px] font-medium text-slate-700">
+                                {daysSince === 999 ? 'Never' : `${daysSince} Days`}
+                              </span>
+                          </td>
+                          <td className="py-4 px-5">
+                            <div className="flex gap-2 flex-wrap items-center">
+                              {c.personas.length === 0 && <span className="text-[12px] text-slate-400 font-medium italic">No Persona</span>}
+                              {c.personas.slice(0, 2).map((p: string) => (
+                                <div key={p} className="flex items-center gap-1.5 border border-slate-200 bg-white px-2 py-0.5 rounded text-[12px] font-medium text-slate-700 shadow-sm">
+                                  <span className={`w-1.5 h-1.5 rounded-full ${getDotColor(p)}`} />
+                                  {p}
+                                </div>
+                              ))}
+                              {c.personas.length > 2 && (
+                                <span className="text-[10px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded">+{c.personas.length - 2}</span>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {total > LIMIT && (
+            <div className="mt-2 flex items-center justify-between">
+              <p className="text-[12px] text-slate-500 font-medium">
+                Showing {page * LIMIT + 1}–{Math.min((page + 1) * LIMIT, total)} of {total}
+              </p>
+              <div className="flex gap-2">
+                <button onClick={() => setPage(Math.max(0, page - 1))} disabled={page === 0} className="bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded text-[12px] font-bold hover:bg-slate-50 disabled:opacity-50">Prev</button>
+                <button onClick={() => setPage(page + 1)} disabled={(page + 1) * LIMIT >= total} className="bg-white border border-slate-200 text-slate-700 px-3 py-1 rounded text-[12px] font-bold hover:bg-slate-50 disabled:opacity-50">Next</button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
     </div>
   );
 }
