@@ -146,7 +146,21 @@ model RevenueMemory {
   revenue          Decimal  @db.Decimal(10, 2)
   conversion_rate  Decimal  @db.Decimal(5, 2)
   learning         String
+  impact_score     Float    @default(0)
   created_at       DateTime @default(now())
 
   @@map("revenue_memories")
+}
+
+model RevenueDecisionLedger {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campaign_id         String?  @db.Uuid
+  recommendation_type String
+  predicted_revenue   Decimal  @db.Decimal(10, 2)
+  actual_revenue      Decimal? @db.Decimal(10, 2)
+  prediction_error    Float?
+  confidence_score    Float    @default(0)
+  created_at          DateTime @default(now())
+
+  @@map("revenue_decision_ledger")
 }

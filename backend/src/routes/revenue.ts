@@ -390,14 +390,40 @@ export async function revenueRoutes(fastify: FastifyInstance) {
     highValueBucket.potentialRevenue = Math.round(highValueBucket.audience * globalAOV * 0.08);
     repeatBucket.potentialRevenue = Math.round(repeatBucket.audience * globalAOV * 0.1);
 
+    // Memory Ranking Engine: Check for high-impact memories
+    const highImpactMemories = await prisma.revenueMemory.findMany({
+      where: { impact_score: { gte: 70 } },
+      orderBy: { impact_score: 'desc' },
+      take: 10
+    });
+
+    const dormantMemory = highImpactMemories.find(m => m.audience_type.toLowerCase().includes('dormant'));
+    const vipMemory = highImpactMemories.find(m => m.audience_type.toLowerCase().includes('vip') || m.audience_type.toLowerCase().includes('high value'));
+    const repeatMemory = highImpactMemories.find(m => m.audience_type.toLowerCase().includes('repeat'));
+
     dormantBucket.reasoning[0] = `${dormantBucket.audience} Targetable Customers`;
     dormantBucket.reasoning[1] = `₹${dormantBucket.potentialRevenue} Revenue Potential`;
+    if (dormantMemory) {
+      dormantBucket.reasoning[2] = `Similar Campaign generated ₹${dormantMemory.revenue}`;
+      dormantBucket.reasoning[3] = dormantMemory.learning;
+      dormantBucket.confidence = 88; // Boost confidence based on memory
+    }
     
     highValueBucket.reasoning[0] = `${highValueBucket.audience} Targetable Customers`;
     highValueBucket.reasoning[1] = `₹${highValueBucket.potentialRevenue} Revenue Potential`;
+    if (vipMemory) {
+      highValueBucket.reasoning[2] = `Similar Campaign generated ₹${vipMemory.revenue}`;
+      highValueBucket.reasoning[3] = vipMemory.learning;
+      highValueBucket.confidence = 92;
+    }
 
     repeatBucket.reasoning[0] = `${repeatBucket.audience} Targetable Customers`;
     repeatBucket.reasoning[1] = `₹${repeatBucket.potentialRevenue} Revenue Potential`;
+    if (repeatMemory) {
+      repeatBucket.reasoning[2] = `Similar Campaign generated ₹${repeatMemory.revenue}`;
+      repeatBucket.reasoning[3] = repeatMemory.learning;
+      repeatBucket.confidence = 85;
+    }
 
     const opps = [];
     if (highValueBucket.audience > 0) opps.push(highValueBucket);
@@ -417,64 +443,95 @@ export async function revenueRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // 4. DECISION SIMULATOR
-  const SimulateSchema = z.object({
-    segmentId: z.string().optional(),
+  // 4. DECISION SIMULATOR (MULTI-SCENARIO)
+  const SimulateScenarioSchema = z.object({
+    name: z.string(),
     audienceName: z.string().optional(),
     channel: z.string(),
-    offer: z.string().optional(),
-    discount: z.string().optional(),
-    sendTime: z.string().optional(),
-    campaignGoal: z.string().optional()
+    discount: z.string().optional()
+  });
+
+  const MultiSimulateSchema = z.object({
+    scenarios: z.array(SimulateScenarioSchema)
   });
 
   fastify.post('/api/revenue/simulate', async (request, reply) => {
     try {
-      const input = SimulateSchema.parse(request.body);
+      const input = MultiSimulateSchema.parse(request.body);
+      
+      const results = [];
+      let bestOption = null;
+      let maxRevenue = -1;
 
-      const memories = await prisma.revenueMemory.findMany({
-        where: {
-          channel: input.channel,
-          audience_type: {
-            contains: input.audienceName || '',
-            mode: 'insensitive'
+      for (const scenario of input.scenarios) {
+        // Only use high-impact memories (Memory Ranking Engine logic)
+        const memories = await prisma.revenueMemory.findMany({
+          where: {
+            channel: scenario.channel,
+            audience_type: {
+              contains: scenario.audienceName || '',
+              mode: 'insensitive'
+            },
+            impact_score: { gte: 50 } // Must have a decent impact score to influence predictions
           }
+        });
+
+        let expectedConversion = 0;
+        let expectedRevenue = 0;
+        let expectedROI = 0;
+        let expectedProfit = 0;
+        let reasoning: string[] = [];
+
+        if (memories.length > 0) {
+          expectedConversion = memories.reduce((sum, m) => sum + Number(m.conversion_rate), 0) / memories.length;
+          expectedRevenue = memories.reduce((sum, m) => sum + Number(m.revenue), 0) / memories.length;
+          expectedROI = expectedRevenue * 0.15;
+          expectedProfit = expectedRevenue * 0.4;
+          reasoning = [
+            `${memories.length} high-impact historical campaigns for ${scenario.audienceName || 'this audience'}`,
+            `Historical conversion: ${expectedConversion.toFixed(1)}%`,
+            `Historical expected revenue: ₹${Math.round(expectedRevenue)}`
+          ];
+        } else {
+          const metrics = await prisma.channelMetric.findUnique({ where: { channel: scenario.channel } });
+          expectedConversion = metrics ? Number(metrics.conversion_rate) : 2.5;
+          // Apply a generic modifier based on discount for fallback
+          const discountVal = scenario.discount ? parseInt(scenario.discount) : 0;
+          const convModifier = 1 + (discountVal / 100);
+          expectedConversion = expectedConversion * convModifier;
+          
+          expectedRevenue = 35000 * convModifier;
+          expectedROI = 5000;
+          expectedProfit = expectedRevenue * 0.4 - (expectedRevenue * (discountVal / 100));
+          reasoning = [
+            `Insufficient high-impact history for ${scenario.audienceName || 'this audience'}`,
+            `Fallback to global metrics for ${scenario.channel}`,
+            `Baseline conversion: ${expectedConversion.toFixed(1)}%`
+          ];
         }
-      });
 
-      let expectedConversion = 0;
-      let expectedRevenue = 0;
-      let expectedROI = 0;
-      let reasoning: string[] = [];
+        const simResult = {
+          scenarioName: scenario.name,
+          expectedRevenue,
+          expectedROI,
+          expectedConversion,
+          expectedProfit,
+          expectedPurchasers: Math.round(500 * (expectedConversion / 100)),
+          confidence: memories.length > 0 ? "High" : "Medium",
+          reasoning
+        };
 
-      if (memories.length > 0) {
-        expectedConversion = memories.reduce((sum, m) => sum + Number(m.conversion_rate), 0) / memories.length;
-        expectedRevenue = memories.reduce((sum, m) => sum + Number(m.revenue), 0) / memories.length;
-        expectedROI = expectedRevenue * 0.15;
-        reasoning = [
-          `${memories.length} similar historical campaigns for ${input.audienceName || 'this audience'}`,
-          `Historical conversion: ${expectedConversion.toFixed(1)}%`,
-          `Historical expected revenue: ₹${Math.round(expectedRevenue)}`
-        ];
-      } else {
-        const metrics = await prisma.channelMetric.findUnique({ where: { channel: input.channel } });
-        expectedConversion = metrics ? Number(metrics.conversion_rate) : 2.5;
-        expectedRevenue = 35000;
-        expectedROI = 5000;
-        reasoning = [
-          `Insufficient exact history for ${input.audienceName || 'this audience'}`,
-          `Fallback to global metrics for ${input.channel}`,
-          `Baseline conversion: ${expectedConversion}%`
-        ];
+        results.push(simResult);
+
+        if (expectedRevenue > maxRevenue) {
+          maxRevenue = expectedRevenue;
+          bestOption = scenario.name;
+        }
       }
 
       return reply.send({
-        expectedRevenue,
-        expectedROI,
-        expectedConversion,
-        expectedPurchasers: Math.round(500 * (expectedConversion / 100)),
-        confidence: memories.length > 0 ? "High" : "Medium",
-        reasoning
+        scenarios: results,
+        bestOption
       });
     } catch (err) {
       console.error(err);
@@ -519,20 +576,27 @@ export async function revenueRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // 6. REVENUE MEMORY ENGINE
-  const MemorySchema = z.object({
+  // 6. LEARNING LOOP ENGINE
+  const LearnSchema = z.object({
     campaignId: z.string().optional(),
     audienceType: z.string(),
     channel: z.string(),
     discount: z.string().optional(),
     revenue: z.number(),
     conversionRate: z.number(),
-    learning: z.string()
+    learning: z.string(),
+    recommendationId: z.string().optional() // Links back to a Ledger entry
   });
 
-  fastify.post('/api/revenue/memories', async (request, reply) => {
+  fastify.post('/api/revenue/learn', async (request, reply) => {
     try {
-      const input = MemorySchema.parse(request.body);
+      const input = LearnSchema.parse(request.body);
+      
+      // Calculate Impact Score
+      // Base score on revenue (> 50k is good) and conversion (> 5% is good)
+      let impactScore = (input.revenue / 50000) * 50 + (input.conversionRate / 5) * 50;
+      if (impactScore > 100) impactScore = 100;
+      
       const memory = await prisma.revenueMemory.create({
         data: {
           campaign_id: input.campaignId,
@@ -541,13 +605,95 @@ export async function revenueRoutes(fastify: FastifyInstance) {
           discount: input.discount,
           revenue: input.revenue,
           conversion_rate: input.conversionRate,
-          learning: input.learning
+          learning: input.learning,
+          impact_score: impactScore
         }
       });
-      return reply.send(memory);
+
+      // If this was an AI recommendation, update the Decision Ledger
+      if (input.recommendationId) {
+        const ledger = await prisma.revenueDecisionLedger.findUnique({
+          where: { id: input.recommendationId }
+        });
+
+        if (ledger) {
+          const predicted = Number(ledger.predicted_revenue);
+          const error = ((input.revenue - predicted) / predicted) * 100; // Percentage error
+          
+          await prisma.revenueDecisionLedger.update({
+            where: { id: input.recommendationId },
+            data: {
+              actual_revenue: input.revenue,
+              prediction_error: error
+            }
+          });
+        }
+      }
+
+      return reply.send({ memory, impactScore });
     } catch(err) {
       console.error(err);
-      return reply.status(500).send({ error: 'Failed to save memory' });
+      return reply.status(500).send({ error: 'Learning Loop failed' });
+    }
+  });
+
+  // 7. REVENUE DECISION LEDGER
+  const LogPredictionSchema = z.object({
+    campaignId: z.string().optional(),
+    recommendationType: z.string(),
+    predictedRevenue: z.number(),
+    confidenceScore: z.number()
+  });
+
+  fastify.post('/api/revenue/ledger/log', async (request, reply) => {
+    try {
+      const input = LogPredictionSchema.parse(request.body);
+      const ledgerEntry = await prisma.revenueDecisionLedger.create({
+        data: {
+          campaign_id: input.campaignId,
+          recommendation_type: input.recommendationType,
+          predicted_revenue: input.predictedRevenue,
+          confidence_score: input.confidenceScore
+        }
+      });
+      return reply.send(ledgerEntry);
+    } catch(err) {
+      console.error(err);
+      return reply.status(500).send({ error: 'Failed to log prediction' });
+    }
+  });
+
+  fastify.get('/api/revenue/ledger', async (request, reply) => {
+    try {
+      const ledgers = await prisma.revenueDecisionLedger.findMany({
+        where: { actual_revenue: { not: null } }
+      });
+
+      if (ledgers.length === 0) {
+        return reply.send({
+          systemAccuracy: "Insufficient Data",
+          revenuePredictionAccuracy: 0,
+          totalPredictionsAudited: 0,
+          ledgers: []
+        });
+      }
+
+      // Calculate absolute mean error
+      const totalAbsError = ledgers.reduce((sum, l) => sum + Math.abs(Number(l.prediction_error || 0)), 0);
+      const meanError = totalAbsError / ledgers.length;
+      
+      // Accuracy = 100 - error
+      const accuracy = Math.max(0, 100 - meanError);
+
+      return reply.send({
+        systemAccuracy: accuracy > 85 ? "High" : "Learning",
+        revenuePredictionAccuracy: accuracy,
+        totalPredictionsAudited: ledgers.length,
+        ledgers
+      });
+    } catch(err) {
+      console.error(err);
+      return reply.status(500).send({ error: 'Failed to fetch ledger' });
     }
   });
 }
