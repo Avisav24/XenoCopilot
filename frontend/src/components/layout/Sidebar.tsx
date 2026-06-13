@@ -3,16 +3,36 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
-import { Spark, Group, Megaphone, Server, Settings, Activity, DatabaseScript, DataTransferBoth } from 'iconoir-react';
+import { Spark, Group, Megaphone, StatsReport, Settings, GraphUp, DatabaseScript } from 'iconoir-react';
 
-const navItems = [
-  { href: '/command-center', label: 'Revenue Command Center', icon: <Activity height={18} width={18} /> },
-  { href: '/intelligence', label: 'Customer Intelligence', icon: <Group height={18} width={18} /> },
-  { href: '/chat', label: 'Campaign Studio', icon: <Spark height={18} width={18} /> },
-  { href: '/engagement', label: 'Campaign History', icon: <Megaphone height={18} width={18} /> },
-  { href: '/segments', label: 'Segments', icon: <DataTransferBoth height={18} width={18} /> },
-  { href: '/import', label: 'Data Import', icon: <DatabaseScript height={18} width={18} /> },
-  { href: '/architecture', label: 'Architecture', icon: <Server height={18} width={18} /> },
+const navGroups = [
+  {
+    label: 'Overview',
+    items: [
+      { href: '/command-center', label: 'Revenue Command Center', icon: <DatabaseScript height={18} width={18} /> },
+      { href: '/revenue', label: 'Revenue Operations', icon: <GraphUp height={18} width={18} /> },
+    ]
+  },
+  {
+    label: 'Audience',
+    items: [
+      { href: '/intelligence', label: 'Customer 360', icon: <Group height={18} width={18} /> },
+    ]
+  },
+  {
+    label: 'Campaigns',
+    items: [
+      { href: '/chat', label: 'Campaign Studio', icon: <Spark height={18} width={18} /> },
+      { href: '/engagement', label: 'All Campaigns', icon: <Megaphone height={18} width={18} /> },
+    ]
+  },
+  {
+    label: 'Settings',
+    items: [
+      { href: '/import', label: 'Data Import', icon: <DatabaseScript height={18} width={18} /> },
+      { href: '/architecture', label: 'System Architecture', icon: <StatsReport height={18} width={18} /> },
+    ]
+  }
 ];
 
 export function Sidebar() {
@@ -32,28 +52,33 @@ export function Sidebar() {
             </Link>
           </div>
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-1 px-3">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-              
-              return (
-                <Link 
-                  key={item.href} 
-                  href={item.href}
-                  className={clsx(
-                    'flex items-center gap-3 px-3 py-2 rounded-md text-[13px] font-medium transition-colors duration-150',
-                    isActive 
-                      ? 'text-ink bg-canvas-soft shadow-sm border border-hairline' 
-                      : 'text-ink-muted hover:bg-canvas-soft hover:text-ink border border-transparent'
-                  )}
-                >
-                  <div className={clsx("flex-shrink-0", isActive ? "text-primary" : "text-ink-muted")}>
-                    {item.icon}
-                  </div>
-                  <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
-                </Link>
-              );
-            })}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-6">
+            {navGroups.map((group) => (
+              <div key={group.label} className="flex flex-col gap-1">
+                <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider px-3 mb-2">{group.label}</span>
+                {group.items.map((item) => {
+                  const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                  
+                  return (
+                    <Link 
+                      key={item.href} 
+                      href={item.href}
+                      className={clsx(
+                        'flex items-center gap-3 px-3 py-2 rounded-md text-[14px] font-medium transition-colors duration-150',
+                        isActive 
+                          ? 'text-primary bg-primary-soft' 
+                          : 'text-ink-muted hover:bg-canvas-soft hover:text-ink'
+                      )}
+                    >
+                      <div className={clsx("flex-shrink-0", isActive ? "text-primary" : "text-ink-muted")}>
+                        {item.icon}
+                      </div>
+                      <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </nav>
 

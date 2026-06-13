@@ -10,19 +10,16 @@
   }
 
   h1 {
-    @apply text-[36px] font-semibold text-ink tracking-tight;
+    @apply text-[48px] font-bold text-ink;
   }
   h2 {
-    @apply text-[22px] font-semibold text-ink tracking-tight;
+    @apply text-[24px] font-bold text-ink;
   }
   h3 {
-    @apply text-[16px] font-semibold text-ink;
+    @apply text-[18px] font-bold text-ink;
   }
   p {
-    @apply text-[14px] text-ink leading-[1.6];
-  }
-  label {
-    @apply text-[12px] font-medium text-ink-muted;
+    @apply text-[15px] text-ink-muted leading-[1.6];
   }
 }
 
@@ -40,10 +37,10 @@
     @apply w-full text-left border-collapse;
   }
   .table-enterprise th {
-    @apply px-4 py-3 text-[13px] font-semibold text-ink-muted border-b border-hairline bg-canvas whitespace-nowrap text-left;
+    @apply px-4 py-3 text-[12px] font-bold text-ink-muted border-b border-hairline bg-canvas-soft whitespace-nowrap uppercase tracking-wider;
   }
   .table-enterprise td {
-    @apply px-4 py-3 text-[14px] text-ink border-b border-hairline whitespace-nowrap;
+    @apply px-4 py-4 text-[14px] text-ink border-b border-hairline whitespace-nowrap;
   }
   .table-enterprise tr:hover td {
     @apply bg-canvas-soft/50;
