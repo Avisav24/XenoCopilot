@@ -713,8 +713,7 @@ function CampaignStudioContent() {
                   </div>
                 </div>
               </div>
-
-              </div>
+              </>
               )}
             </div>
 
