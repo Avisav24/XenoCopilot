@@ -42,9 +42,9 @@ export default function CommandCenterPage() {
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
 
-  const totalAtRisk = leaks?.reduce((sum: number, l: any) => sum + l.revenueAtRisk, 0) || 420000;
-  const totalOpp = opportunities?.reduce((sum: number, o: any) => sum + o.potentialRevenue, 0) || 780000;
-  const predictedRecovery = leaks?.reduce((sum: number, l: any) => sum + l.recoverableRevenue, 0) || 210000;
+  const totalAtRisk = leaks?.reduce((sum: number, l: any) => sum + l.revenueAtRisk, 0) || 0;
+  const totalOpp = opportunities?.reduce((sum: number, o: any) => sum + o.potentialRevenue, 0) || 0;
+  const predictedRecovery = leaks?.reduce((sum: number, l: any) => sum + l.recoverableRevenue, 0) || 0;
   
   const topLeak = leaks?.[0];
 
@@ -108,9 +108,25 @@ export default function CommandCenterPage() {
             </h2>
             
             {leaksLoading ? (
-              <div className="p-6 border border-hairline bg-canvas-soft text-ink-muted text-[13px] font-medium">Analyzing database for revenue leaks...</div>
+              <div className="flex flex-col gap-4">
+                {[1, 2].map((n) => (
+                  <div key={n} className="border border-hairline bg-white shadow-sm p-5 flex flex-col gap-4 animate-pulse">
+                    <div className="flex justify-between items-start border-b border-hairline pb-4">
+                      <div className="flex flex-col gap-2 w-1/2">
+                        <div className="h-4 bg-canvas-soft w-3/4 rounded"></div>
+                        <div className="h-3 bg-canvas-soft w-1/2 rounded"></div>
+                      </div>
+                      <div className="h-8 bg-canvas-soft w-24 rounded"></div>
+                    </div>
+                    <div className="h-20 bg-canvas-soft w-full rounded"></div>
+                  </div>
+                ))}
+              </div>
             ) : leaks?.length === 0 ? (
-              <div className="p-6 border border-hairline bg-canvas-soft text-ink-muted text-[13px] font-medium">No active revenue leaks detected.</div>
+              <div className="p-8 border border-hairline bg-white flex flex-col items-center justify-center gap-2">
+                <span className="text-[14px] font-semibold text-ink">No revenue leaks detected</span>
+                <span className="text-[13px] text-ink-muted">Your customer base is currently healthy.</span>
+              </div>
             ) : (
               <div className="flex flex-col gap-4">
                 {leaks?.map((leak: any, i: number) => (
@@ -182,7 +198,19 @@ export default function CommandCenterPage() {
                 </thead>
                 <tbody className="text-[13px]">
                   {oppsLoading ? (
-                    <tr><td colSpan={5} className="p-4 text-center text-ink-muted">Scanning opportunities...</td></tr>
+                    <>
+                      {[1, 2, 3].map((n) => (
+                        <tr key={n} className="border-b border-hairline animate-pulse">
+                          <td className="p-3"><div className="h-4 bg-canvas-soft w-3/4 rounded"></div></td>
+                          <td className="p-3"><div className="h-4 bg-canvas-soft w-full rounded"></div></td>
+                          <td className="p-3"><div className="h-4 bg-canvas-soft w-1/2 rounded"></div></td>
+                          <td className="p-3"><div className="h-4 bg-canvas-soft w-3/4 rounded"></div></td>
+                          <td className="p-3"><div className="h-6 bg-canvas-soft w-full rounded"></div></td>
+                        </tr>
+                      ))}
+                    </>
+                  ) : opportunities?.length === 0 ? (
+                    <tr><td colSpan={5} className="p-8 text-center text-[13px] text-ink-muted bg-white">No opportunities available. Check back later.</td></tr>
                   ) : opportunities?.map((opp: any, idx: number) => (
                     <tr key={idx} className="border-b border-hairline hover:bg-canvas-soft transition-colors">
                       <td className="p-3">

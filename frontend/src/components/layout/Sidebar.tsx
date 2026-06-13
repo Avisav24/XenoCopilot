@@ -11,7 +11,6 @@ const navGroups = [
     items: [
       { href: '/command-center', label: 'Revenue Command Center', icon: <DatabaseScript height={18} width={18} /> },
       { href: '/revenue', label: 'Revenue Operations', icon: <GraphUp height={18} width={18} /> },
-      { href: '/opportunities', label: 'Opportunity Center', icon: <Spark height={18} width={18} /> },
     ]
   },
   {
