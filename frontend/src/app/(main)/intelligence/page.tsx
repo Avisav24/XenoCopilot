@@ -635,10 +635,10 @@ export default function IntelligencePage() {
                               <span className={clsx(
                                 "text-[11px] font-bold px-2.5 py-1 rounded uppercase tracking-wider whitespace-nowrap", 
                                 priorityStr === 'Critical' ? "bg-red-100 text-red-800 border border-red-200" : 
-                                priorityStr === 'High' ? "bg-orange-100 text-orange-800 border border-orange-200" : 
+                                priorityStr === 'High' ? "bg-red-100 text-red-800 border border-red-200" : 
                                 priorityStr === 'Medium' ? "bg-amber-100 text-amber-800 border border-amber-200" : 
-                                priorityStr === 'High Value' ? "bg-emerald-100 text-emerald-800 border border-emerald-200" : 
-                                "bg-slate-100 text-slate-600 border border-slate-200"
+                                priorityStr === 'High Value' ? "bg-purple-100 text-purple-800 border border-purple-200" : 
+                                "bg-emerald-100 text-emerald-800 border border-emerald-200"
                               )}>
                                 {priorityStr}
                               </span>

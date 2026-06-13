@@ -92,9 +92,10 @@ async function main() {
 
   console.log(`👤 Seeding ${CUSTOMER_COUNT} customers...`);
   const customerData = Array.from({ length: CUSTOMER_COUNT }, () => {
+    const name = randomIndianName();
     return {
-      name: randomIndianName(),
-      email: faker.internet.email().toLowerCase(),
+      name,
+      email: `${name.replace(/\s+/g, '.').toLowerCase()}${Math.floor(Math.random() * 100)}@gmail.com`,
       phone: `+91${faker.string.numeric(10)}`,
       city: CITIES[Math.floor(Math.random() * CITIES.length)],
       signup_date: randomDaysAgo(300, 700),

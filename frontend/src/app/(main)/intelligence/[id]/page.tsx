@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ArrowLeft, Spark, WarningTriangle, FastArrowRight } from 'iconoir-react';
 import { setCampaignContext } from '@/lib/campaignContext';
+import { clsx } from 'clsx';
 
 const PERSONA_COLORS: Record<string, string> = {
   'VIP Customer': 'bg-primary',
@@ -17,7 +18,12 @@ const PERSONA_COLORS: Record<string, string> = {
 
 function getDotColor(persona: string) {
   if (PERSONA_COLORS[persona]) return PERSONA_COLORS[persona];
-  return 'bg-primary';
+  let hash = 0;
+  for (let i = 0; i < persona.length; i++) {
+    hash = persona.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const colors = ['bg-primary', 'bg-emerald-500', 'bg-purple-500', 'bg-orange-500', 'bg-teal-500'];
+  return colors[Math.abs(hash) % colors.length];
 }
 
 export default function Customer360Page() {
@@ -48,6 +54,9 @@ export default function Customer360Page() {
     : null;
 
   const isAtRisk = c.health_score < 40;
+  
+  // Extract personas handling either backend format
+  const personas = c.personas || (c.customer_personas || []).map((cp: any) => cp.persona?.name || cp.name).filter(Boolean);
   
   // Mock Purchase History
   const mockPurchases = [
@@ -80,8 +89,20 @@ export default function Customer360Page() {
           
           <div className="flex items-center gap-8">
             <div className="flex flex-col items-end">
-              <span className="label-text">Health Score</span>
-              <span className={`text-[24px] font-mono-numbers font-semibold ${isAtRisk ? 'text-semantic-down' : c.health_score > 75 ? 'text-semantic-up' : 'text-semantic-warning'}`}>{c.health_score}/100</span>
+              <span className="label-text mb-1">Health Score</span>
+              <div className="flex items-center gap-2">
+                <span className={clsx(
+                  "text-[11px] font-bold px-2 py-0.5 rounded uppercase tracking-wider",
+                  c.health_score >= 91 ? "bg-emerald-100 text-emerald-800" :
+                  c.health_score >= 76 ? "bg-emerald-50 text-emerald-600" :
+                  c.health_score >= 51 ? "bg-amber-100 text-amber-800" :
+                  c.health_score >= 31 ? "bg-orange-100 text-orange-800" :
+                  "bg-red-100 text-red-800"
+                )}>
+                  {c.health_score >= 91 ? 'Very High' : c.health_score >= 76 ? 'Healthy' : c.health_score >= 51 ? 'Needs Attention' : c.health_score >= 31 ? 'At Risk' : 'Critical'}
+                </span>
+                <span className={`text-[24px] leading-none font-mono-numbers font-semibold ${isAtRisk ? 'text-semantic-down' : c.health_score > 75 ? 'text-semantic-up' : 'text-semantic-warning'}`}>{c.health_score}/100</span>
+              </div>
             </div>
             <div className="flex flex-col items-end">
               <span className="label-text">Lifetime Value</span>
@@ -94,13 +115,13 @@ export default function Customer360Page() {
           <div className="p-5 flex flex-col gap-1">
             <span className="label-text">Primary Personas</span>
             <div className="flex gap-1.5 flex-wrap mt-1">
-              {c.customer_personas.slice(0, 2).map((cp: any) => (
-                <div key={cp.persona.id} className="badge-persona">
-                  <span className={`w-1.5 h-1.5 rounded-full ${getDotColor(cp.persona.name)}`} />
-                  {cp.persona.name}
+              {personas.slice(0, 2).map((p: string) => (
+                <div key={p} className="badge-persona border border-hairline shadow-sm bg-canvas">
+                  <span className={`w-1.5 h-1.5 rounded-full ${getDotColor(p)}`} />
+                  {p}
                 </div>
               ))}
-              {c.customer_personas.length === 0 && <span className="text-[12px] text-muted font-medium">Uncategorized</span>}
+              {personas.length === 0 && <span className="text-[12px] text-muted font-medium">Uncategorized</span>}
             </div>
           </div>
           <div className="p-5 flex flex-col gap-1">
@@ -153,18 +174,31 @@ export default function Customer360Page() {
           <div className="flex flex-col">
             <h2 className="mb-4 border-b border-hairline pb-2">Behavioral Personas</h2>
             <div className="flex flex-col gap-3">
-              {c.customer_personas.map((cp: any) => (
-                <div key={cp.persona.id} className="p-4 border border-hairline rounded-xl bg-surface-card flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${getDotColor(cp.persona.name)}`} />
-                    <span className="text-[14px] font-semibold text-ink">{cp.persona.name}</span>
+              {c.customer_personas && c.customer_personas.length > 0 ? (
+                c.customer_personas.map((cp: any) => (
+                  <div key={cp.persona?.id || cp.id} className="p-4 border border-hairline rounded-xl bg-surface-card flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${getDotColor(cp.persona?.name || cp.name)}`} />
+                      <span className="text-[14px] font-semibold text-ink">{cp.persona?.name || cp.name}</span>
+                    </div>
+                    <p className="text-[13px] text-muted leading-relaxed">
+                      Matched based on: {cp.persona?.description || cp.description || 'Behavioral data match'}
+                    </p>
                   </div>
-                  <p className="text-[13px] text-muted leading-relaxed">
-                    Matched based on: {cp.persona.description}
-                  </p>
-                </div>
-              ))}
-              {c.customer_personas.length === 0 && (
+                ))
+              ) : personas && personas.length > 0 ? (
+                personas.map((p: string) => (
+                  <div key={p} className="p-4 border border-hairline rounded-xl bg-surface-card flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${getDotColor(p)}`} />
+                      <span className="text-[14px] font-semibold text-ink">{p}</span>
+                    </div>
+                    <p className="text-[13px] text-muted leading-relaxed">
+                      Matched based on: Behavioral data match
+                    </p>
+                  </div>
+                ))
+              ) : (
                 <div className="p-4 border border-hairline rounded-xl bg-surface-soft text-muted text-[13px]">
                   No behavioral data available.
                 </div>
