@@ -139,7 +139,8 @@ function CampaignStudioContent() {
           name: goal || 'Generated Campaign',
           channel: selectedChannel,
           message: activeMessage,
-          persona_id: strategyResult?.persona?.id
+          persona_id: strategyResult?.persona?.id,
+          audience_size: strategyResult?.count
         })
       });
       if (data.campaign_id) {

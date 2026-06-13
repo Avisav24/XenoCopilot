@@ -28,6 +28,7 @@ const LaunchCampaignSchema = z.object({
   individual_id: z.string().uuid().optional(),
   channel: z.string(),
   message: z.string(),
+  audience_size: z.number().optional(),
 });
 
 // Helper function to try Gemini keys in sequence, then fallback to Groq keys
@@ -344,31 +345,13 @@ Example Output:
   // ── 4. Launch Campaign ────────────────────────────────────────
   fastify.post('/api/ai/launch-campaign', async (request, reply) => {
     try {
-      const { name, persona_id, individual_id, channel, message } = LaunchCampaignSchema.parse(request.body);
+      const { name, persona_id, individual_id, channel, message, audience_size } = LaunchCampaignSchema.parse(request.body);
 
       // Check if persona_id is a valid UUID, if not fallback
       let finalPersonaId = persona_id;
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(finalPersonaId || '');
       if (!isUUID) {
-        const anyPersona = await prisma.persona.findFirst();
-        finalPersonaId = anyPersona?.id;
-      }
-
-      if (!finalPersonaId) {
-        return reply.status(400).send({ error: 'Missing persona_id or valid fallback' });
-      }
-
-      const campaign = await prisma.campaign.create({
-        data: {
-          name,
-          persona_id: finalPersonaId,
-          channel,
-          message,
-          status: 'sending',
-        },
-      });
-
-      let commData = [];
+        const anyPersona = await prisma.person      let commData = [];
       if (individual_id) {
         commData.push({
           campaign_id: campaign.id,
@@ -376,39 +359,69 @@ Example Output:
           status: 'delivered',
         });
       } else {
-        const customerPersonas = await prisma.customerPersona.findMany({
-          where: { persona_id: finalPersonaId },
-        });
+        let targetCustomerIds: string[] = [];
+        
+        if (audience_size && !isUUID) {
+          const randomCustomers = await prisma.$queryRawUnsafe<{id: string}[]>(
+            `SELECT id FROM "customers" ORDER BY random() LIMIT ${audience_size}`
+          );
+          targetCustomerIds = randomCustomers.map(c => c.id);
+        } else {
+          const customerPersonas = await prisma.customerPersona.findMany({
+            where: { persona_id: finalPersonaId },
+          });
+          targetCustomerIds = customerPersonas.map(cp => cp.customer_id);
+        }
+
+        if (targetCustomerIds.length === 0) {
+          const fallbackSize = audience_size || 50; 
+          const randomCustomers = await prisma.$queryRawUnsafe<{id: string}[]>(
+            `SELECT id FROM "customers" ORDER BY random() LIMIT ${fallbackSize}`
+          );
+          targetCustomerIds = randomCustomers.map(c => c.id);
+        }
 
         const chanMetric = await prisma.channelMetric.findFirst({ where: { channel } });
         const openRate = chanMetric?.open_rate ? Number(chanMetric.open_rate) / 100 : 0.45;
         const clickRate = chanMetric?.ctr ? Number(chanMetric.ctr) / 100 : 0.15;
         const convRate = chanMetric?.conversion_rate ? Number(chanMetric.conversion_rate) / 100 : 0.03;
 
-        commData = customerPersonas.map((cp) => {
-          let status = 'sent';
+        const now = new Date();
+        const baseTime = now.getTime() - 2 * 60 * 60 * 1000;
+
+        commData = targetCustomerIds.map((custId) => {
           const r = Math.random();
+          let status = 'sent';
           if (r < 0.98) status = 'delivered';
           if (r < openRate) status = 'opened';
           if (r < clickRate) status = 'clicked';
           if (r < convRate) status = 'purchased';
 
-          const now = Date.now();
-          const sent_at = new Date(now - Math.random() * 7200000);
-          const delivered_at = new Date(sent_at.getTime() + 1000 + Math.random() * 5000);
-          const opened_at = new Date(delivered_at.getTime() + 5000 + Math.random() * 600000);
-          const clicked_at = new Date(opened_at.getTime() + 5000 + Math.random() * 60000);
-          const purchased_at = new Date(clicked_at.getTime() + 5000 + Math.random() * 300000);
+          const sent_at = new Date(baseTime + Math.random() * 30 * 60 * 1000);
+          let delivered_at = null, opened_at = null, clicked_at = null, purchased_at = null;
+
+          if (['delivered', 'opened', 'clicked', 'purchased'].includes(status)) {
+            delivered_at = new Date(sent_at.getTime() + Math.random() * 5 * 60 * 1000);
+          }
+          if (['opened', 'clicked', 'purchased'].includes(status)) {
+            opened_at = new Date((delivered_at || sent_at).getTime() + Math.random() * 15 * 60 * 1000);
+          }
+          if (['clicked', 'purchased'].includes(status)) {
+            clicked_at = new Date((opened_at || sent_at).getTime() + Math.random() * 10 * 60 * 1000);
+          }
+          if (status === 'purchased') {
+            purchased_at = new Date((clicked_at || sent_at).getTime() + Math.random() * 30 * 60 * 1000);
+          }
 
           return {
             campaign_id: campaign.id,
-            customer_id: cp.customer_id,
+            customer_id: custId,
             status,
-            ...(status === 'sent' || status === 'delivered' || status === 'opened' || status === 'clicked' || status === 'purchased' ? { sent_at } : {}),
-            ...(status === 'delivered' || status === 'opened' || status === 'clicked' || status === 'purchased' ? { delivered_at } : {}),
-            ...(status === 'opened' || status === 'clicked' || status === 'purchased' ? { opened_at } : {}),
-            ...(status === 'clicked' || status === 'purchased' ? { clicked_at } : {}),
-            ...(status === 'purchased' ? { purchased_at } : {}),
+            sent_at,
+            delivered_at,
+            opened_at,
+            clicked_at,
+            purchased_at
           };
         });
       }
