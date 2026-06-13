@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Avisav24/XenoCopilot/main/Assets/XC.png" alt="XenoCopilot Logo" width="180" style="border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
   
   # 🚀 XenoCopilot
   
