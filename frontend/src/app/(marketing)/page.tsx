@@ -103,7 +103,7 @@ export default function LandingPage() {
     e.preventDefault();
     gsap.to('.hero-fade', {
       opacity: 0, y: -15, duration: 0.4, stagger: 0.05, ease: 'power2.in',
-      onComplete: () => router.push('/revenue')
+      onComplete: () => router.push('/command-center')
     });
   };
 

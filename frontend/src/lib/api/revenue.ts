@@ -17,3 +17,23 @@ export const getRevenueStats = () => fetchAPI<{
   aiInsights?: { insight: string; metric: string; value: string; actionLabel: string }[];
   opportunities?: { name: string; value: string; audience: string; confidence: number; actionLabel: string }[];
 }>('/api/revenue/stats');
+
+export const getRevenueLeaks = () => fetchAPI<any[]>('/api/revenue/leaks');
+
+export const simulateCampaign = (data: {
+  segmentId?: string;
+  audienceName?: string;
+  channel: string;
+  offer?: string;
+  campaignGoal: string;
+}) => fetchAPI<any>('/api/revenue/simulate', {
+  method: 'POST',
+  body: JSON.stringify(data)
+});
+
+export const generateRevenuePlan = (revenueGoal: string) => fetchAPI<any>('/api/revenue/planner', {
+  method: 'POST',
+  body: JSON.stringify({ revenueGoal })
+});
+
+export const getRevenueFeed = () => fetchAPI<any[]>('/api/revenue/feed');

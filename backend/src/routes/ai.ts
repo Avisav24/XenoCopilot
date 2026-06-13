@@ -32,7 +32,7 @@ const LaunchCampaignSchema = z.object({
 });
 
 // Helper function to try Gemini keys in sequence, then fallback to Groq keys
-async function generateWithFallback(genaiInstances: GoogleGenAI[], groqInstances: Groq[], systemInstruction: string, userPrompt: string, temperature: number, isJson: boolean = false) {
+export async function generateWithFallback(genaiInstances: GoogleGenAI[], groqInstances: Groq[], systemInstruction: string, userPrompt: string, temperature: number, isJson: boolean = false) {
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   let lastGeminiError;
 

@@ -1,5 +1,9 @@
 import { FastifyInstance } from 'fastify';
 import prisma from '../lib/prisma';
+import { GoogleGenAI } from '@google/genai';
+import { Groq } from 'groq-sdk';
+import { z } from 'zod';
+import { generateWithFallback } from './ai';
 
 export async function revenueRoutes(fastify: FastifyInstance) {
   fastify.get('/api/revenue/stats', async (_request, reply) => {
@@ -145,5 +149,236 @@ export async function revenueRoutes(fastify: FastifyInstance) {
         }
       ]
     });
+  });
+
+  const geminiKeys = [
+    process.env.GEMINI_API_KEY,
+    process.env.GEMINI_API_KEY_1,
+    process.env.GEMINI_API_KEY_2,
+    process.env.GEMINI_API_KEY_3
+  ].filter(Boolean) as string[];
+
+  const groqKeys = [
+    process.env.GROQ_API_KEY,
+    process.env.GROQ_API_KEY_1,
+    process.env.GROQ_API_KEY_2,
+    process.env.GROQ_API_KEY_3
+  ].filter(Boolean) as string[];
+
+  const genaiInstances = geminiKeys.map(key => new GoogleGenAI({ apiKey: key }));
+  const groqInstances = groqKeys.map(key => new Groq({ apiKey: key }));
+
+  // 1. REVENUE LEAKS ENGINE
+  fastify.get('/api/revenue/leaks', async (request, reply) => {
+    try {
+      const customers = await prisma.customer.findMany({
+        include: {
+          customer_personas: { include: { persona: true } },
+          orders: { orderBy: { order_date: 'desc' } }
+        }
+      });
+
+      const now = Date.now();
+      const stats = customers.map(c => {
+        const daysSince = c.last_order_date ? (now - c.last_order_date.getTime()) / (1000 * 60 * 60 * 24) : 999;
+        return {
+          id: c.id,
+          health: c.health_score,
+          daysSince,
+          spent: Number(c.total_spent),
+          ordersCount: c.orders.length,
+          personas: c.customer_personas.map(cp => cp.persona.name)
+        };
+      });
+
+      const dbContext = {
+        totalCustomers: stats.length,
+        atRiskCount: stats.filter(s => s.health < 40).length,
+        dormantCount: stats.filter(s => s.daysSince > 90).length,
+        avgSpend: stats.reduce((sum, s) => sum + s.spent, 0) / (stats.length || 1),
+      };
+
+      const systemPrompt = `You are the XenoCopilot Revenue Leak Detection Engine.
+Analyze the CRM metrics and identify 3 critical areas where future revenue will be lost.
+Revenue at risk must be calculated mathematically based on expected future spend and churn probability.
+
+Output ONLY a strictly formatted JSON array of objects with the exact keys:
+[
+  {
+    "id": "uuid",
+    "title": "Clear issue title",
+    "customersAffected": 120,
+    "revenueAtRisk": 500000,
+    "recoverableRevenue": 200000,
+    "evidence": ["Point 1", "Point 2", "Point 3"],
+    "recommendation": "Launch X Campaign",
+    "confidenceReason": "Based on Y"
+  }
+]`;
+
+      const aiResponse = await generateWithFallback(
+        genaiInstances,
+        groqInstances,
+        systemPrompt,
+        `Database Stats: ${JSON.stringify(dbContext)}`,
+        0.3,
+        true
+      );
+
+      let leaks = [];
+      try {
+        leaks = JSON.parse(aiResponse.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
+        if (!Array.isArray(leaks)) leaks = [leaks];
+      } catch (e) {
+        console.error("Failed to parse leaks JSON", e);
+        leaks = [];
+      }
+
+      return reply.send(leaks);
+    } catch (err) {
+      console.error(err);
+      return reply.status(500).send({ error: 'Failed to detect revenue leaks' });
+    }
+  });
+
+  // 2. AI DECISION SIMULATOR
+  const SimulateSchema = z.object({
+    segmentId: z.string().optional(),
+    audienceName: z.string().optional(),
+    channel: z.string(),
+    offer: z.string().optional(),
+    campaignGoal: z.string()
+  });
+
+  fastify.post('/api/revenue/simulate', async (request, reply) => {
+    try {
+      const input = SimulateSchema.parse(request.body);
+
+      const dbContext = {
+        historicalConversion: {
+          'WhatsApp': 6.8,
+          'Email': 2.1,
+          'SMS': 3.5
+        },
+        avgAOV: 3200,
+      };
+
+      const systemPrompt = `You are the XenoCopilot AI Decision Simulator.
+Model the expected business outcome of launching this specific campaign.
+Do not generate arbitrary values; use the provided historical conversion baselines to formulate your math.
+
+Output ONLY a JSON object with:
+{
+  "audienceSize": 425,
+  "expectedOpenRate": 65.5,
+  "expectedCTR": 12.4,
+  "expectedConversionRate": 6.8,
+  "expectedRevenue": 342000,
+  "expectedROI": 4.2,
+  "risks": ["Risk 1", "Risk 2"],
+  "reasoning": ["Reason 1", "Reason 2"]
+}`;
+
+      const userPrompt = `Simulate this scenario:
+Audience: ${input.audienceName || input.segmentId || 'Target Audience'}
+Channel: ${input.channel}
+Offer: ${input.offer || 'Standard'}
+Goal: ${input.campaignGoal}
+
+Historical Baselines: ${JSON.stringify(dbContext)}`;
+
+      const aiResponse = await generateWithFallback(
+        genaiInstances,
+        groqInstances,
+        systemPrompt,
+        userPrompt,
+        0.2,
+        true
+      );
+
+      const simulation = JSON.parse(aiResponse.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
+      return reply.send(simulation);
+    } catch (err) {
+      console.error(err);
+      return reply.status(500).send({ error: 'Simulation failed' });
+    }
+  });
+
+  // 3. AUTONOMOUS REVENUE GOAL PLANNER
+  const PlannerSchema = z.object({
+    revenueGoal: z.string() // e.g. "10,00,000"
+  });
+
+  fastify.post('/api/revenue/planner', async (request, reply) => {
+    try {
+      const { revenueGoal } = PlannerSchema.parse(request.body);
+
+      const systemPrompt = `You are the XenoCopilot Autonomous Revenue Goal Planner.
+The marketer has input a total revenue target they must hit this month.
+You must break this total goal down into 3-4 distinct audience campaign opportunities.
+The sum of 'potentialRevenue' across opportunities should roughly equal or slightly exceed the goal.
+
+Output ONLY a JSON object:
+{
+  "totalForecast": 1040000,
+  "opportunities": [
+    {
+      "title": "Campaign Name",
+      "audienceSize": 400,
+      "potentialRevenue": 320000,
+      "recommendedChannel": "WhatsApp",
+      "messageStrategy": "What to say",
+      "estimatedConversionRate": 5.5
+    }
+  ]
+}`;
+
+      const aiResponse = await generateWithFallback(
+        genaiInstances,
+        groqInstances,
+        systemPrompt,
+        `Revenue Goal: ${revenueGoal}`,
+        0.4,
+        true
+      );
+
+      const plan = JSON.parse(aiResponse.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
+      return reply.send(plan);
+    } catch (err) {
+      console.error(err);
+      return reply.status(500).send({ error: 'Planner failed' });
+    }
+  });
+
+  // 4. REVENUE COMMAND FEED
+  fastify.get('/api/revenue/feed', async (request, reply) => {
+    try {
+      const systemPrompt = `Generate 4 live AI-generated insight alerts for a "Bloomberg Terminal for Marketers".
+Categorize them strictly as one of: "Revenue Opportunity", "Revenue Risk", "Campaign Insight", or "New Segment Detected".
+
+Output ONLY a JSON array:
+[
+  {
+    "category": "Revenue Risk",
+    "message": "VIP engagement down 24% this week",
+    "timestamp": "2 mins ago"
+  }
+]`;
+
+      const aiResponse = await generateWithFallback(
+        genaiInstances,
+        groqInstances,
+        systemPrompt,
+        "Generate live feed.",
+        0.7,
+        true
+      );
+
+      const feed = JSON.parse(aiResponse.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
+      return reply.send(feed);
+    } catch (err) {
+      console.error(err);
+      return reply.status(500).send({ error: 'Feed failed' });
+    }
   });
 }
