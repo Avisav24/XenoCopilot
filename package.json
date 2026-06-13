@@ -5,7 +5,7 @@
   "author": "Abhinav",
   "license": "MIT",
   "private": true,
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@9.15.4",
   "scripts": {
     "dev": "pnpm --parallel -r dev",
     "build": "pnpm -r build",
