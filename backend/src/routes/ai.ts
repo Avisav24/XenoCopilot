@@ -393,10 +393,22 @@ Example Output:
           if (r < clickRate) status = 'clicked';
           if (r < convRate) status = 'purchased';
 
+          const now = Date.now();
+          const sent_at = new Date(now - Math.random() * 7200000);
+          const delivered_at = new Date(sent_at.getTime() + 1000 + Math.random() * 5000);
+          const opened_at = new Date(delivered_at.getTime() + 5000 + Math.random() * 600000);
+          const clicked_at = new Date(opened_at.getTime() + 5000 + Math.random() * 60000);
+          const purchased_at = new Date(clicked_at.getTime() + 5000 + Math.random() * 300000);
+
           return {
             campaign_id: campaign.id,
             customer_id: cp.customer_id,
             status,
+            ...(status === 'sent' || status === 'delivered' || status === 'opened' || status === 'clicked' || status === 'purchased' ? { sent_at } : {}),
+            ...(status === 'delivered' || status === 'opened' || status === 'clicked' || status === 'purchased' ? { delivered_at } : {}),
+            ...(status === 'opened' || status === 'clicked' || status === 'purchased' ? { opened_at } : {}),
+            ...(status === 'clicked' || status === 'purchased' ? { clicked_at } : {}),
+            ...(status === 'purchased' ? { purchased_at } : {}),
           };
         });
       }
