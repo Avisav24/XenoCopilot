@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShieldCheck, CheckCircle, GraphUp, Spark, WarningCircle, ArrowRight, Activity, Flash } from 'iconoir-react';
 import { clsx } from 'clsx';
+import { DataTable, Column } from '@/components/ui/DataTable';
+import { RightPanel, PanelSection, PanelMetric } from '@/components/ui/RightPanel';
+import { Spark, Play, Activity } from 'iconoir-react';
 
 export default function CommandCenter() {
   const [ledger, setLedger] = useState<any>(null);
@@ -54,184 +56,137 @@ export default function CommandCenter() {
     }
   };
 
+  const combinedData = [
+    ...leaks.map(l => ({
+      type: 'Leak',
+      title: l.leakName,
+      audience: l.audience,
+      impact: l.revenueAtRisk,
+      confidence: l.confidence,
+      action: l.recommendedAction,
+      urgency: 'High'
+    })),
+    ...opportunities.map(o => ({
+      type: 'Opportunity',
+      title: o.opportunity,
+      audience: o.audience,
+      impact: o.potentialRevenue,
+      confidence: o.confidence,
+      action: o.action || 'Launch Campaign',
+      urgency: 'Medium'
+    }))
+  ];
+
+  const columns: Column<any>[] = [
+    { key: 'title', label: 'Initiative' },
+    { key: 'type', label: 'Type', render: (item) => (
+      <span className={clsx(
+        "px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider",
+        item.type === 'Leak' ? "bg-danger/10 text-danger" : "bg-success/10 text-success"
+      )}>{item.type}</span>
+    )},
+    { key: 'audience', label: 'Audience', render: (item) => `${item.audience} Users` },
+    { key: 'impact', label: 'Revenue Impact', render: (item) => `₹${item.impact.toLocaleString()}` },
+    { key: 'confidence', label: 'Confidence', render: (item) => `${item.confidence}%` },
+    { key: 'action', label: 'Recommended Action' },
+    { key: 'launch', label: '', render: (item) => (
+      <button 
+        onClick={() => runSimulation(item.title)}
+        className="text-[12px] font-semibold text-primary hover:text-primary-press transition-colors"
+      >
+        Simulate
+      </button>
+    )}
+  ];
+
+  const topImpact = combinedData.reduce((acc, curr) => curr.impact > acc.impact ? curr : acc, { impact: 0 } as any);
+  const totalLeak = leaks.reduce((sum, l) => sum + l.revenueAtRisk, 0);
+  const totalOpp = opportunities.reduce((sum, o) => sum + o.potentialRevenue, 0);
+
   return (
-    <div className="flex-1 p-8 overflow-y-auto w-full max-w-[1200px] mx-auto pb-24">
-      {/* HUD Header */}
-      <div className="mb-12">
-        <h1 className="text-[28px] font-bold text-ink tracking-tight mb-2 flex items-center gap-3">
-          <Activity className="text-primary" />
-          Revenue Command Center
-        </h1>
-        <p className="text-[16px] text-ink-muted font-medium italic">
-          "XenoCopilot does not optimize campaigns. XenoCopilot optimizes revenue decisions."
-        </p>
-
-        {ledger && (
-          <div className="mt-8 grid grid-cols-3 gap-6">
-            <div className="bg-canvas-soft border border-hairline p-5 rounded-lg shadow-sm">
-              <p className="text-[12px] uppercase font-bold text-ink-muted tracking-wider mb-1 flex items-center gap-2">
-                <ShieldCheck height={16} width={16} /> System Accuracy
-              </p>
-              <p className="text-[24px] font-bold text-ink">{ledger.systemAccuracy}</p>
-            </div>
-            <div className="bg-canvas-soft border border-hairline p-5 rounded-lg shadow-sm">
-              <p className="text-[12px] uppercase font-bold text-ink-muted tracking-wider mb-1 flex items-center gap-2">
-                <CheckCircle height={16} width={16} /> Revenue Prediction Accuracy
-              </p>
-              <p className="text-[24px] font-bold text-success">{ledger.revenuePredictionAccuracy.toFixed(1)}%</p>
-            </div>
-            <div className="bg-canvas-soft border border-hairline p-5 rounded-lg shadow-sm">
-              <p className="text-[12px] uppercase font-bold text-ink-muted tracking-wider mb-1 flex items-center gap-2">
-                <Activity height={16} width={16} /> Predictions Audited
-              </p>
-              <p className="text-[24px] font-bold text-ink">{ledger.totalPredictionsAudited}</p>
-            </div>
+    <div className="flex w-full h-full">
+      {/* Main Workspace */}
+      <div className="flex-1 overflow-y-auto p-8 lg:p-12">
+        <div className="max-w-[1000px] mx-auto">
+          
+          <div className="mb-10">
+            <h1 className="mb-2">Revenue Command Center</h1>
+            <p className="italic text-ink-muted">"XenoCopilot does not optimize campaigns. XenoCopilot optimizes revenue decisions."</p>
           </div>
-        )}
-      </div>
 
-      <div className="grid grid-cols-2 gap-8 mb-12">
-        {/* LEAK ENGINE */}
-        <div>
-          <h2 className="text-[18px] font-bold text-ink mb-4 flex items-center gap-2 border-b border-hairline pb-2">
-            <WarningCircle className="text-danger" /> Revenue Leak Engine
-          </h2>
-          <div className="flex flex-col gap-4">
-            {leaks.map((leak, idx) => (
-              <div key={idx} className="bg-canvas-soft border border-hairline rounded-lg p-5">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-bold text-ink text-[16px]">{leak.leakName}</h3>
-                    <p className="text-danger font-medium text-[14px]">₹{leak.revenueAtRisk.toLocaleString()} At Risk</p>
-                  </div>
-                  <span className="bg-canvas border border-hairline px-3 py-1 rounded-full text-[12px] font-bold text-ink-muted">
-                    {leak.confidence}% Confidence
-                  </span>
-                </div>
-                
-                <div className="bg-canvas rounded p-3 mb-4 border border-hairline">
-                  <p className="text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-2">Recommendation Provenance</p>
-                  <ul className="flex flex-col gap-1">
-                    {leak.evidence.map((ev: string, i: number) => (
-                      <li key={i} className="text-[13px] text-ink flex items-start gap-2">
-                        <span className="text-primary font-bold">Source {i+1}:</span> {ev}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="flex justify-between items-center mt-2 pt-4 border-t border-hairline">
-                  <div>
-                    <p className="text-[11px] font-bold text-ink-muted uppercase">Recommended Action</p>
-                    <p className="text-[14px] font-medium text-ink">{leak.recommendedAction}</p>
-                  </div>
-                  <button className="bg-ink text-canvas px-4 py-2 rounded-md text-[13px] font-bold flex items-center gap-2 hover:bg-ink-muted transition-colors">
-                    Launch
-                  </button>
-                </div>
+          {/* Revenue Brief */}
+          <div className="mb-12 border-l-2 border-primary pl-5">
+            <h2 className="text-[16px] font-semibold text-ink mb-4 uppercase tracking-wider">Revenue Brief</h2>
+            <div className="grid grid-cols-4 gap-6">
+              <div>
+                <span className="block text-[12px] text-ink-muted mb-1">Revenue At Risk</span>
+                <span className="block text-[20px] font-semibold text-danger">₹{totalLeak.toLocaleString()}</span>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* OPPORTUNITY ENGINE */}
-        <div>
-          <h2 className="text-[18px] font-bold text-ink mb-4 flex items-center gap-2 border-b border-hairline pb-2">
-            <GraphUp className="text-success" /> Revenue Opportunity Engine
-          </h2>
-          <div className="flex flex-col gap-4">
-            {opportunities.map((opp, idx) => (
-              <div key={idx} className="bg-canvas-soft border border-hairline rounded-lg p-5">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-bold text-ink text-[16px]">{opp.opportunity}</h3>
-                    <p className="text-success font-medium text-[14px]">₹{opp.potentialRevenue.toLocaleString()} Potential</p>
-                  </div>
-                  <span className="bg-canvas border border-hairline px-3 py-1 rounded-full text-[12px] font-bold text-ink-muted">
-                    {opp.confidence}% Confidence
-                  </span>
-                </div>
-                
-                <div className="bg-canvas rounded p-3 mb-4 border border-hairline">
-                  <p className="text-[11px] font-bold text-ink-muted uppercase tracking-wider mb-2">Recommendation Provenance</p>
-                  <ul className="flex flex-col gap-1">
-                    {opp.reasoning.map((reason: string, i: number) => (
-                      <li key={i} className="text-[13px] text-ink flex items-start gap-2">
-                        <span className="text-primary font-bold">Source {i+1}:</span> {reason}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="flex justify-between items-center mt-2 pt-4 border-t border-hairline">
-                  <button 
-                    onClick={() => runSimulation(opp.opportunity)}
-                    disabled={isSimulating}
-                    className="bg-canvas border border-hairline px-4 py-2 rounded-md text-[13px] font-bold flex items-center gap-2 hover:bg-canvas-soft transition-colors disabled:opacity-50"
-                  >
-                    <Spark height={16} width={16} /> Simulate Multi-Scenario
-                  </button>
-                  <button className="bg-primary text-white px-4 py-2 rounded-md text-[13px] font-bold flex items-center gap-2 hover:bg-primary-soft transition-colors">
-                    Execute <ArrowRight height={16} width={16} />
-                  </button>
-                </div>
+              <div>
+                <span className="block text-[12px] text-ink-muted mb-1">Potential Recovery</span>
+                <span className="block text-[20px] font-semibold text-success">₹{totalOpp.toLocaleString()}</span>
               </div>
-            ))}
+              <div>
+                <span className="block text-[12px] text-ink-muted mb-1">Top Opportunity</span>
+                <span className="block text-[14px] font-semibold text-ink mt-1 truncate">{topImpact?.title || '-'}</span>
+              </div>
+              <div>
+                <span className="block text-[12px] text-ink-muted mb-1">Recommended Action</span>
+                <span className="block text-[14px] font-semibold text-primary mt-1 truncate">{topImpact?.action || '-'}</span>
+              </div>
+            </div>
           </div>
+
+          <div className="mb-6">
+            <h2 className="text-[18px] mb-4">Action Items</h2>
+            <DataTable columns={columns} data={combinedData} searchPlaceholder="Search initiatives..." />
+          </div>
+          
         </div>
       </div>
 
-      {/* SIMULATOR HUD */}
-      {simResults && (
-        <div className="bg-canvas-soft border border-hairline rounded-lg p-6 shadow-sm mb-12">
-          <h2 className="text-[20px] font-bold text-ink mb-2 flex items-center gap-2">
-            <Flash className="text-warning" /> Multi-Scenario Decision Simulator
-          </h2>
-          <p className="text-[14px] text-ink-muted mb-6">Evaluating multiple execution paths based on historical memory ranking.</p>
+      {/* Right Context Panel */}
+      <RightPanel title="AI Intelligence">
+        <PanelSection title="System Accuracy">
+          {ledger ? (
+            <div className="flex flex-col gap-2 mt-2">
+              <PanelMetric label="Model Architecture" value="XenoCopilot v4" />
+              <PanelMetric label="Revenue Prediction" value={`${ledger.revenuePredictionAccuracy.toFixed(1)}%`} trend="positive" />
+              <PanelMetric label="System Accuracy" value={ledger.systemAccuracy} />
+              <PanelMetric label="Predictions Audited" value={ledger.totalPredictionsAudited.toString()} />
+            </div>
+          ) : (
+            <p className="text-ink-muted italic">Connecting to Ledger...</p>
+          )}
+        </PanelSection>
 
-          <div className="grid grid-cols-3 gap-6">
-            {simResults.scenarios.map((scenario: any, idx: number) => {
-              const isBest = scenario.scenarioName === simResults.bestOption;
-              return (
-                <div key={idx} className={clsx(
-                  "border rounded-lg p-5 relative",
-                  isBest ? "border-primary bg-primary/5 shadow-md" : "border-hairline bg-canvas"
-                )}>
-                  {isBest && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full">
-                      Best Option
-                    </div>
-                  )}
-                  <h3 className="font-bold text-[16px] text-ink mb-4">{scenario.scenarioName}</h3>
-                  <div className="flex flex-col gap-3">
-                    <div className="flex justify-between items-center border-b border-hairline pb-2">
-                      <span className="text-[13px] text-ink-muted">Expected Revenue</span>
-                      <span className="font-bold text-ink">₹{Math.round(scenario.expectedRevenue).toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center border-b border-hairline pb-2">
-                      <span className="text-[13px] text-ink-muted">Expected Profit</span>
-                      <span className={clsx("font-bold", isBest ? "text-success" : "text-ink")}>
-                        ₹{Math.round(scenario.expectedProfit).toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center pb-2">
-                      <span className="text-[13px] text-ink-muted">Conversion Rate</span>
-                      <span className="font-bold text-ink">{scenario.expectedConversion.toFixed(1)}%</span>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-hairline">
-                    <p className="text-[11px] font-bold text-ink-muted uppercase mb-2">Memory Provenance</p>
-                    <ul className="text-[12px] text-ink-muted list-disc pl-4">
-                      {scenario.reasoning.map((r: string, i: number) => <li key={i}>{r}</li>)}
+        {simResults && (
+          <PanelSection title="Simulation Results" noBorder>
+            <div className="bg-primary/5 border border-primary/20 rounded p-4 mb-4">
+              <div className="text-[11px] font-bold text-primary uppercase mb-1">Best Option</div>
+              <div className="text-[14px] font-semibold text-ink">{simResults.bestOption}</div>
+            </div>
+            <div className="flex flex-col gap-4">
+              {simResults.scenarios.map((scen: any, idx: number) => (
+                <div key={idx} className="border border-hairline rounded p-3 bg-canvas-soft">
+                  <div className="font-semibold text-[13px] mb-2">{scen.scenarioName}</div>
+                  <PanelMetric label="Expected Revenue" value={`₹${Math.round(scen.expectedRevenue).toLocaleString()}`} />
+                  <PanelMetric label="Expected Profit" value={`₹${Math.round(scen.expectedProfit).toLocaleString()}`} trend={scen.scenarioName === simResults.bestOption ? 'positive' : 'neutral'} />
+                  <div className="mt-3 text-[12px] text-ink-muted border-t border-hairline pt-2">
+                    <span className="font-semibold block mb-1">Memory Provenance:</span>
+                    <ul className="list-disc pl-4 space-y-1">
+                      {scen.reasoning.map((r: string, i: number) => <li key={i}>{r}</li>)}
                     </ul>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
+              ))}
+            </div>
+            <button className="w-full mt-4 bg-ink text-white py-2 rounded text-[13px] font-semibold hover:bg-ink-muted transition-colors flex justify-center items-center gap-2">
+              <Play height={14} width={14} /> Execute Best Option
+            </button>
+          </PanelSection>
+        )}
+      </RightPanel>
     </div>
   );
 }

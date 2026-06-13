@@ -17,15 +17,18 @@ module.exports = {
           press: '#1D4ED8',
         },
         ink: {
-          DEFAULT: '#0F172A',
-          muted: '#64748B',
+          DEFAULT: '#171717',
+          muted: '#737373',
+          light: '#A3A3A3',
         },
         hairline: {
-          DEFAULT: '#E2E8F0',
+          DEFAULT: '#E5E7EB',
+          dark: '#D4D4D8',
         },
         canvas: {
           DEFAULT: '#FFFFFF',
-          soft: '#F8FAFC',
+          soft: '#FAFAFA',
+          subtle: '#F4F4F5',
         },
         semantic: {
           success: '#16A34A',
