@@ -31,7 +31,7 @@ export default function ImportPage() {
     formData.append('file', file);
     
     // Use raw fetch to bypass JSON Content-Type default in fetchAPI
-    const res = await fetch(`http://localhost:3001/api/import/${type}`, {
+    const res = await fetch(`/api/import/${type}`, {
        method: 'POST',
        body: formData
     });

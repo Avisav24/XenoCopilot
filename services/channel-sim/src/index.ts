@@ -79,7 +79,7 @@ interface SendBody {
   recipients: Recipient[];
 }
 
-app.post('/simulate', (req: Request<{}, {}, SendBody>, res: Response) => {
+const handleSimulate = (req: Request<{}, {}, SendBody>, res: Response) => {
   const { campaignId, recipients } = req.body;
 
   if (!campaignId || !recipients || !Array.isArray(recipients)) {
@@ -97,14 +97,12 @@ app.post('/simulate', (req: Request<{}, {}, SendBody>, res: Response) => {
       console.error(`[sim] Simulation error for ${r.communicationId}:`, err)
     );
   }
-});
+};
+
+app.post('/simulate', handleSimulate);
 
 // Alias /send to /simulate to match user spec precisely if needed
-app.post('/send', (req: Request<{}, {}, SendBody>, res: Response) => {
-  // Reroute to same handler
-  req.url = '/simulate';
-  app.handle(req, res);
-});
+app.post('/send', handleSimulate);
 
 // ── Start ─────────────────────────────────────────────────
 app.listen(PORT, () => {
