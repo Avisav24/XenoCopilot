@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "XenoCopilot Frontend — Next.js 14",
   "private": true,
+  "packageManager": "pnpm@9.15.4",
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
