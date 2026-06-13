@@ -144,7 +144,7 @@ export default function LivePage({ params }: { params: { id: string } }) {
         { name: 'Delivered', value: funnel.delivered, fill: '#60a5fa' },
         { name: 'Opened', value: funnel.opened, fill: '#34d399' },
         { name: 'Clicked', value: funnel.clicked, fill: '#2dd4bf' },
-        { name: 'Converted', value: funnel.purchased, fill: '#f59e0b' },
+        { name: 'Converted', value: funnel.converted, fill: '#f59e0b' },
       ]
     : [];
 
@@ -186,7 +186,7 @@ export default function LivePage({ params }: { params: { id: string } }) {
               <StatPill label="Sent" value={funnel.sent} color="bg-slate-100 text-slate-700" />
               <StatPill label="Delivered" value={funnel.delivered} color="bg-blue-50 text-blue-700" />
               <StatPill label="Opened" value={funnel.opened} color="bg-emerald-50 text-emerald-700" />
-              <StatPill label="Converted" value={funnel.purchased} color="bg-amber-50 text-amber-700" />
+              <StatPill label="Converted" value={funnel.converted} color="bg-amber-50 text-amber-700" />
             </div>
           )}
 

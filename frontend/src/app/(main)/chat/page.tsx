@@ -720,7 +720,7 @@ function CampaignStudioContent() {
                     { label: 'Selected Channel', value: selectedChannel },
                     { label: 'Schedule',         value: 'Immediate' },
                     { label: 'Variant',          value: `Variant ${activeVariant}` },
-                  ].map(row => (
+                  ].map((row: any) => (
                     <div key={row.label} className="flex justify-between items-center border-b border-slate-50 pb-3 last:border-0 last:pb-0">
                       <span className="text-[13px] font-semibold text-slate-500">{row.label}</span>
                       {row.badge ? (
