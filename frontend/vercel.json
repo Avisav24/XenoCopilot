@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "cd ../.. && pnpm --filter @xenocopilot/web build",
+  "buildCommand": "cd ../.. && pnpm --filter @xenocopilot/frontend build",
   "outputDirectory": ".next",
   "installCommand": "pnpm install"
 }

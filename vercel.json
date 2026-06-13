@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm install && npm run build",
+  "buildCommand": "pnpm --filter @xenocopilot/frontend build",
   "outputDirectory": "frontend/.next",
-  "installCommand": "npm install",
+  "installCommand": "pnpm install",
   "framework": "nextjs",
   "rootDirectory": "frontend"
 }
