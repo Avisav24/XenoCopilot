@@ -1509,4 +1509,31 @@ Ensure the projected total revenue across all campaigns roughly equals or slight
     }
   });
 
+  fastify.post('/api/ai/next-best-action', async (request, reply) => {
+    try {
+      const { customer_id } = request.body as { customer_id: string };
+      // Simulated AI response for demo purposes
+      return reply.send({
+        aiSummary: "Customer exhibits consistent purchasing patterns. High engagement on mobile channels, specifically WhatsApp.",
+        churnRiskAnalysis: "Low churn risk. Recent activity indicates sustained brand affinity.",
+        revenuePotential: "₹24,500 over next 6 months",
+        behavioralInsights: [
+          "Responds to weekend flash sales",
+          "Prefers premium beauty segments",
+          "High cart abandonment recovery rate"
+        ],
+        nextBestAction: {
+          priority: "High",
+          recommendedAction: "Cross-Sell Premium Skincare",
+          reason: "Customer recently bought complementary products and reacts well to WhatsApp nudges.",
+          expectedRevenue: 3200,
+          confidence: "91%"
+        }
+      });
+    } catch (err: any) {
+      console.error('[Next Best Action Error]:', err);
+      return reply.status(500).send({ error: 'Failed to generate next best action' });
+    }
+  });
+
 }

@@ -144,8 +144,16 @@ export async function customerRoutes(fastify: FastifyInstance) {
 
     if (!customer) return reply.status(404).send({ error: 'Not found' });
 
+    const personasList = customer.customer_personas.map(cp => cp.persona.name);
+    if (personasList.length === 0) {
+      if (customer.health_score > 80) personasList.push('VIP Customer');
+      else if (customer.health_score < 40) personasList.push('Dormant');
+      else personasList.push('Discount Hunter');
+    }
+
     return reply.send({
       ...customer,
+      personas: personasList,
       total_spent: Number(customer.total_spent),
       orders: customer.orders.map(o => ({ ...o, amount: Number(o.amount) }))
     });
