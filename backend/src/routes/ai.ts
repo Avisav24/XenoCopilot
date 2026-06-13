@@ -351,7 +351,25 @@ Example Output:
       let finalPersonaId = persona_id;
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(finalPersonaId || '');
       if (!isUUID) {
-        const anyPersona = await prisma.person      let commData = [];
+        const anyPersona = await prisma.persona.findFirst();
+        finalPersonaId = anyPersona?.id;
+      }
+
+      if (!finalPersonaId) {
+        return reply.status(400).send({ error: 'Missing persona_id or valid fallback' });
+      }
+
+      const campaign = await prisma.campaign.create({
+        data: {
+          name,
+          persona_id: finalPersonaId,
+          channel,
+          message,
+          status: 'sending',
+        },
+      });
+
+      let commData: any[] = [];
       if (individual_id) {
         commData.push({
           campaign_id: campaign.id,
