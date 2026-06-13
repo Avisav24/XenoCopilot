@@ -207,5 +207,5 @@ To maintain 100% operational uptime during high traffic or rate-limiting events,
 ---
 
 <div align="center">
-  <p>Built with ❤️ by Abhinav | <b>XenoCopilot v1.0.0</b></p>
+  <p>Built with ❤️ by Abhinav Vats | <b>XenoCopilot v1.0.0</b></p>
 </div>
