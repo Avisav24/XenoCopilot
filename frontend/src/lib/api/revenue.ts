@@ -25,6 +25,8 @@ export const simulateCampaign = (data: {
   audienceName?: string;
   channel: string;
   offer?: string;
+  discount?: string;
+  sendTime?: string;
   campaignGoal: string;
 }) => fetchAPI<any>('/api/revenue/simulate', {
   method: 'POST',
@@ -36,4 +38,16 @@ export const generateRevenuePlan = (revenueGoal: string) => fetchAPI<any>('/api/
   body: JSON.stringify({ revenueGoal })
 });
 
-export const getRevenueFeed = () => fetchAPI<any[]>('/api/revenue/feed');
+export const getRevenueOpportunities = () => fetchAPI<any[]>('/api/revenue/opportunities');
+
+export const saveCampaignMemory = (data: {
+  campaignName: string;
+  audienceSegment: string;
+  channel: string;
+  revenue: number;
+  conversionRate: number;
+  learnings: string[];
+}) => fetchAPI<any>('/api/revenue/memories', {
+  method: 'POST',
+  body: JSON.stringify(data)
+});

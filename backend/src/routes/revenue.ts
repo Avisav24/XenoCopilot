@@ -212,7 +212,8 @@ Output ONLY a strictly formatted JSON array of objects with the exact keys:
     "recoverableRevenue": 200000,
     "evidence": ["Point 1", "Point 2", "Point 3"],
     "recommendation": "Launch X Campaign",
-    "confidenceReason": "Based on Y"
+    "confidenceReason": "Based on Y",
+    "predictedLossDate": "21 Days"
   }
 ]`;
 
@@ -247,12 +248,20 @@ Output ONLY a strictly formatted JSON array of objects with the exact keys:
     audienceName: z.string().optional(),
     channel: z.string(),
     offer: z.string().optional(),
+    discount: z.string().optional(),
+    sendTime: z.string().optional(),
     campaignGoal: z.string()
   });
 
   fastify.post('/api/revenue/simulate', async (request, reply) => {
     try {
       const input = SimulateSchema.parse(request.body);
+
+      // Fetch Campaign Memories for the memory engine
+      const memories = await prisma.campaignMemory.findMany({
+        take: 5,
+        orderBy: { created_at: 'desc' }
+      });
 
       const dbContext = {
         historicalConversion: {
@@ -261,6 +270,7 @@ Output ONLY a strictly formatted JSON array of objects with the exact keys:
           'SMS': 3.5
         },
         avgAOV: 3200,
+        recentMemories: memories
       };
 
       const systemPrompt = `You are the XenoCopilot AI Decision Simulator.
@@ -273,9 +283,10 @@ Output ONLY a JSON object with:
   "expectedOpenRate": 65.5,
   "expectedCTR": 12.4,
   "expectedConversionRate": 6.8,
+  "expectedPurchasers": 28,
   "expectedRevenue": 342000,
   "expectedROI": 4.2,
-  "risks": ["Risk 1", "Risk 2"],
+  "risk": "Low",
   "reasoning": ["Reason 1", "Reason 2"]
 }`;
 
@@ -283,6 +294,8 @@ Output ONLY a JSON object with:
 Audience: ${input.audienceName || input.segmentId || 'Target Audience'}
 Channel: ${input.channel}
 Offer: ${input.offer || 'Standard'}
+Discount: ${input.discount || 'None'}
+Send Time: ${input.sendTime || 'Any'}
 Goal: ${input.campaignGoal}
 
 Historical Baselines: ${JSON.stringify(dbContext)}`;
@@ -320,7 +333,10 @@ The sum of 'potentialRevenue' across opportunities should roughly equal or sligh
 
 Output ONLY a JSON object:
 {
-  "totalForecast": 1040000,
+  "projectedTotalRevenue": 1040000,
+  "gapAnalysis": "Slightly over target.",
+  "expectedCompletionDate": "Month End",
+  "status": "Goal Achievable",
   "opportunities": [
     {
       "title": "Campaign Name",
@@ -350,18 +366,28 @@ Output ONLY a JSON object:
     }
   });
 
-  // 4. REVENUE COMMAND FEED
-  fastify.get('/api/revenue/feed', async (request, reply) => {
+  // 4. REVENUE OPPORTUNITIES (Merged)
+  fastify.get('/api/revenue/opportunities', async (request, reply) => {
     try {
-      const systemPrompt = `Generate 4 live AI-generated insight alerts for a "Bloomberg Terminal for Marketers".
-Categorize them strictly as one of: "Revenue Opportunity", "Revenue Risk", "Campaign Insight", or "New Segment Detected".
-
+      const customers = await prisma.customer.findMany({
+        include: {
+          customer_personas: { include: { persona: true } },
+          orders: true
+        }
+      });
+      
+      const systemPrompt = `You are the XenoCopilot Revenue Opportunity Engine.
+Identify 3 positive revenue creation opportunities (e.g. Upsells, Cross-sells).
 Output ONLY a JSON array:
 [
   {
-    "category": "Revenue Risk",
-    "message": "VIP engagement down 24% this week",
-    "timestamp": "2 mins ago"
+    "opportunity": "Dormant Customer Recovery",
+    "potentialRevenue": 170000,
+    "audience": 428,
+    "confidence": 82,
+    "channel": "WhatsApp",
+    "reasoning": ["Previously active", "Historical recovery 3.1%"],
+    "action": "Launch Campaign"
   }
 ]`;
 
@@ -369,16 +395,46 @@ Output ONLY a JSON array:
         genaiInstances,
         groqInstances,
         systemPrompt,
-        "Generate live feed.",
-        0.7,
+        `Find opportunities from ${customers.length} customers.`,
+        0.3,
         true
       );
 
-      const feed = JSON.parse(aiResponse.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
-      return reply.send(feed);
+      const opps = JSON.parse(aiResponse.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
+      return reply.send(Array.isArray(opps) ? opps : [opps]);
     } catch (err) {
       console.error(err);
-      return reply.status(500).send({ error: 'Feed failed' });
+      return reply.status(500).send({ error: 'Failed to find opportunities' });
+    }
+  });
+
+  // 5. CAMPAIGN MEMORIES
+  const MemorySchema = z.object({
+    campaignName: z.string(),
+    audienceSegment: z.string(),
+    channel: z.string(),
+    revenue: z.number(),
+    conversionRate: z.number(),
+    learnings: z.array(z.string())
+  });
+
+  fastify.post('/api/revenue/memories', async (request, reply) => {
+    try {
+      const input = MemorySchema.parse(request.body);
+      const memory = await prisma.campaignMemory.create({
+        data: {
+          campaign_name: input.campaignName,
+          audience_segment: input.audienceSegment,
+          channel: input.channel,
+          revenue: input.revenue,
+          conversion_rate: input.conversionRate,
+          learnings: input.learnings
+        }
+      });
+      return reply.send(memory);
+    } catch (err) {
+      console.error(err);
+      return reply.status(500).send({ error: 'Failed to save memory' });
     }
   });
 }

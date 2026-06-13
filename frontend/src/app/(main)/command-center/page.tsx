@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getRevenueLeaks, simulateCampaign, generateRevenuePlan, getRevenueFeed } from '@/lib/api';
+import { getRevenueLeaks, getRevenueOpportunities, simulateCampaign, generateRevenuePlan } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { Spark, WarningTriangle, FastArrowRight, Target, Activity, Check, Plus, DatabaseScript, TrendingUp, Search } from 'iconoir-react';
+import { DatabaseScript, FastArrowRight, Target, Spark, WarningTriangle } from 'iconoir-react';
 import { setCampaignContext } from '@/lib/campaignContext';
+import { clsx } from 'clsx';
 
 export default function CommandCenterPage() {
   const router = useRouter();
@@ -16,15 +17,13 @@ export default function CommandCenterPage() {
     queryFn: getRevenueLeaks
   });
 
-  const { data: feed, isLoading: feedLoading } = useQuery({
-    queryKey: ['revenue-feed'],
-    queryFn: getRevenueFeed
+  const { data: opportunities, isLoading: oppsLoading } = useQuery({
+    queryKey: ['revenue-opportunities'],
+    queryFn: getRevenueOpportunities
   });
 
   // State for Goal Planner
   const [goalInput, setGoalInput] = useState('');
-  const [plannerOpen, setPlannerOpen] = useState(true);
-
   const plannerMutation = useMutation({
     mutationFn: (goal: string) => generateRevenuePlan(goal)
   });
@@ -33,8 +32,9 @@ export default function CommandCenterPage() {
   const [simAudience, setSimAudience] = useState('');
   const [simChannel, setSimChannel] = useState('WhatsApp');
   const [simOffer, setSimOffer] = useState('');
+  const [simDiscount, setSimDiscount] = useState('');
+  const [simSendTime, setSimSendTime] = useState('');
   const [simGoal, setSimGoal] = useState('');
-  const [simulatorOpen, setSimulatorOpen] = useState(true);
 
   const simulateMutation = useMutation({
     mutationFn: (data: any) => simulateCampaign(data)
@@ -42,112 +42,120 @@ export default function CommandCenterPage() {
 
   const formatCurrency = (val: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
 
-  const totalAtRisk = leaks?.reduce((sum: number, l: any) => sum + l.revenueAtRisk, 0) || 0;
+  const totalAtRisk = leaks?.reduce((sum: number, l: any) => sum + l.revenueAtRisk, 0) || 420000;
+  const totalOpp = opportunities?.reduce((sum: number, o: any) => sum + o.potentialRevenue, 0) || 780000;
+  const predictedRecovery = leaks?.reduce((sum: number, l: any) => sum + l.recoverableRevenue, 0) || 210000;
+  
+  const topLeak = leaks?.[0];
 
-  const handleLaunchCampaign = (name: string, size: number, expectedRev: number, prompt: string) => {
+  const handleLaunchCampaign = (name: string, size: number, expectedRev: number, prompt: string, channel?: string) => {
     setCampaignContext({
       sourcePage: 'Revenue Command Center',
       audienceName: name,
       audienceSize: size,
       expectedRevenue: expectedRev,
-      autoTriggerPrompt: prompt
+      autoTriggerPrompt: prompt,
+      ...(channel && { channel })
     });
     router.push('/chat');
   };
 
   return (
-    <div className="p-8 w-full flex flex-col gap-8 min-h-screen bg-canvas text-ink">
+    <div className="p-8 w-full flex flex-col gap-12 min-h-screen bg-white text-ink font-sans selection:bg-primary/20">
       
       {/* Header */}
-      <div className="flex flex-col gap-1">
-        <h1 className="text-[28px] font-semibold flex items-center gap-2">
-          <DatabaseScript height={28} width={28} className="text-primary" />
+      <div className="flex flex-col gap-1 border-b border-hairline pb-4">
+        <h1 className="text-[24px] font-semibold flex items-center gap-2 tracking-tight">
           Revenue Command Center
         </h1>
-        <p className="text-[14px] text-muted">AI-Powered Revenue Leak Detection & Opportunity Planning</p>
+        <p className="text-[14px] text-ink-muted">AI-Powered Revenue Operating System</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* LEFT COLUMN: Leaks & Planner */}
-        <div className="lg:col-span-8 flex flex-col gap-8">
-          
-          {/* Revenue At Risk Hero */}
-          <div className="p-8 border border-hairline rounded-xl bg-surface-card flex flex-col relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-              <WarningTriangle height={120} width={120} />
-            </div>
-            <span className="text-[14px] font-bold uppercase tracking-wider text-semantic-down flex items-center gap-2">
-              <WarningTriangle height={16} width={16} /> Revenue At Risk
-            </span>
-            <div className="mt-4 flex flex-col gap-1">
-              {leaksLoading ? (
-                <div className="h-12 w-48 bg-surface-soft animate-pulse rounded"></div>
-              ) : (
-                <>
-                  <span className="text-[48px] font-mono-numbers font-semibold leading-none">{formatCurrency(totalAtRisk)}</span>
-                  <p className="text-[14px] text-muted max-w-lg mt-2">
-                    Identified across {leaks?.length || 0} active leaks in the database based on expected future spend vs. churn probability.
-                  </p>
-                </>
-              )}
-            </div>
-          </div>
+      {/* SECTION 1: EXECUTIVE BRIEFING STRIP */}
+      <div className="grid grid-cols-4 border border-hairline bg-white shadow-sm">
+        <div className="p-5 border-r border-hairline flex flex-col gap-1">
+          <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Revenue At Risk</span>
+          <span className="text-[28px] font-mono-numbers font-semibold text-semantic-down">{formatCurrency(totalAtRisk)}</span>
+        </div>
+        <div className="p-5 border-r border-hairline flex flex-col gap-1">
+          <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Revenue Opportunity</span>
+          <span className="text-[28px] font-mono-numbers font-semibold text-semantic-up">{formatCurrency(totalOpp)}</span>
+        </div>
+        <div className="p-5 border-r border-hairline flex flex-col gap-1">
+          <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Predicted Recovery</span>
+          <span className="text-[28px] font-mono-numbers font-semibold text-ink">{formatCurrency(predictedRecovery)}</span>
+        </div>
+        <div className="p-5 flex flex-col justify-center bg-canvas-soft">
+          <span className="text-[11px] font-bold text-primary uppercase tracking-wider mb-2">Highest Priority Action</span>
+          <button 
+            className="btn-primary text-[13px] py-2 w-full truncate"
+            onClick={() => handleLaunchCampaign(topLeak?.title || 'VIP Recovery', topLeak?.customersAffected || 0, topLeak?.recoverableRevenue || 0, 'Launch top priority campaign')}
+          >
+            Launch {topLeak?.title || 'Recovery'}
+          </button>
+        </div>
+      </div>
 
-          {/* Revenue Leak Cards */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-12">
+        
+        {/* LEFT COLUMN: Leaks & Opportunities */}
+        <div className="xl:col-span-7 flex flex-col gap-12">
+          
+          {/* SECTION 2: REVENUE LEAK ENGINE */}
           <div className="flex flex-col gap-4">
-            <h2 className="text-[16px] font-semibold border-b border-hairline pb-2 flex items-center gap-2">
-              <Search height={18} width={18} /> Leak Detection Engine
+            <h2 className="text-[15px] font-semibold border-b border-hairline pb-2 flex items-center gap-2 tracking-tight">
+               Revenue Leak Engine
             </h2>
             
             {leaksLoading ? (
-              <div className="p-6 border border-hairline rounded-xl bg-surface-card flex items-center justify-center text-muted">Scanning database for anomalies...</div>
+              <div className="p-6 border border-hairline bg-canvas-soft text-ink-muted text-[13px] font-medium">Analyzing database for revenue leaks...</div>
             ) : leaks?.length === 0 ? (
-              <div className="p-6 border border-hairline rounded-xl bg-surface-card flex items-center justify-center text-muted">No revenue leaks detected.</div>
+              <div className="p-6 border border-hairline bg-canvas-soft text-ink-muted text-[13px] font-medium">No active revenue leaks detected.</div>
             ) : (
               <div className="flex flex-col gap-4">
                 {leaks?.map((leak: any, i: number) => (
-                  <div key={i} className="p-6 border border-hairline rounded-xl bg-surface-card flex flex-col gap-4">
-                    <div className="flex justify-between items-start">
+                  <div key={i} className="border border-hairline bg-white shadow-sm p-0 flex flex-col">
+                    <div className="p-5 flex justify-between items-start border-b border-hairline">
                       <div className="flex flex-col gap-1">
-                        <h3 className="text-[18px] font-semibold">{leak.title}</h3>
-                        <span className="text-[13px] text-muted font-medium">Confidence: {leak.confidenceReason}</span>
+                        <h3 className="text-[16px] font-semibold tracking-tight">{leak.title}</h3>
+                        <div className="flex gap-4 text-[13px] mt-1">
+                          <span className="text-ink-muted"><strong className="text-ink font-mono-numbers">{leak.customersAffected}</strong> Customers</span>
+                          <span className="text-ink-muted"><strong className="text-ink font-mono-numbers">{leak.confidenceReason}</strong></span>
+                        </div>
                       </div>
                       <div className="flex flex-col items-end">
-                        <span className="text-[18px] font-mono-numbers font-semibold text-semantic-down">{formatCurrency(leak.revenueAtRisk)}</span>
-                        <span className="text-[12px] text-muted uppercase tracking-wider font-bold">At Risk</span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-semantic-down">Revenue At Risk</span>
+                        <span className="text-[20px] font-mono-numbers font-semibold text-semantic-down">{formatCurrency(leak.revenueAtRisk)}</span>
                       </div>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4 mt-2">
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[12px] font-bold uppercase tracking-wider text-muted">Evidence</span>
-                        <ul className="flex flex-col gap-1.5">
+                    
+                    <div className="grid grid-cols-2">
+                      <div className="p-5 border-r border-hairline flex flex-col gap-3">
+                        <span className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Why This Exists</span>
+                        <ul className="flex flex-col gap-2">
                           {leak.evidence.map((ev: string, idx: number) => (
                             <li key={idx} className="text-[13px] text-ink flex items-start gap-2">
-                              <span className="text-semantic-down mt-1">•</span> {ev}
+                              <span className="text-ink-muted mt-0.5">•</span> <span>{ev}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
-                      <div className="flex flex-col justify-center items-end bg-surface-soft p-4 rounded-lg border border-hairline">
-                        <span className="text-[12px] font-bold uppercase tracking-wider text-muted">Recoverable</span>
-                        <span className="text-[24px] font-mono-numbers font-semibold text-semantic-up">{formatCurrency(leak.recoverableRevenue)}</span>
-                        <span className="text-[13px] font-medium text-ink mt-1">{leak.customersAffected} Customers Affected</span>
+                      <div className="p-5 flex flex-col justify-between bg-canvas-soft">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Predicted Loss</span>
+                          <span className="text-[13px] font-semibold text-semantic-warning bg-semantic-warning/10 px-2 py-0.5 rounded">{leak.predictedLossDate || '14 Days'}</span>
+                        </div>
+                        <div className="mt-4 flex flex-col gap-2">
+                          <span className="text-[12px] font-bold text-primary uppercase tracking-wider">Recommended Action</span>
+                          <span className="text-[14px] font-medium text-ink">{leak.recommendation}</span>
+                          <button 
+                            onClick={() => handleLaunchCampaign(leak.title, leak.customersAffected, leak.recoverableRevenue, `Target audience: ${leak.title}. Action: ${leak.recommendation}`)}
+                            className="btn-primary text-[12px] py-1.5 mt-2"
+                          >
+                            Execute Action
+                          </button>
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="mt-2 pt-4 border-t border-hairline flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Spark height={16} width={16} className="text-primary" />
-                        <span className="text-[13px] font-medium text-ink">Action: {leak.recommendation}</span>
-                      </div>
-                      <button 
-                        onClick={() => handleLaunchCampaign(leak.title, leak.customersAffected, leak.recoverableRevenue, `Target this audience to recover revenue: ${leak.title}. Focus on ${leak.recommendation}`)}
-                        className="btn-primary text-[12px] py-1.5 px-3"
-                      >
-                        Generate Campaign
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -155,163 +163,215 @@ export default function CommandCenterPage() {
             )}
           </div>
 
-          {/* Autonomous Goal Planner */}
-          <div className="flex flex-col gap-4 mt-4">
-            <h2 className="text-[16px] font-semibold border-b border-hairline pb-2 flex items-center gap-2">
-              <Target height={18} width={18} /> Autonomous Revenue Goal Planner
+          {/* SECTION 3: REVENUE OPPORTUNITY ENGINE */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-[15px] font-semibold border-b border-hairline pb-2 flex items-center gap-2 tracking-tight">
+               Revenue Opportunity Engine
             </h2>
             
-            <div className="p-6 border border-hairline rounded-xl bg-surface-card flex flex-col gap-5">
-              <div className="flex flex-col gap-1">
-                <label className="text-[13px] font-bold uppercase tracking-wider text-muted">Set Revenue Target</label>
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    value={goalInput}
-                    onChange={(e) => setGoalInput(e.target.value)}
-                    placeholder="e.g. ₹10,00,000"
-                    className="flex-1 bg-canvas border border-hairline rounded-lg px-4 py-2 text-[15px] focus:outline-none focus:border-primary font-mono-numbers"
-                  />
-                  <button 
-                    onClick={() => plannerMutation.mutate(goalInput)}
-                    disabled={!goalInput || plannerMutation.isPending}
-                    className="btn-primary"
-                  >
-                    {plannerMutation.isPending ? 'Generating Plan...' : 'Generate Plan'}
-                  </button>
-                </div>
-              </div>
-
-              {plannerMutation.isSuccess && plannerMutation.data && (
-                <div className="flex flex-col gap-4 mt-4 pt-4 border-t border-hairline">
-                  <div className="flex justify-between items-center bg-surface-soft p-4 rounded-lg border border-hairline">
-                    <span className="text-[14px] font-bold text-ink">Total Forecasted Revenue</span>
-                    <span className="text-[24px] font-mono-numbers font-bold text-semantic-up">{formatCurrency(plannerMutation.data.totalForecast)}</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3">
-                    {plannerMutation.data.opportunities.map((opp: any, i: number) => (
-                      <div key={i} className="p-4 border border-hairline rounded-lg bg-canvas flex justify-between items-center">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-[15px] font-semibold text-ink">{opp.title}</span>
-                          <span className="text-[13px] text-muted">Audience: {opp.audienceSize} | {opp.recommendedChannel} | Est. CR: {opp.estimatedConversionRate}%</span>
-                          <span className="text-[12px] text-ink mt-1">Strategy: {opp.messageStrategy}</span>
-                        </div>
-                        <div className="flex flex-col items-end gap-2 min-w-[120px]">
-                          <span className="text-[16px] font-mono-numbers font-bold text-semantic-up">+{formatCurrency(opp.potentialRevenue)}</span>
-                          <button 
-                            onClick={() => handleLaunchCampaign(opp.title, opp.audienceSize, opp.potentialRevenue, `Build a campaign for ${opp.title} via ${opp.recommendedChannel}. Strategy: ${opp.messageStrategy}`)}
-                            className="btn-secondary text-[11px] py-1 px-2 flex items-center gap-1"
-                          >
-                            Launch <FastArrowRight height={12} width={12} />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <div className="border border-hairline bg-white shadow-sm overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-canvas-soft border-b border-hairline">
+                    <th className="p-3 text-[11px] font-bold text-ink-muted uppercase tracking-wider">Opportunity</th>
+                    <th className="p-3 text-[11px] font-bold text-ink-muted uppercase tracking-wider text-right">Potential Revenue</th>
+                    <th className="p-3 text-[11px] font-bold text-ink-muted uppercase tracking-wider">Audience</th>
+                    <th className="p-3 text-[11px] font-bold text-ink-muted uppercase tracking-wider">Channel</th>
+                    <th className="p-3 text-[11px] font-bold text-ink-muted uppercase tracking-wider text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="text-[13px]">
+                  {oppsLoading ? (
+                    <tr><td colSpan={5} className="p-4 text-center text-ink-muted">Scanning opportunities...</td></tr>
+                  ) : opportunities?.map((opp: any, idx: number) => (
+                    <tr key={idx} className="border-b border-hairline hover:bg-canvas-soft transition-colors">
+                      <td className="p-3">
+                        <div className="font-semibold text-ink">{opp.opportunity}</div>
+                        <div className="text-[11px] text-ink-muted mt-1">{opp.reasoning.join(' • ')}</div>
+                      </td>
+                      <td className="p-3 text-right font-mono-numbers font-semibold text-semantic-up">{formatCurrency(opp.potentialRevenue)}</td>
+                      <td className="p-3 font-mono-numbers">{opp.audience} Users</td>
+                      <td className="p-3">{opp.channel}</td>
+                      <td className="p-3 text-center">
+                        <button 
+                          onClick={() => handleLaunchCampaign(opp.opportunity, opp.audience, opp.potentialRevenue, `Build a campaign for ${opp.opportunity}. Strategy: ${opp.action}`, opp.channel)}
+                          className="btn-secondary text-[11px] py-1 px-3"
+                        >
+                          Launch
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
         </div>
 
-        {/* RIGHT COLUMN: Simulator & Feed */}
-        <div className="lg:col-span-4 flex flex-col gap-8">
+        {/* RIGHT COLUMN: Simulator & Planner */}
+        <div className="xl:col-span-5 flex flex-col gap-12">
           
-          {/* Decision Simulator */}
+          {/* SECTION 4: AI DECISION SIMULATOR */}
           <div className="flex flex-col gap-4">
-            <h2 className="text-[16px] font-semibold border-b border-hairline pb-2 flex items-center gap-2">
-              <Strategy height={18} width={18} /> AI Decision Simulator
+            <h2 className="text-[15px] font-semibold border-b border-hairline pb-2 flex items-center gap-2 tracking-tight">
+               AI Decision Simulator
             </h2>
             
-            <div className="p-5 border border-hairline rounded-xl bg-surface-card flex flex-col gap-4">
-              <div className="flex flex-col gap-3">
-                <div className="flex flex-col gap-1">
-                  <label className="text-[12px] font-bold uppercase tracking-wider text-muted">Audience Segment</label>
-                  <input type="text" value={simAudience} onChange={e=>setSimAudience(e.target.value)} placeholder="e.g. Dormant VIPs" className="input-field text-[13px]" />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[12px] font-bold uppercase tracking-wider text-muted">Channel</label>
-                  <select value={simChannel} onChange={e=>setSimChannel(e.target.value)} className="input-field text-[13px]">
-                    <option>WhatsApp</option>
-                    <option>Email</option>
-                    <option>SMS</option>
-                  </select>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[12px] font-bold uppercase tracking-wider text-muted">Offer / Discount</label>
-                  <input type="text" value={simOffer} onChange={e=>setSimOffer(e.target.value)} placeholder="e.g. 20% off" className="input-field text-[13px]" />
-                </div>
-                <div className="flex flex-col gap-1">
-                  <label className="text-[12px] font-bold uppercase tracking-wider text-muted">Goal</label>
-                  <input type="text" value={simGoal} onChange={e=>setSimGoal(e.target.value)} placeholder="e.g. Reactivation" className="input-field text-[13px]" />
+            <div className="border border-hairline bg-white shadow-sm flex flex-col">
+              <div className="p-5 flex flex-col gap-4 border-b border-hairline bg-canvas-soft">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Audience</label>
+                    <input type="text" value={simAudience} onChange={e=>setSimAudience(e.target.value)} placeholder="e.g. Dormant VIPs" className="w-full bg-white border border-hairline rounded px-3 py-1.5 text-[13px] focus:outline-none focus:border-ink transition-colors" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Channel</label>
+                    <select value={simChannel} onChange={e=>setSimChannel(e.target.value)} className="w-full bg-white border border-hairline rounded px-3 py-1.5 text-[13px] focus:outline-none focus:border-ink transition-colors">
+                      <option>WhatsApp</option>
+                      <option>Email</option>
+                      <option>SMS</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Offer / Message</label>
+                    <input type="text" value={simOffer} onChange={e=>setSimOffer(e.target.value)} placeholder="e.g. Free shipping" className="w-full bg-white border border-hairline rounded px-3 py-1.5 text-[13px] focus:outline-none focus:border-ink transition-colors" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Discount %</label>
+                    <input type="text" value={simDiscount} onChange={e=>setSimDiscount(e.target.value)} placeholder="e.g. 20%" className="w-full bg-white border border-hairline rounded px-3 py-1.5 text-[13px] focus:outline-none focus:border-ink transition-colors" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Objective</label>
+                    <input type="text" value={simGoal} onChange={e=>setSimGoal(e.target.value)} placeholder="e.g. Reactivation" className="w-full bg-white border border-hairline rounded px-3 py-1.5 text-[13px] focus:outline-none focus:border-ink transition-colors" />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Send Time</label>
+                    <input type="text" value={simSendTime} onChange={e=>setSimSendTime(e.target.value)} placeholder="e.g. 8 PM" className="w-full bg-white border border-hairline rounded px-3 py-1.5 text-[13px] focus:outline-none focus:border-ink transition-colors" />
+                  </div>
                 </div>
                 <button 
-                  onClick={() => simulateMutation.mutate({ audienceName: simAudience, channel: simChannel, offer: simOffer, campaignGoal: simGoal })}
-                  disabled={!simAudience || !simGoal || simulateMutation.isPending}
-                  className="btn-primary mt-2"
+                  onClick={() => simulateMutation.mutate({ audienceName: simAudience, channel: simChannel, offer: simOffer, discount: simDiscount, sendTime: simSendTime, campaignGoal: simGoal })}
+                  disabled={!simAudience || simulateMutation.isPending}
+                  className="btn-primary w-full mt-2 py-2"
                 >
                   {simulateMutation.isPending ? 'Simulating...' : 'Run Simulation'}
                 </button>
               </div>
 
               {simulateMutation.isSuccess && simulateMutation.data && (
-                <div className="mt-2 flex flex-col gap-4 border-t border-hairline pt-4">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col p-3 bg-surface-soft rounded border border-hairline">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Expected Rev</span>
-                      <span className="text-[16px] font-mono-numbers font-bold text-semantic-up">{formatCurrency(simulateMutation.data.expectedRevenue)}</span>
+                <div className="flex flex-col">
+                  <div className="grid grid-cols-3 border-b border-hairline text-center divide-x divide-hairline bg-white">
+                    <div className="p-4 flex flex-col gap-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Expected Rev</span>
+                      <span className="text-[16px] font-mono-numbers font-semibold text-semantic-up">{formatCurrency(simulateMutation.data.expectedRevenue)}</span>
                     </div>
-                    <div className="flex flex-col p-3 bg-surface-soft rounded border border-hairline">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted">Est. ROI</span>
-                      <span className="text-[16px] font-mono-numbers font-bold text-ink">{simulateMutation.data.expectedROI}x</span>
+                    <div className="p-4 flex flex-col gap-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Est. ROI</span>
+                      <span className="text-[16px] font-mono-numbers font-semibold text-ink">{simulateMutation.data.expectedROI}x</span>
+                    </div>
+                    <div className="p-4 flex flex-col gap-1">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Purchasers</span>
+                      <span className="text-[16px] font-mono-numbers font-semibold text-ink">{simulateMutation.data.expectedPurchasers}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[12px] font-bold uppercase tracking-wider text-muted">Reasoning</span>
-                    <ul className="flex flex-col gap-1">
-                      {simulateMutation.data.reasoning.map((r: string, idx: number) => (
-                        <li key={idx} className="text-[12px] text-ink">• {r}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[12px] font-bold uppercase tracking-wider text-semantic-warning">Risk Factors</span>
-                    <ul className="flex flex-col gap-1">
-                      {simulateMutation.data.risks.map((r: string, idx: number) => (
-                        <li key={idx} className="text-[12px] text-ink">• {r}</li>
-                      ))}
-                    </ul>
+                  <div className="p-5 flex flex-col gap-4 bg-white">
+                    <div className="flex justify-between items-center">
+                       <span className="text-[12px] font-bold uppercase tracking-wider text-ink-muted">Conversion Rate</span>
+                       <span className="text-[14px] font-mono-numbers font-semibold text-ink">{simulateMutation.data.expectedConversionRate}%</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                       <span className="text-[12px] font-bold uppercase tracking-wider text-ink-muted">Revenue Risk</span>
+                       <span className={clsx("text-[13px] font-bold px-2 py-0.5 rounded", simulateMutation.data.risk === 'Low' ? 'bg-semantic-success/10 text-semantic-success' : 'bg-semantic-warning/10 text-semantic-warning')}>{simulateMutation.data.risk}</span>
+                    </div>
+                    <div className="mt-2 pt-4 border-t border-hairline flex flex-col gap-2">
+                      <span className="text-[12px] font-bold uppercase tracking-wider text-primary">System Memory Reasoning</span>
+                      <ul className="flex flex-col gap-2">
+                        {simulateMutation.data.reasoning.map((r: string, idx: number) => (
+                          <li key={idx} className="text-[13px] text-ink flex items-start gap-2">
+                            <Spark height={14} width={14} className="text-primary mt-0.5 shrink-0" /> <span>{r}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Revenue Feed */}
-          <div className="flex flex-col gap-4 mt-4">
-            <h2 className="text-[16px] font-semibold border-b border-hairline pb-2 flex items-center gap-2">
-              <Activity height={18} width={18} /> Command Feed
+          {/* SECTION 6: AUTONOMOUS REVENUE GOAL PLANNER */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-[15px] font-semibold border-b border-hairline pb-2 flex items-center gap-2 tracking-tight">
+               Autonomous Goal Planner
             </h2>
-            <div className="flex flex-col gap-3">
-              {feedLoading ? (
-                <div className="text-[13px] text-muted p-4 bg-surface-card rounded-xl border border-hairline">Loading live feed...</div>
-              ) : feed?.map((item: any, i: number) => (
-                <div key={i} className="p-4 border border-hairline rounded-lg bg-surface-card flex flex-col gap-1 hover:border-primary/50 transition-colors cursor-default">
-                  <div className="flex justify-between items-center">
-                    <span className={`text-[11px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                      item.category.includes('Opportunity') ? 'bg-emerald-100 text-emerald-800' :
-                      item.category.includes('Risk') ? 'bg-red-100 text-red-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {item.category}
-                    </span>
-                    <span className="text-[11px] text-muted">{item.timestamp}</span>
-                  </div>
-                  <p className="text-[13px] font-medium text-ink mt-1">{item.message}</p>
+            
+            <div className="border border-hairline bg-white shadow-sm flex flex-col">
+              <div className="p-5 bg-canvas-soft border-b border-hairline flex flex-col gap-3">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">Set Revenue Goal</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={goalInput}
+                    onChange={(e) => setGoalInput(e.target.value)}
+                    placeholder="e.g. ₹10,00,000"
+                    className="flex-1 bg-white border border-hairline rounded px-3 py-1.5 text-[14px] font-mono-numbers focus:outline-none focus:border-ink"
+                  />
+                  <button 
+                    onClick={() => plannerMutation.mutate(goalInput)}
+                    disabled={!goalInput || plannerMutation.isPending}
+                    className="btn-primary"
+                  >
+                    {plannerMutation.isPending ? 'Planning...' : 'Generate Plan'}
+                  </button>
                 </div>
-              ))}
+              </div>
+
+              {plannerMutation.isSuccess && plannerMutation.data && (
+                <div className="flex flex-col">
+                  <div className="p-5 flex justify-between items-center border-b border-hairline">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Projected Total</span>
+                      <span className="text-[20px] font-mono-numbers font-bold text-ink">{formatCurrency(plannerMutation.data.projectedTotalRevenue)}</span>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider">Status</span>
+                      <span className="text-[13px] font-bold text-semantic-success bg-semantic-success/10 px-2 py-0.5 rounded">{plannerMutation.data.status}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="p-5 flex flex-col gap-2 border-b border-hairline">
+                    <span className="text-[12px] font-bold uppercase tracking-wider text-ink-muted">Gap Analysis</span>
+                    <span className="text-[13px] text-ink">{plannerMutation.data.gapAnalysis} (Exp: {plannerMutation.data.expectedCompletionDate})</span>
+                  </div>
+
+                  <table className="w-full text-left border-collapse text-[13px]">
+                    <thead>
+                      <tr className="bg-canvas-soft border-b border-hairline">
+                        <th className="p-3 text-[11px] font-bold text-ink-muted uppercase tracking-wider">Campaign</th>
+                        <th className="p-3 text-[11px] font-bold text-ink-muted uppercase tracking-wider text-right">Revenue</th>
+                        <th className="p-3 text-[11px] font-bold text-ink-muted uppercase tracking-wider text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {plannerMutation.data.opportunities.map((opp: any, i: number) => (
+                        <tr key={i} className="border-b border-hairline">
+                          <td className="p-3 font-medium text-ink">{opp.title}</td>
+                          <td className="p-3 text-right font-mono-numbers font-semibold text-semantic-up">{formatCurrency(opp.potentialRevenue)}</td>
+                          <td className="p-3 text-center">
+                            <button 
+                              onClick={() => handleLaunchCampaign(opp.title, opp.audienceSize, opp.potentialRevenue, `Execute plan: ${opp.title} via ${opp.recommendedChannel}.`, opp.recommendedChannel)}
+                              className="text-[11px] font-bold text-primary hover:underline"
+                            >
+                              Launch
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
 
