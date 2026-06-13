@@ -13,6 +13,8 @@
   [![BullMQ](https://img.shields.io/badge/BullMQ-CC0000?style=for-the-badge&logo=redis&logoColor=white)](https://bullmq.io/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
   [![pnpm](https://img.shields.io/badge/pnpm-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io/)
+  
+  **[🔴 Live Demo](https://xenocopilot.vercel.app/)**
 </div>
 
 ---
