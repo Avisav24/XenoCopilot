@@ -3,7 +3,7 @@ services:
     name: xenocopilot-backend
     env: node
     rootDir: backend
-    buildCommand: pnpm --filter @xenocopilot/backend db:generate && pnpm --filter @xenocopilot/backend build
+    buildCommand: pnpm install --production=false && pnpm --filter @xenocopilot/backend db:generate && pnpm --filter @xenocopilot/backend build
     startCommand: pnpm --filter @xenocopilot/backend start
     envVars:
       - key: DATABASE_URL
