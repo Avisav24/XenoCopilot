@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Spark, ArrowUp, ArrowDown, Xmark, Group, Filter, GraphUp, WarningTriangle, User, DataTransferBoth, FastArrowRight, Sparks } from 'iconoir-react';
 import { useState } from 'react';
 import { clsx } from 'clsx';
+import { setCampaignContext } from '@/lib/campaignContext';
 
 export default function PersonasPage() {
   const router = useRouter();
@@ -116,7 +117,17 @@ export default function PersonasPage() {
                </div>
 
                <div className="flex justify-end pt-4 border-t border-slate-100 mt-auto">
-                  <button onClick={() => router.push(`/chat?persona=${selectedPersona.id}`)} className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3 rounded-lg transition-colors shadow-sm w-full">
+                  <button onClick={() => {
+                     setCampaignContext({
+                        sourcePage: 'Personas',
+                        audienceName: selectedPersona.name,
+                        audienceSize: selectedPersona.customerCount,
+                        expectedRevenue: selectedPersona.revenueContribution,
+                        recommendedChannel: selectedPersona.bestChannels?.[0]?.channel || 'Email',
+                        autoTriggerPrompt: `Create a ${selectedPersona.bestChannels?.[0]?.channel || 'Email'} campaign for ${selectedPersona.name}. Audience size ${selectedPersona.customerCount}. Average order value ₹${selectedPersona.avgAOV}. Generate the best campaign strategy.`
+                     });
+                     router.push('/chat');
+                  }} className="bg-slate-900 hover:bg-slate-800 text-white font-bold px-6 py-3 rounded-lg transition-colors shadow-sm w-full">
                      Generate Campaign for Audience
                   </button>
                </div>
@@ -185,7 +196,16 @@ export default function PersonasPage() {
                               <span className="text-[18px] font-bold text-emerald-600 font-mono-numbers">{nlResult.revenuePotential}</span>
                            </div>
                         </div>
-                        <button onClick={() => router.push('/chat')} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg transition-colors text-[13px]">
+                        <button onClick={() => {
+                           setCampaignContext({
+                              sourcePage: 'Segment Builder',
+                              audienceName: 'Custom Segment',
+                              audienceSize: nlResult.audienceSize,
+                              expectedRevenue: nlResult.revenuePotential,
+                              autoTriggerPrompt: `Create a campaign for a custom segment of ${nlResult.audienceSize} customers. Expected revenue is ${nlResult.revenuePotential}. Generate the best campaign strategy.`
+                           });
+                           router.push('/chat');
+                        }} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 rounded-lg transition-colors text-[13px]">
                            Generate Campaign
                         </button>
                      </div>

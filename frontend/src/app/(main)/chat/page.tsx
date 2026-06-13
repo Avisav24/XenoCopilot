@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchAPI } from '@/lib/api';
 import { Search, Play, EditPencil, Clock, CheckCircle, Plus, Filter, LayoutRight, MessageText, ArrowRight, ShieldCheck, Mail, SmartphoneDevice, HeadsetHelp, Phone, VideoCamera, MoreHoriz, Emoji, Camera, Attachment, SendDiagonal, Xmark, Spark } from 'iconoir-react';
 import { clsx } from 'clsx';
+import { getCampaignContext, clearCampaignContext, CampaignContextData } from '@/lib/campaignContext';
 
 function HighlightedMessage({ text }: { text: string }) {
   if (!text) return null;
@@ -43,6 +44,7 @@ function CampaignStudioContent() {
   const searchParams = useSearchParams();
   const audienceParam = searchParams.get('audience');
 
+  const [sourceContext, setSourceContext] = useState<CampaignContextData | null>(null);
   const [goal, setGoal] = useState(audienceParam || '');
   const [submittedGoal, setSubmittedGoal] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -50,7 +52,19 @@ function CampaignStudioContent() {
   const hasAutoSubmitted = useRef(false);
 
   useEffect(() => {
-    if (audienceParam && !hasAutoSubmitted.current && !isGenerating && !submittedGoal) {
+    const ctx = getCampaignContext();
+    if (ctx && !hasAutoSubmitted.current && !isGenerating && !submittedGoal) {
+      hasAutoSubmitted.current = true;
+      setSourceContext(ctx);
+      const prompt = ctx.autoTriggerPrompt || '';
+      setGoal(prompt);
+      clearCampaignContext();
+      
+      // Delay submit slightly to allow state to settle
+      setTimeout(() => {
+        handleCommandSubmit(undefined, prompt);
+      }, 50);
+    } else if (audienceParam && !hasAutoSubmitted.current && !isGenerating && !submittedGoal) {
       hasAutoSubmitted.current = true;
       handleCommandSubmit(undefined, audienceParam);
     }
@@ -187,6 +201,14 @@ function CampaignStudioContent() {
 
         {/* ── IMPROVEMENT 1: Goal Command Bar with Send Button ── */}
         <div className="w-full mb-2">
+          {sourceContext && (
+            <div className="mb-3 flex items-center gap-2">
+               <span className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Generated from:</span>
+               <span className="text-[12px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-1.5">
+                 {sourceContext.sourcePage} <ArrowRight height={12} width={12} className="opacity-50"/> {sourceContext.audienceName}
+               </span>
+            </div>
+          )}
           <form onSubmit={handleCommandSubmit} className="relative group">
             <Search height={18} width={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors pointer-events-none" />
             <input

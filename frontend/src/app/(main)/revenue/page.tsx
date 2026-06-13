@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, FastArrowRight, Plus, Group, DatabaseScript, Megaphone } from 'iconoir-react';
 import { useRouter } from 'next/navigation';
+import { setCampaignContext } from '@/lib/campaignContext';
 
 export default function RevenueOperationsPage() {
   const router = useRouter();
@@ -41,7 +42,18 @@ export default function RevenueOperationsPage() {
             <span className="text-[16px] font-bold text-slate-900 mt-1">WhatsApp</span>
             <span className="text-[12px] font-medium text-slate-500 mt-1">6.4% conversion rate</span>
          </div>
-          <div className="p-5 flex flex-col gap-1 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => router.push('/chat?audience=Dormant%20VIP%20Recovery')}>
+          <div className="p-5 flex flex-col gap-1 bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => {
+            setCampaignContext({
+              sourcePage: 'Revenue Operations',
+              audienceName: 'Dormant VIP Recovery',
+              audienceSize: 428,
+              expectedRevenue: '₹1.72L',
+              recommendedChannel: 'WhatsApp',
+              recommendedAction: 'Launch VIP Recovery',
+              autoTriggerPrompt: `Create a WhatsApp win-back campaign for 428 customers in the Dormant VIP Recovery segment. Expected recoverable revenue is ₹1.72L. Generate the best performing campaign strategy.`
+            });
+            router.push('/chat');
+          }}>
             <span className="text-[12px] font-semibold text-slate-900 uppercase tracking-wider">Recommended Action</span>
             <span className="text-[16px] font-bold text-slate-900 mt-1">Launch VIP Recovery</span>
             <span className="text-[12px] font-medium text-slate-500 mt-1">Highest ROI opportunity</span>
@@ -82,7 +94,17 @@ export default function RevenueOperationsPage() {
                              </span>
                           </td>
                           <td className="py-5 px-6 text-right">
-                             <button onClick={() => router.push(`/chat?audience=${encodeURIComponent(row.opp)}`)} className="text-[13px] font-bold text-blue-600 hover:text-blue-800 transition-colors">
+                             <button onClick={() => {
+                                setCampaignContext({
+                                  sourcePage: 'Revenue Operations',
+                                  audienceName: row.opp,
+                                  audienceSize: row.aud,
+                                  expectedRevenue: row.rev,
+                                  recommendedChannel: 'WhatsApp',
+                                  autoTriggerPrompt: `Create a WhatsApp campaign for ${row.aud} customers in the ${row.opp} segment. Expected revenue impact is ${row.rev}. Generate the best performing campaign strategy.`
+                                });
+                                router.push('/chat');
+                             }} className="text-[13px] font-bold text-blue-600 hover:text-blue-800 transition-colors">
                                 Generate Campaign
                              </button>
                           </td>
@@ -101,7 +123,17 @@ export default function RevenueOperationsPage() {
               <h2 className="text-[18px] font-bold text-slate-900">Quick Actions</h2>
               
               <div className="border border-slate-200 rounded-xl bg-white shadow-sm p-3 flex flex-col gap-1">
-                 <button onClick={() => router.push('/chat?audience=Dormant%20VIP%20Recovery')} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 rounded-lg transition-colors group">
+                 <button onClick={() => {
+                    setCampaignContext({
+                      sourcePage: 'Revenue Operations',
+                      audienceName: 'Dormant VIP Recovery',
+                      audienceSize: 428,
+                      expectedRevenue: '₹1.72L',
+                      recommendedChannel: 'WhatsApp',
+                      autoTriggerPrompt: `Create a WhatsApp win-back campaign for 428 customers in the Dormant VIP Recovery segment. Expected recoverable revenue is ₹1.72L.`
+                    });
+                    router.push('/chat');
+                 }} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 rounded-lg transition-colors group">
                     <div className="w-8 h-8 rounded bg-blue-50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                        <Megaphone height={16} width={16} />
                     </div>

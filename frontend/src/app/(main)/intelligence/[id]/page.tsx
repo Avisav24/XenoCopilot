@@ -5,6 +5,7 @@ import { getCustomer, getNextBestAction } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { ArrowLeft, Spark, WarningTriangle, FastArrowRight } from 'iconoir-react';
+import { setCampaignContext } from '@/lib/campaignContext';
 
 const PERSONA_COLORS: Record<string, string> = {
   'VIP Customer': 'bg-primary',
@@ -221,7 +222,18 @@ export default function Customer360Page() {
 
                   </div>
 
-                  <button className="btn-primary w-full mt-2" onClick={() => router.push('/chat')}>
+                  <button className="btn-primary w-full mt-2" onClick={() => {
+                    setCampaignContext({
+                      sourcePage: 'Customer 360',
+                      audienceName: c.name,
+                      audienceSize: 1,
+                      expectedRevenue: nba.expectedRevenue,
+                      churnRisk: isAtRisk ? 'High' : 'Low',
+                      recommendedAction: nba.action,
+                      autoTriggerPrompt: `Create a personalized campaign for ${c.name}. Customer health score is ${c.health_score} with ${isAtRisk ? 'High' : 'Low'} churn risk. Expected revenue recovery is ₹${nba.expectedRevenue}.`
+                    });
+                    router.push('/chat');
+                  }}>
                     Execute Strategy
                   </button>
                 </div>

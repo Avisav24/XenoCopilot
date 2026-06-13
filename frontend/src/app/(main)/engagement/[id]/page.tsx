@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCampaignInsights } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
+import { setCampaignContext } from '@/lib/campaignContext';
 import { clsx } from 'clsx';
 import { NavArrowLeft, Play, Pause, Copy, Download, User, ArrowRight, CheckCircle } from 'iconoir-react';
 
@@ -71,7 +72,17 @@ export default function EngagementInsightsPage() {
           <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 transition-colors">
             <User height={16} width={16} /> View Audience
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 transition-colors">
+          <button onClick={() => {
+            setCampaignContext({
+               sourcePage: 'Campaign Detail',
+               audienceName: insights.persona || 'Audience',
+               audienceSize: insights.audience_count || 90,
+               expectedRevenue: funnel.revenue || 0,
+               recommendedChannel: insights.channel || 'WhatsApp',
+               autoTriggerPrompt: `Duplicate the "${insights.name}" campaign for ${insights.audience_count || 90} customers in the ${insights.persona || 'Audience'} segment via ${insights.channel || 'WhatsApp'}. Optimize the messaging based on the previous performance.`
+            });
+            router.push('/chat');
+          }} className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 transition-colors">
             <Copy height={16} width={16} /> Duplicate
           </button>
           <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-lg text-[13px] font-semibold text-slate-700 transition-colors">
