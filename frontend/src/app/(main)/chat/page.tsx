@@ -92,6 +92,7 @@ function CampaignStudioContent() {
         risk: segmentRes.risk,
         revenue: segmentRes.revenue,
         goal: segmentRes.goal,
+        ai_response_text: segmentRes.ai_response_text,
         variants: [
           { version: 'A', text: msgRes.variantA || "Your favorite products are back in stock." },
           { version: 'B', text: msgRes.variantB || "Special offer inside for our best customers." }
@@ -257,7 +258,7 @@ function CampaignStudioContent() {
             {/* ── 8-Column Campaign Workspace ── */}
             <div className="col-span-8 flex flex-col gap-8 pb-12">
 
-              {/* Command Bar Intent */}
+              {/* AI Copilot Response */}
               <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex flex-col gap-3 shadow-sm relative overflow-hidden">
                  <button 
                    onClick={handleReset} 
@@ -266,21 +267,29 @@ function CampaignStudioContent() {
                    <Xmark height={14} width={14} /> Reset Session
                  </button>
                  
-                 <span className="text-[12px] font-bold text-blue-800 uppercase tracking-wider mb-1">Why this campaign?</span>
+                 <span className="text-[12px] font-bold text-blue-800 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Spark height={14} width={14}/> Revenue Intelligence Copilot</span>
                  
-                 <p className="text-[14px] text-slate-800 font-medium">
-                   We identified <span className="font-bold text-slate-900">{strategyResult?.count || 0}</span> customers matching the <span className="font-bold text-slate-900">{strategyResult?.goal || 'target'}</span> criteria.
-                 </p>
-                 <p className="text-[14px] text-slate-800 font-medium">
-                   This segment exhibits a <span className="font-bold text-slate-900">{strategyResult?.risk || 'Low'}</span> churn risk with an Average Order Value of <span className="font-bold text-emerald-700">{strategyResult?.aov || '₹0'}</span>.
-                 </p>
-                 <p className="text-[14px] text-slate-800 font-medium">
-                   Based on a <span className="font-bold text-blue-700">{strategyResult?.conversionRate || 0}%</span> expected conversion rate via <span className="font-bold text-slate-900">{strategyResult?.channel || 'your channel'}</span>, the total opportunity is <span className="font-bold text-emerald-700">₹{(strategyResult?.expectedRevenue || 0).toLocaleString('en-IN')}</span>.
-                 </p>
+                 {strategyResult?.ai_response_text ? (
+                   <div className="text-[14px] text-slate-800 font-medium whitespace-pre-wrap leading-relaxed">
+                     {strategyResult.ai_response_text}
+                   </div>
+                 ) : (
+                   <>
+                     <p className="text-[14px] text-slate-800 font-medium">
+                       We identified <span className="font-bold text-slate-900">{strategyResult?.count || 0}</span> customers matching the <span className="font-bold text-slate-900">{strategyResult?.goal || 'target'}</span> criteria.
+                     </p>
+                     <p className="text-[14px] text-slate-800 font-medium">
+                       This segment exhibits a <span className="font-bold text-slate-900">{strategyResult?.risk || 'Low'}</span> churn risk with an Average Order Value of <span className="font-bold text-emerald-700">{strategyResult?.aov || '₹0'}</span>.
+                     </p>
+                     <p className="text-[14px] text-slate-800 font-medium">
+                       Based on a <span className="font-bold text-blue-700">{strategyResult?.conversionRate || 0}%</span> expected conversion rate via <span className="font-bold text-slate-900">{strategyResult?.channel || 'your channel'}</span>, the total opportunity is <span className="font-bold text-emerald-700">₹{(strategyResult?.expectedRevenue || 0).toLocaleString('en-IN')}</span>.
+                     </p>
+                   </>
+                 )}
                  
                  <div className="mt-3">
                     <button 
-                      onClick={() => router.push('/personas')}
+                      onClick={() => router.push('/intelligence')}
                       className="bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold px-5 py-2.5 rounded-lg transition-colors shadow-sm"
                     >
                       Open Audience

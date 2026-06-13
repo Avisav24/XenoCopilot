@@ -107,8 +107,9 @@ export async function aiRoutes(fastify: FastifyInstance) {
     try {
       const { goal } = request.body as { goal: string };
       
-const systemPrompt = `You are a SQL AI for a CRM database. 
-You must translate the marketer's natural language goal into a valid PostgreSQL WHERE clause for the "customers" table.
+      // Step 1: Intermediate Structure & SQL Query Generation
+      const step1Prompt = `You are a SQL AI for a CRM database. 
+You must translate the marketer's natural language goal into a valid PostgreSQL WHERE clause for the "customers" table, and extract intent and filters.
 The "customers" table has these columns:
 - total_spent (numeric)
 - health_score (integer)
@@ -116,28 +117,24 @@ The "customers" table has these columns:
 - signup_date (timestamp)
 
 Rules:
-- Output ONLY a JSON object containing the "where_clause" string, "channel" (the best channel for this goal: "WhatsApp", "Email", or "SMS"), and "goal_type" (a short 1-word category like "Win-back", "Expansion", "Retention").
-- The where_clause must be valid postgres SQL syntax (e.g., "total_spent > 5000 AND last_order_date < NOW() - INTERVAL '90 days'").
-- Do NOT include the word WHERE, just the condition.
-- If the goal is completely generic (e.g. "Increase revenue"), return "1=1" as the where_clause.
+- Output ONLY a JSON object containing:
+  "where_clause": The postgres WHERE condition (do not include the word WHERE). E.g., "total_spent > 5000 AND last_order_date < NOW() - INTERVAL '90 days'"
+  "channel": The best channel (WhatsApp, Email, or SMS).
+  "goal_type": A short 1-word category (Win-back, Expansion, Retention).
+  "detectedIntent": e.g., "Audience Discovery"
+  "filters": An object of the filters extracted, e.g. { "age_gt": 30 }
+- If generic, return "1=1" as where_clause.`;
 
-Example Output:
-{
-  "where_clause": "total_spent > 5000 AND last_order_date < NOW() - INTERVAL '90 days'",
-  "channel": "WhatsApp",
-  "goal_type": "Win-back"
-}`;
-
-      const text = await generateWithFallback(
+      const step1Text = await generateWithFallback(
         genaiInstances, 
         groqInstances, 
-        systemPrompt, 
+        step1Prompt, 
         `Goal: "${goal}"`, 
         0.1,
         true
       );
 
-      const parsed = JSON.parse(text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
+      const parsed = JSON.parse(step1Text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
       const whereClause = parsed.where_clause || '1=1';
 
       // Execute dynamic raw query safely
@@ -169,6 +166,99 @@ Example Output:
       if (count < 50) audienceMatch = 'Low';
       else if (count < 200) audienceMatch = 'Medium';
 
+      // Step 2: Generate XenoCopilot Revenue Intelligence Text
+      const step2Prompt = `# XenoCopilot Revenue Intelligence System Prompt
+
+You are XenoCopilot.
+An AI Revenue Growth Copilot embedded inside a CRM.
+You are not a chatbot.
+You are not a search engine.
+You are a marketing strategist, CRM analyst, customer intelligence engine, and campaign planner.
+
+Your job is to help marketers answer:
+* Who should I target?
+* Why should I target them?
+* What should I send?
+* Which channel should I use?
+* How much revenue can I generate?
+
+---
+
+CORE RULE
+Never simply classify a query.
+Always transform the user's request into a business action.
+
+Bad:
+Intent: Segmentation
+Segment: Customers
+
+Good:
+Audience:
+Customers above 30 years
+
+Audience Size:
+428
+
+Potential Revenue:
+₹2.8L
+
+Recommended Campaign:
+Premium Product Promotion
+
+Reason:
+Customers above 30 contribute 38% of total revenue and have higher repeat purchase rates.
+
+---
+
+QUERY UNDERSTANDING
+For every query:
+1. Understand the business goal.
+2. Extract filters.
+3. Build the audience.
+4. Estimate business value.
+5. Recommend action.
+6. Recommend channel.
+7. Generate campaign idea.
+
+---
+
+MESSAGE GENERATION
+Whenever a campaign is recommended, generate 2 message variants.
+Variant A: Direct conversion focused.
+Variant B: Relationship and retention focused.
+Keep messages short and realistic.
+Use customer name, category preferences, and behavioral context when available.
+
+---
+
+TONE
+Sound like: Braze, HubSpot, Mixpanel, Salesforce Marketing Cloud
+Not ChatGPT. Not a chatbot. Not an AI assistant.
+Every response should help a marketer make a revenue decision.`;
+
+      // Build intermediate structure to pass as context
+      const intermediateStructure = {
+        userQuery: goal,
+        detectedIntent: parsed.detectedIntent || "Audience Discovery",
+        filters: parsed.filters || {},
+        expectedOutput: "audience_recommendation",
+        databaseMetrics: {
+          audienceSize: count,
+          potentialRevenue: totalRevenue,
+          averageOrderValue: aov,
+          recommendedChannel: channelName
+        }
+      };
+
+      const step2Text = await generateWithFallback(
+        genaiInstances, 
+        groqInstances, 
+        step2Prompt, 
+        `Context Structure:\n${JSON.stringify(intermediateStructure, null, 2)}\n\nGenerate the intelligence response.`, 
+        0.5,
+        false
+      );
+
       return reply.send({
         id: 'dyn_' + Date.now(),
         name: parsed.goal_type || 'Custom Segment',
@@ -183,7 +273,8 @@ Example Output:
         aov: '₹' + aov.toLocaleString('en-IN'),
         risk: risk,
         channel: channelName,
-        goal: parsed.goal_type || 'Conversion'
+        goal: parsed.goal_type || 'Conversion',
+        ai_response_text: step2Text // The new Copilot conversational response!
       });
 
     } catch (err) {
