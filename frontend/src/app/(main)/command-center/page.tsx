@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { getRevenueLeaks, getRevenueOpportunities, simulateCampaign, generateRevenuePlan } from '@/lib/api';
+import { getRevenueLeaks, getRevenueOpportunities, simulateCampaign, generateRevenuePlan, getRevenueDebug } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { DatabaseScript, FastArrowRight, Spark, WarningTriangle } from 'iconoir-react';
 import { setCampaignContext } from '@/lib/campaignContext';
@@ -11,13 +11,17 @@ import { clsx } from 'clsx';
 export default function CommandCenterPage() {
   const router = useRouter();
 
-  // Queries
-  const { data: leaks, isLoading: leaksLoading } = useQuery({
+  const { data: debugInfo } = useQuery({
+    queryKey: ['revenue-debug'],
+    queryFn: getRevenueDebug
+  });
+
+  const { data: leaks, isLoading: leaksLoading, isError: leaksError, refetch: refetchLeaks } = useQuery({
     queryKey: ['revenue-leaks'],
     queryFn: getRevenueLeaks
   });
 
-  const { data: opportunities, isLoading: oppsLoading } = useQuery({
+  const { data: opportunities, isLoading: oppsLoading, isError: oppsError, refetch: refetchOpps } = useQuery({
     queryKey: ['revenue-opportunities'],
     queryFn: getRevenueOpportunities
   });
@@ -70,6 +74,28 @@ export default function CommandCenterPage() {
         </h1>
         <p className="text-[14px] text-ink-muted">AI-Powered Revenue Operating System</p>
       </div>
+
+      {debugInfo?.warning && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded text-[13px] flex items-center gap-2">
+          <WarningTriangle className="w-4 h-4 text-amber-500" />
+          <span>{debugInfo.warning}</span>
+        </div>
+      )}
+
+      {(leaksError || oppsError) && (
+        <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded flex flex-col items-start gap-3">
+          <div className="flex items-center gap-2 text-[14px] font-medium">
+            <WarningTriangle className="w-4 h-4" />
+            <span>Revenue engine unavailable.</span>
+          </div>
+          <button 
+            onClick={() => { refetchLeaks(); refetchOpps(); }}
+            className="btn-primary text-[12px] py-1.5 px-3"
+          >
+            Retry Connection
+          </button>
+        </div>
+      )}
 
       {/* SECTION 1: EXECUTIVE BRIEFING STRIP */}
       <div className="grid grid-cols-4 border border-hairline bg-white shadow-sm">
@@ -210,7 +236,7 @@ export default function CommandCenterPage() {
                       ))}
                     </>
                   ) : opportunities?.length === 0 ? (
-                    <tr><td colSpan={5} className="p-8 text-center text-[13px] text-ink-muted bg-white">No opportunities available. Check back later.</td></tr>
+                    <tr><td colSpan={5} className="p-8 text-center text-[13px] text-ink-muted bg-white">No revenue opportunities detected.</td></tr>
                   ) : opportunities?.map((opp: any, idx: number) => (
                     <tr key={idx} className="border-b border-hairline hover:bg-canvas-soft transition-colors">
                       <td className="p-3">

@@ -20,6 +20,13 @@ export const getRevenueStats = () => fetchAPI<{
 
 export const getRevenueLeaks = () => fetchAPI<any[]>('/api/revenue/leaks');
 
+export const getRevenueDebug = () => fetchAPI<any>('/api/revenue/debug');
+
+export const saveRevenueMemory = (data: any) => fetchAPI<any>('/api/revenue/memories', {
+  method: 'POST',
+  body: JSON.stringify(data)
+});
+
 export const simulateCampaign = (data: {
   segmentId?: string;
   audienceName?: string;
