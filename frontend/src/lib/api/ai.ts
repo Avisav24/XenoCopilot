@@ -96,7 +96,7 @@ export const getNextBestAction = (customer_id: string) =>
     body: JSON.stringify({ customer_id }),
   });
 
-export const simulateCampaign = (audience_size: number) => 
+export const simulateLegacyCampaign = (audience_size: number) => 
   fetchAPI<any[]>('/api/ai/simulate-campaign', {
     method: 'POST',
     body: JSON.stringify({ audience_size }),

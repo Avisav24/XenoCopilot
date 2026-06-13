@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { getRevenueLeaks, getRevenueOpportunities, simulateCampaign, generateRevenuePlan } from '@/lib/api';
 import { useRouter } from 'next/navigation';
-import { DatabaseScript, FastArrowRight, Target, Spark, WarningTriangle } from 'iconoir-react';
+import { DatabaseScript, FastArrowRight, Spark, WarningTriangle } from 'iconoir-react';
 import { setCampaignContext } from '@/lib/campaignContext';
 import { clsx } from 'clsx';
 
