@@ -170,6 +170,22 @@ export default function IntelligencePage() {
                         <span className="text-primary font-medium">Expected Revenue Recovery</span>
                         <span className="font-mono-numbers font-bold text-semantic-success">₹{expectedRec.toLocaleString('en-IN')}</span>
                       </div>
+                      <button 
+                        onClick={() => {
+                          setCampaignContext({
+                            sourcePage: 'Customer Directory',
+                            audienceName: sc.name,
+                            audienceSize: 1,
+                            expectedRevenue: `₹${expectedRec.toLocaleString('en-IN')}`,
+                            recommendedChannel: 'WhatsApp',
+                            autoTriggerPrompt: `Create a recovery campaign for ${sc.name} based on dormant behavior and high LTV.`
+                          });
+                          router.push('/chat');
+                        }}
+                        className="mt-2 w-full bg-primary hover:bg-primary/90 text-white font-bold py-2.5 rounded transition-colors text-[13px] shadow-sm flex justify-center items-center gap-1.5"
+                      >
+                        Generate Campaign
+                      </button>
                    </div>
                  </div>
 
@@ -368,7 +384,17 @@ export default function IntelligencePage() {
 
                 <div className="border-t border-hairline pt-5 mt-1">
                    <button 
-                      onClick={() => router.push(`/chat?audience=${encodeURIComponent(audienceDesc)}`)} 
+                      onClick={() => {
+                        setCampaignContext({
+                          sourcePage: 'Audience Builder',
+                          audienceName: audienceDesc,
+                          audienceSize: audienceResult.count,
+                          expectedRevenue: `₹${audienceResult.revenue}`,
+                          recommendedChannel: audienceResult.channel,
+                          autoTriggerPrompt: `Launch campaign for ${audienceDesc}`
+                        });
+                        router.push('/chat');
+                      }}
                       disabled={!audienceResult}
                       className="w-full bg-ink hover:bg-ink/90 disabled:opacity-50 text-canvas font-bold py-3.5 rounded-lg transition-colors text-[14px] shadow-sm">
                       Generate Campaign
@@ -468,7 +494,17 @@ export default function IntelligencePage() {
                      <span className="text-[13px] font-bold text-ink-muted hover:text-ink cursor-pointer transition-colors">
                         View Audience
                      </span>
-                     <button onClick={() => router.push(`/chat?audience=${aud.id}`)} className="text-[13px] font-bold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                     <button onClick={() => {
+                        setCampaignContext({
+                          sourcePage: 'Recommended Audiences',
+                          audienceName: aud.name,
+                          audienceSize: aud.count,
+                          expectedRevenue: aud.revenue,
+                          recommendedChannel: aud.channel,
+                          autoTriggerPrompt: `Generate a ${aud.channel} ${aud.goal} campaign for ${aud.count} customers in the ${aud.name} segment with ${aud.revenue} recoverable revenue.`
+                        });
+                        router.push('/chat');
+                     }} className="text-[13px] font-bold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                        Generate Campaign <FastArrowRight height={14} width={14} />
                      </button>
                    </div>

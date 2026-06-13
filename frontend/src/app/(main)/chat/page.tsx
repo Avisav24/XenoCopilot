@@ -107,6 +107,8 @@ function CampaignStudioContent() {
         revenue: segmentRes.revenue,
         goal: segmentRes.goal,
         ai_response_text: segmentRes.ai_response_text,
+        prismaLogic: segmentRes.prismaLogic,
+        segmentReasoning: segmentRes.segmentReasoning,
         variants: [
           { version: 'A', text: msgRes.variantA || "Your favorite products are back in stock." },
           { version: 'B', text: msgRes.variantB || "Special offer inside for our best customers." }
@@ -338,6 +340,26 @@ function CampaignStudioContent() {
 
               {strategyResult?.count > 0 && (
                 <>
+                  {/* Segment Explainability */}
+                  {strategyResult?.prismaLogic && (
+                    <div className="flex flex-col gap-3">
+                      <span className="text-[12px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5"><Filter height={16} width={16} className="text-slate-500"/> How was this segment built?</span>
+                      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col gap-4 shadow-sm font-mono text-[13px] overflow-hidden">
+                        <div className="flex flex-col gap-1.5">
+                           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">AI Reasoning</span>
+                           <p className="text-[14px] text-slate-300 font-sans leading-relaxed">{strategyResult.segmentReasoning}</p>
+                        </div>
+                        <div className="h-px bg-slate-800 w-full my-1"></div>
+                        <div className="flex flex-col gap-1.5">
+                           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider font-sans">Prisma Query Logic</span>
+                           <pre className="text-emerald-400 overflow-x-auto whitespace-pre-wrap">
+{strategyResult.prismaLogic}
+                           </pre>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Strategy Summary */}
                   <div className="flex flex-col gap-3">
                 <span className="text-[12px] font-bold text-slate-900 uppercase tracking-wider">Strategy Summary</span>

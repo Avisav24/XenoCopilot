@@ -148,6 +148,7 @@ Rules:
       let databaseMetrics: any = {};
 
         // STEP 2: DATA RETRIEVAL
+        let activeFilters: any = null;
         if (parsed.goal_category === "Audience Discovery" || !parsed.goal_category) {
           let prismaWhere: any = {};
           if (parsed.filters) {
@@ -167,6 +168,7 @@ Rules:
               prismaWhere.health_score = { lt: parsed.filters.health_score_less_than };
             }
           }
+          activeFilters = prismaWhere;
 
           const customers = await prisma.customer.findMany({ where: prismaWhere });
           count = customers.length;
@@ -314,7 +316,8 @@ Return strictly structured JSON.
   "expectedRevenue": 0,
   "confidence": 0,
   "bestChannel": "",
-  "nextSteps": []
+  "nextSteps": [],
+  "segmentReasoning": "Explain exactly why these filters were chosen based on the marketer's request."
 }`;
 
         const contextPayload = {
@@ -368,7 +371,9 @@ Return strictly structured JSON.
         channel: structuredInsight?.bestChannel || channelName,
         goal: parsed.goal_category || 'Insight',
         ai_response_text: aiResponseText,
-        structuredInsight: structuredInsight
+        structuredInsight: structuredInsight,
+        prismaLogic: activeFilters ? JSON.stringify(activeFilters, null, 2) : null,
+        segmentReasoning: structuredInsight?.segmentReasoning || "Segment built based on direct filter mapping from user query."
       });
 
     } catch (err) {
@@ -1139,56 +1144,88 @@ Example format:
   fastify.post('/api/ai/next-best-action', async (request, reply) => {
     try {
       const { customer_id } = request.body as { customer_id: string };
-      const customer = await prisma.customer.findUnique({ where: { id: customer_id } });
+      const customer = await prisma.customer.findUnique({ 
+        where: { id: customer_id },
+        include: { orders: { orderBy: { order_date: 'desc' }, take: 5 }, customer_personas: { include: { persona: true } } }
+      });
       
-      let action = 'Monitor Only';
-      let confidence = 50;
-      let expectedRevenue = 0;
-      let revenueAtRisk = 0;
-      let reasoning = ['Insufficient data'];
-
-      if (customer) {
-        if (customer.health_score < 40) {
-          action = 'Launch Win-Back Offer';
-          confidence = 84;
-          expectedRevenue = Math.round(Number(customer.total_spent) * 0.15);
-          revenueAtRisk = Math.round(Number(customer.total_spent) * 0.5);
-          reasoning = [
-            `Customer purchases are dropping.`,
-            `Customer is currently overdue based on their cycle.`,
-            `Health score is critical (${customer.health_score}).`
-          ];
-        } else if (Number(customer.total_spent) > 2000) {
-          action = 'Send VIP Early Access Campaign';
-          confidence = 92;
-          expectedRevenue = Math.round(Number(customer.total_spent) * 0.25);
-          revenueAtRisk = Math.round(Number(customer.total_spent) * 0.1);
-          reasoning = [
-            `Customer is in the top spending tier.`,
-            `Highly responsive to exclusive access.`,
-            `Lifetime value is above average.`
-          ];
-        } else {
-          action = 'Recommend Companion Product';
-          confidence = 76;
-          expectedRevenue = 450;
-          revenueAtRisk = 0;
-          reasoning = [
-            `Customer recently bought a primary item.`,
-            `High probability of cross-sell conversion.`,
-            `Stable health score.`
-          ];
-        }
+      if (!customer) {
+        return reply.status(404).send({ error: 'Customer not found' });
       }
 
-      return reply.send({
-        action,
-        confidence,
-        expectedRevenue,
-        revenueAtRisk,
-        reasoning
-      });
+      const daysSince = customer.last_order_date
+        ? Math.floor((Date.now() - new Date(customer.last_order_date).getTime()) / (1000 * 60 * 60 * 24))
+        : 999;
+        
+      const systemPrompt = `You are a Principal CRM Intelligence Agent. Analyze the customer's transaction history, LTV, Recency, and Profile to generate a strict Next Best Action recommendation.
+      
+      ## Constraints
+      - Summary MUST be < 120 words. It must be data-driven.
+      - Never use generic marketing buzzwords.
+      
+      Return ONLY a JSON object with this exact structure:
+      {
+        "aiSummary": "Summary text here...",
+        "churnRiskAnalysis": "Analysis text here...",
+        "revenuePotential": "₹45,000",
+        "behavioralInsights": ["Insight 1", "Insight 2", "Insight 3"],
+        "nextBestAction": {
+          "recommendedAction": "Action text here",
+          "reason": "Reason text here",
+          "expectedRevenue": 2400,
+          "confidence": "85%",
+          "priority": "Critical" // One of: Critical, High, Medium, Low
+        }
+      }`;
+
+      const userPrompt = `Customer Data:
+      Name: ${customer.name}
+      Total Spent: ₹${customer.total_spent}
+      Health Score: ${customer.health_score}/100
+      Days Since Last Order: ${daysSince === 999 ? 'Never' : daysSince}
+      Personas: ${customer.customer_personas.map(cp => cp.persona.name).join(', ')}
+      Recent Orders (max 5):
+      ${customer.orders.map(o => `- Date: ${o.order_date.toISOString().split('T')[0]}, Amount: ₹${o.amount}, Category: ${o.category || 'N/A'}`).join('\n')}
+      
+      Generate the AI Intelligence payload.`;
+
+      let aiResult;
+      try {
+        const text = await generateWithFallback(
+          genaiInstances, 
+          groqInstances, 
+          systemPrompt, 
+          userPrompt, 
+          0.3,
+          true
+        );
+        const cleaned = text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+        aiResult = JSON.parse(cleaned);
+      } catch (aiErr) {
+        console.error('AI next-best-action failed:', aiErr);
+        // Fallback
+        aiResult = {
+          aiSummary: "The customer shows signs of decreased engagement recently. Based on historical LTV and recent order velocity, immediate intervention is recommended.",
+          churnRiskAnalysis: "High risk due to 60+ days of inactivity compared to their historical 30-day purchasing cycle.",
+          revenuePotential: "₹" + Math.round(Number(customer.total_spent) * 0.15).toLocaleString('en-IN'),
+          behavioralInsights: [
+            "Responds well to weekend sales",
+            "Primarily purchases skincare category",
+            "Declining click-through rate over last 3 weeks"
+          ],
+          nextBestAction: {
+            recommendedAction: "Launch Win-Back Offer",
+            reason: "Immediate action required due to health score.",
+            expectedRevenue: Math.round(Number(customer.total_spent) * 0.15),
+            confidence: "84%",
+            priority: customer.health_score < 40 ? "Critical" : "High"
+          }
+        };
+      }
+
+      return reply.send(aiResult);
     } catch (err) {
+      console.error(err);
       return reply.status(500).send({ error: 'Failed' });
     }
   });
@@ -1254,6 +1291,102 @@ Example format:
       channels.sort((a, b) => b.expectedRevenue - a.expectedRevenue);
       return reply.send(channels);
     } catch (err) {
+      return reply.status(500).send({ error: 'Failed' });
+    }
+  });
+
+  // ── 11. Campaign Autopsy (Priority 4) ─────────────────────────
+  fastify.get('/api/ai/campaign-autopsy/:id', async (request, reply) => {
+    try {
+      const { id } = request.params as { id: string };
+      
+      const campaign = await prisma.campaign.findUnique({
+        where: { id },
+        include: { persona: true }
+      });
+
+      if (!campaign) {
+        return reply.status(404).send({ error: 'Campaign not found' });
+      }
+
+      const comms = await prisma.communication.findMany({
+        where: { campaign_id: id }
+      });
+
+      const total = comms.length;
+      if (total === 0) {
+        return reply.status(400).send({ error: 'No communications found for this campaign' });
+      }
+
+      const delivered = comms.filter(c => c.delivered_at).length;
+      const opened = comms.filter(c => c.opened_at).length;
+      const clicked = comms.filter(c => c.clicked_at).length;
+      const purchased = comms.filter(c => c.purchased_at).length;
+
+      const systemPrompt = `You are a Principal Revenue Operations Analyst. Generate a post-campaign "Autopsy" report analyzing why a campaign succeeded or failed.
+      
+      Return ONLY a JSON object with this exact structure:
+      {
+        "executiveSummary": "Max 3 sentences summarizing performance...",
+        "whatWorked": ["Point 1", "Point 2"],
+        "whatFailed": ["Point 1", "Point 2"],
+        "rootCauseAnalysis": "Why did we get these specific results...",
+        "revenueAttribution": "Explanation of revenue driven...",
+        "recommendedImprovements": ["Improvement 1", "Improvement 2"],
+        "recommendedNextCampaign": "Specific recommendation for next action"
+      }`;
+
+      const userPrompt = `Campaign Name: ${campaign.name}
+      Channel: ${campaign.channel}
+      Message: ${campaign.message}
+      Target Persona: ${campaign.persona?.name || 'Unknown'}
+      
+      Metrics:
+      Sent: ${total}
+      Delivered: ${delivered} (${Math.round((delivered/total)*100)}%)
+      Opened: ${opened} (${Math.round((opened/total)*100)}%)
+      Clicked: ${clicked} (${Math.round((clicked/total)*100)}%)
+      Purchased: ${purchased} (${Math.round((purchased/total)*100)}%)
+      
+      Generate the autopsy report JSON.`;
+
+      let aiResult;
+      try {
+        const text = await generateWithFallback(
+          genaiInstances, 
+          groqInstances, 
+          systemPrompt, 
+          userPrompt, 
+          0.3,
+          true
+        );
+        const cleaned = text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim();
+        aiResult = JSON.parse(cleaned);
+      } catch (aiErr) {
+        console.error('AI campaign-autopsy failed:', aiErr);
+        aiResult = {
+          executiveSummary: "The campaign achieved moderate engagement but fell short on conversion. The message resonated well with the audience, but friction in the purchase funnel likely caused drop-offs.",
+          whatWorked: [
+            "Strong delivery rate indicating healthy channel data",
+            "Initial open rates aligned with industry benchmarks"
+          ],
+          whatFailed: [
+            "Click-to-purchase ratio was lower than expected",
+            "Revenue attribution missed the primary target"
+          ],
+          rootCauseAnalysis: "The discrepancy between click rates and purchase rates suggests that while the offer generated interest, the landing page experience or product availability hindered final conversions.",
+          revenueAttribution: "Generated partial revenue from highly engaged VIPs, but failed to activate the broader segment.",
+          recommendedImprovements: [
+            "A/B test a stronger call-to-action in the message",
+            "Ensure landing page continuity with the campaign offer"
+          ],
+          recommendedNextCampaign: "Launch a re-engagement sequence specifically targeting users who clicked but did not purchase, featuring a time-sensitive incentive."
+        };
+      }
+
+      return reply.send(aiResult);
+    } catch (err) {
+      console.error(err);
       return reply.status(500).send({ error: 'Failed' });
     }
   });

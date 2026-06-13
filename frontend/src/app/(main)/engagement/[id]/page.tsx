@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getCampaignInsights } from '@/lib/api';
+import { getCampaignInsights, getCampaignAutopsy } from '@/lib/api';
 import { useParams, useRouter } from 'next/navigation';
 import { setCampaignContext } from '@/lib/campaignContext';
 import { clsx } from 'clsx';
@@ -19,6 +19,13 @@ export default function EngagementInsightsPage() {
     refetchInterval: 5000,
   });
 
+  const { data: autopsy, isLoading: isAutopsyLoading } = useQuery({
+    queryKey: ['campaign-autopsy', id],
+    queryFn: () => getCampaignAutopsy(id as string),
+    enabled: !!insights,
+    staleTime: Infinity
+  });
+
   if (isLoading) {
     return <div className="p-10 min-h-[60vh] flex items-center justify-center text-slate-500 font-medium">Loading campaign data...</div>;
   }
@@ -28,7 +35,7 @@ export default function EngagementInsightsPage() {
   }
 
   const { funnel } = insights;
-  const tabs = ['Messages', 'Audience'];
+  const tabs = ['Messages', 'Intelligence Report', 'Audience'];
 
   return (
     <div className="w-full flex flex-col gap-8 pb-24 max-w-[1400px]">
@@ -237,6 +244,78 @@ export default function EngagementInsightsPage() {
                </div>
 
             </div>
+          </div>
+        )}
+
+        {activeTab === 'Intelligence Report' && (
+          <div className="flex flex-col gap-6">
+            <h3 className="text-[18px] font-bold text-slate-900">Campaign Intelligence Report</h3>
+            {isAutopsyLoading ? (
+              <div className="p-12 border border-slate-200 rounded-xl bg-slate-50 text-center text-slate-500 font-medium">Generating AI Autopsy Report...</div>
+            ) : autopsy ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2 p-6 border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Executive Summary</span>
+                  <p className="text-[15px] text-slate-800 leading-relaxed font-medium">{autopsy.executiveSummary}</p>
+                </div>
+                
+                <div className="p-6 border border-slate-200 rounded-xl bg-emerald-50/30 flex flex-col gap-3">
+                  <span className="text-[12px] font-semibold text-emerald-700 uppercase tracking-wider">What Worked</span>
+                  <ul className="flex flex-col gap-2">
+                    {autopsy.whatWorked?.map((w: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-[14px] text-slate-700 font-medium">
+                        <span className="text-emerald-500 mt-1">•</span> {w}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="p-6 border border-slate-200 rounded-xl bg-red-50/30 flex flex-col gap-3">
+                  <span className="text-[12px] font-semibold text-red-700 uppercase tracking-wider">What Failed</span>
+                  <ul className="flex flex-col gap-2">
+                    {autopsy.whatFailed?.map((f: string, i: number) => (
+                      <li key={i} className="flex items-start gap-2 text-[14px] text-slate-700 font-medium">
+                        <span className="text-red-500 mt-1">•</span> {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="p-6 border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Root Cause Analysis</span>
+                  <p className="text-[14px] text-slate-700 leading-relaxed font-medium">{autopsy.rootCauseAnalysis}</p>
+                </div>
+
+                <div className="p-6 border border-slate-200 rounded-xl bg-white shadow-sm flex flex-col gap-2">
+                  <span className="text-[12px] font-semibold text-slate-500 uppercase tracking-wider">Revenue Attribution</span>
+                  <p className="text-[14px] text-slate-700 leading-relaxed font-medium">{autopsy.revenueAttribution}</p>
+                </div>
+
+                <div className="md:col-span-2 p-6 border border-primary/20 bg-primary-soft rounded-xl flex flex-col gap-4">
+                  <span className="text-[12px] font-semibold text-primary uppercase tracking-wider">Strategic Recommendations</span>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[13px] font-bold text-slate-900">Improvements for Next Time</span>
+                      <ul className="flex flex-col gap-2">
+                        {autopsy.recommendedImprovements?.map((imp: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-[14px] text-slate-700 font-medium">
+                            <span className="text-primary mt-1">•</span> {imp}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[13px] font-bold text-slate-900">Recommended Next Campaign</span>
+                      <p className="text-[14px] text-slate-700 leading-relaxed font-medium">{autopsy.recommendedNextCampaign}</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            ) : (
+              <div className="p-12 border border-slate-200 rounded-xl bg-slate-50 text-center text-slate-500 font-medium">Autopsy report not available.</div>
+            )}
           </div>
         )}
 

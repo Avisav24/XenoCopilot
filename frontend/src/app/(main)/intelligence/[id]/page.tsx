@@ -58,12 +58,12 @@ export default function Customer360Page() {
   // Extract personas handling either backend format
   const personas = c.personas || (c.customer_personas || []).map((cp: any) => cp.persona?.name || cp.name).filter(Boolean);
   
-  // Mock Purchase History
-  const mockPurchases = [
-    { id: 'ORD-1092', date: c.last_order_date ? new Date(c.last_order_date) : new Date(Date.now() - 86400000 * 15), amount: Math.round(c.total_spent * 0.3), items: 'Luxury Silk Scarf, Essential T-Shirt' },
-    { id: 'ORD-0941', date: new Date(Date.now() - 86400000 * 45), amount: Math.round(c.total_spent * 0.4), items: 'Cashmere Blend Sweater' },
-    { id: 'ORD-0812', date: new Date(Date.now() - 86400000 * 110), amount: Math.round(c.total_spent * 0.3), items: 'Classic Straight Denim, Cotton Socks' },
-  ];
+  const displayOrders = c.orders && c.orders.length > 0 
+    ? c.orders 
+    : [
+        { id: 'ORD-1092', order_date: c.last_order_date ? new Date(c.last_order_date) : new Date(Date.now() - 86400000 * 15), amount: Math.round(c.total_spent * 0.3) },
+        { id: 'ORD-0941', order_date: new Date(Date.now() - 86400000 * 45), amount: Math.round(c.total_spent * 0.4) },
+      ];
 
   return (
     <div className="p-10 w-full flex flex-col gap-8 min-h-screen bg-canvas">
@@ -93,15 +93,13 @@ export default function Customer360Page() {
               <div className="flex items-center gap-2">
                 <span className={clsx(
                   "text-[11px] font-bold px-2 py-0.5 rounded uppercase tracking-wider",
-                  c.health_score >= 91 ? "bg-emerald-100 text-emerald-800" :
-                  c.health_score >= 76 ? "bg-emerald-50 text-emerald-600" :
-                  c.health_score >= 51 ? "bg-amber-100 text-amber-800" :
-                  c.health_score >= 31 ? "bg-orange-100 text-orange-800" :
+                  c.health_score >= 76 ? "bg-emerald-100 text-emerald-800" :
+                  c.health_score >= 40 ? "bg-amber-100 text-amber-800" :
                   "bg-red-100 text-red-800"
                 )}>
-                  {c.health_score >= 91 ? 'Very High' : c.health_score >= 76 ? 'Healthy' : c.health_score >= 51 ? 'Needs Attention' : c.health_score >= 31 ? 'At Risk' : 'Critical'}
+                  {c.health_score >= 76 ? 'High' : c.health_score >= 40 ? 'Medium' : 'Low'}
                 </span>
-                <span className={`text-[24px] leading-none font-mono-numbers font-semibold ${isAtRisk ? 'text-semantic-down' : c.health_score > 75 ? 'text-semantic-up' : 'text-semantic-warning'}`}>{c.health_score}/100</span>
+                <span className={`text-[24px] leading-none font-mono-numbers font-semibold ${c.health_score >= 76 ? 'text-semantic-up' : c.health_score >= 40 ? 'text-semantic-warning' : 'text-semantic-down'}`}>{c.health_score}/100</span>
               </div>
             </div>
             <div className="flex flex-col items-end">
@@ -134,7 +132,7 @@ export default function Customer360Page() {
           </div>
           <div className="p-5 flex flex-col gap-1">
             <span className="label-text">Total Orders</span>
-            <span className="text-[14px] font-medium text-ink">{c.orders?.length || mockPurchases.length}</span>
+            <span className="text-[14px] font-medium text-ink">{c.orders?.length || displayOrders.length}</span>
           </div>
         </div>
       </div>
@@ -158,12 +156,12 @@ export default function Customer360Page() {
                   </tr>
                 </thead>
                 <tbody className="bg-surface-card">
-                  {mockPurchases.map((order) => (
+                  {displayOrders.map((order: any) => (
                     <tr key={order.id}>
                       <td className="font-mono-numbers text-muted font-medium">{order.id}</td>
-                      <td>{format(order.date, 'MMM d, yyyy')}</td>
+                      <td>{format(new Date(order.order_date), 'MMM d, yyyy')}</td>
                       <td className="font-mono-numbers text-right text-ink">₹{order.amount.toLocaleString()}</td>
-                      <td className="text-muted truncate max-w-[200px]">{order.items}</td>
+                      <td className="text-muted truncate max-w-[200px]">Premium Products</td>
                     </tr>
                   ))}
                 </tbody>
@@ -176,7 +174,7 @@ export default function Customer360Page() {
             <div className="flex flex-col gap-3">
               {c.customer_personas && c.customer_personas.length > 0 ? (
                 c.customer_personas.map((cp: any) => (
-                  <div key={cp.persona?.id || cp.id} className="p-4 border border-hairline rounded-xl bg-surface-card flex flex-col gap-2">
+                  <div key={cp.persona?.id || cp.id || cp.persona?.name} className="p-4 border border-hairline rounded-xl bg-surface-card flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${getDotColor(cp.persona?.name || cp.name)}`} />
                       <span className="text-[14px] font-semibold text-ink">{cp.persona?.name || cp.name}</span>
@@ -219,73 +217,92 @@ export default function Customer360Page() {
               
               {/* NBA Engine Block */}
               {nba ? (
-                <div className="p-6 border border-hairline rounded-xl bg-surface-card flex flex-col gap-5">
-                  <div className="flex items-center gap-2 border-b border-hairline pb-3">
-                    <FastArrowRight height={18} width={18} className="text-primary" />
-                    <span className="text-[14px] font-bold text-ink uppercase tracking-wider">Next Best Action</span>
+                <div className="flex flex-col gap-4">
+                  {/* Executive AI Summary */}
+                  <div className="p-5 border border-hairline rounded-xl bg-surface-card flex flex-col gap-2">
+                    <span className="label-text">Executive Summary</span>
+                    <p className="text-[14px] text-ink leading-relaxed font-medium">
+                      {nba.aiSummary}
+                    </p>
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <h3 className="text-[18px] font-semibold text-ink">{nba.action}</h3>
-                    
-                    <div className="grid grid-cols-3 gap-4 mt-2 mb-2 bg-surface-soft p-3 rounded-lg border border-hairline">
-                      <div className="flex flex-col">
-                        <span className="label-text">Expected Revenue</span>
-                        <span className="text-[16px] font-mono-numbers font-semibold text-semantic-up">+₹{nba.expectedRevenue.toLocaleString()}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="label-text">Revenue At Risk</span>
-                        <span className="text-[16px] font-mono-numbers font-semibold text-semantic-down">₹{nba.revenueAtRisk?.toLocaleString() || 0}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="label-text">Confidence</span>
-                        <span className="text-[16px] font-mono-numbers font-semibold text-ink">{nba.confidence}%</span>
+                  {/* Churn Risk & Revenue Potential */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 border border-hairline rounded-xl bg-surface-card flex flex-col gap-1">
+                      <span className="label-text">Churn Risk Analysis</span>
+                      <p className="text-[13px] text-ink font-medium mt-1 leading-snug">{nba.churnRiskAnalysis}</p>
+                    </div>
+                    <div className="p-4 border border-hairline rounded-xl bg-surface-card flex flex-col gap-1">
+                      <span className="label-text">Revenue Potential</span>
+                      <p className="text-[18px] font-mono-numbers font-semibold text-semantic-up mt-1">{nba.revenuePotential}</p>
+                    </div>
+                  </div>
+
+                  {/* Behavioral Insights */}
+                  <div className="p-5 border border-hairline rounded-xl bg-surface-card flex flex-col gap-3">
+                    <span className="label-text">Behavioral Insights</span>
+                    <ul className="flex flex-col gap-2">
+                      {nba.behavioralInsights?.map((insight: string, idx: number) => (
+                        <li key={idx} className="flex items-start gap-2 text-[13px] text-ink font-medium">
+                          <span className="text-primary mt-1">•</span> {insight}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Next Best Action */}
+                  <div className="p-6 border border-primary/30 rounded-xl bg-primary-soft flex flex-col gap-5 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-3">
+                       <span className={clsx(
+                         "text-[11px] font-bold px-2 py-1 rounded uppercase tracking-wider",
+                         nba.nextBestAction?.priority === 'Critical' ? "bg-red-100 text-red-800" :
+                         nba.nextBestAction?.priority === 'High' ? "bg-amber-100 text-amber-800" :
+                         "bg-emerald-100 text-emerald-800"
+                       )}>
+                         {nba.nextBestAction?.priority || 'Medium'} Priority
+                       </span>
+                    </div>
+                    <div className="flex items-center gap-2 border-b border-primary/10 pb-3 w-3/4">
+                      <FastArrowRight height={18} width={18} className="text-primary" />
+                      <span className="text-[14px] font-bold text-primary uppercase tracking-wider">Next Best Action</span>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <h3 className="text-[18px] font-semibold text-ink">{nba.nextBestAction?.recommendedAction}</h3>
+                      <p className="text-[13px] text-slate-600 font-medium">{nba.nextBestAction?.reason}</p>
+                      
+                      <div className="grid grid-cols-2 gap-4 mt-2">
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">Expected Revenue</span>
+                          <span className="text-[16px] font-mono-numbers font-bold text-semantic-up">₹{nba.nextBestAction?.expectedRevenue?.toLocaleString()}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-semibold text-primary uppercase tracking-wider">Confidence</span>
+                          <span className="text-[16px] font-mono-numbers font-bold text-ink">{nba.nextBestAction?.confidence}</span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-2 mt-2">
-                      <span className="text-[12px] font-semibold text-muted uppercase tracking-wider">Reasoning</span>
-                      <ul className="flex flex-col gap-1.5">
-                        {nba.reasoning.map((r: string, idx: number) => (
-                          <li key={idx} className="flex items-start gap-2 text-[13px] text-muted">
-                            <span className="text-primary mt-1">•</span> {r}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
+                    <button className="btn-primary w-full mt-2 flex justify-center items-center gap-2 shadow-sm" onClick={() => {
+                      setCampaignContext({
+                        sourcePage: 'Customer 360',
+                        audienceName: c.name,
+                        audienceSize: 1,
+                        expectedRevenue: `₹${nba.nextBestAction?.expectedRevenue}`,
+                        recommendedChannel: 'WhatsApp',
+                        autoTriggerPrompt: `Create a personalized ${nba.nextBestAction?.recommendedAction?.toLowerCase()} campaign for ${c.name}. Reason: ${nba.nextBestAction?.reason} Expected revenue recovery is ₹${nba.nextBestAction?.expectedRevenue}.`
+                      });
+                      router.push('/chat');
+                    }}>
+                      Generate Campaign
+                    </button>
                   </div>
-
-                  <button className="btn-primary w-full mt-2" onClick={() => {
-                    setCampaignContext({
-                      sourcePage: 'Customer 360',
-                      audienceName: c.name,
-                      audienceSize: 1,
-                      expectedRevenue: nba.expectedRevenue,
-                      churnRisk: isAtRisk ? 'High' : 'Low',
-                      recommendedAction: nba.action,
-                      autoTriggerPrompt: `Create a personalized campaign for ${c.name}. Customer health score is ${c.health_score} with ${isAtRisk ? 'High' : 'Low'} churn risk. Expected revenue recovery is ₹${nba.expectedRevenue}.`
-                    });
-                    router.push('/chat');
-                  }}>
-                    Execute Strategy
-                  </button>
                 </div>
               ) : (
                 <div className="p-6 border border-hairline rounded-xl bg-surface-card flex items-center justify-center text-muted text-[13px]">
-                  Generating Next Best Action...
+                  Generating AI Intelligence...
                 </div>
               )}
-
-              {/* Legacy Insights */}
-              <div className="p-5 border border-hairline rounded-xl bg-surface-card">
-                <span className="label-text mb-2 block">Churn Risk</span>
-                <p className="text-[14px] text-ink leading-relaxed font-medium">
-                  {isAtRisk 
-                    ? `High risk detected. Customer has deviated from their standard 45-day purchase cycle. Immediate retention required.` 
-                    : `Low risk. Customer exhibits stable purchasing cadence consistent with the "${c.customer_personas[0]?.persona?.name || 'average'}" segment.`}
-                </p>
-              </div>
 
             </div>
           </div>

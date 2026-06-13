@@ -91,7 +91,7 @@ export const getOpportunities = () => fetchAPI<{
 }[]>('/api/ai/opportunities');
 
 export const getNextBestAction = (customer_id: string) => 
-  fetchAPI<{ action: string; confidence: number; expectedRevenue: number; revenueAtRisk: number; reasoning: string[] }>('/api/ai/next-best-action', {
+  fetchAPI<any>('/api/ai/next-best-action', {
     method: 'POST',
     body: JSON.stringify({ customer_id }),
   });
@@ -101,3 +101,6 @@ export const simulateCampaign = (audience_size: number) =>
     method: 'POST',
     body: JSON.stringify({ audience_size }),
   });
+
+export const getCampaignAutopsy = (id: string) =>
+  fetchAPI<any>(`/api/ai/campaign-autopsy/${id}`);

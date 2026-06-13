@@ -10,6 +10,7 @@ const navGroups = [
     label: 'Overview',
     items: [
       { href: '/revenue', label: 'Revenue Operations', icon: <GraphUp height={18} width={18} /> },
+      { href: '/opportunities', label: 'Opportunity Center', icon: <Spark height={18} width={18} /> },
     ]
   },
   {
