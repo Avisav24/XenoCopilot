@@ -1442,7 +1442,7 @@ Ensure the projected total revenue across all campaigns roughly equals or slight
       const parsedPlan = JSON.parse(responseText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
       return reply.send(parsedPlan);
     } catch (err: any) {
-      console.error('[AI Revenue Plan Error]:', err);
+      console.error('[AI Revenue Plan Error - Railway Build Trigger]:', err);
       // Fallback response for demo safety
       return reply.send({
         revenueObjective: "Generate Revenue",

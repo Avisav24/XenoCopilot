@@ -26,13 +26,6 @@ const navGroups = [
       { href: '/engagement', label: 'All Campaigns', icon: <Megaphone height={18} width={18} /> },
     ]
   },
-  {
-    label: 'Settings',
-    items: [
-      { href: '/import', label: 'Data Import', icon: <DatabaseScript height={18} width={18} /> },
-      { href: '/architecture', label: 'System Architecture', icon: <StatsReport height={18} width={18} /> },
-    ]
-  }
 ];
 
 export function Sidebar() {
@@ -82,12 +75,7 @@ export function Sidebar() {
           </div>
         </nav>
 
-        {/* Workspace / User / Settings */}
-        <div className="p-4 border-t border-hairline w-full flex flex-col gap-2">
-          <div className="flex items-center gap-3 px-3 py-2 hover:bg-canvas-soft rounded-md cursor-pointer transition-colors w-full text-[14px] font-medium text-ink-muted hover:text-ink">
-            <Settings height={18} width={18} />
-            <span>Settings</span>
-          </div>
+        <div className="p-4 w-full flex flex-col gap-2">
           <div className="flex items-center gap-3 px-3 py-2 hover:bg-canvas-soft rounded-md cursor-pointer transition-colors w-full">
             <div className="w-8 h-8 rounded-md bg-canvas-soft flex items-center justify-center text-ink text-[12px] font-bold border border-hairline flex-shrink-0">
               D
