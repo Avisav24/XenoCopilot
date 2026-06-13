@@ -21,7 +21,7 @@ const server = Fastify({
 async function main() {
   // CORS
   await server.register(cors, {
-    origin: true, // Allow any origin to fix Vercel CORS issues
+    origin: (origin, cb) => cb(null, true), // Reflect request origin
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
   });
