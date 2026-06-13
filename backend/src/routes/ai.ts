@@ -102,28 +102,30 @@ export async function aiRoutes(fastify: FastifyInstance) {
   const genaiInstances = geminiKeys.map(key => new GoogleGenAI({ apiKey: key }));
   const groqInstances = groqKeys.map(key => new Groq({ apiKey: key }));
 
-  // ── 1.5 Dynamic Segmentation (SQL) ─────────────────────────────────────────
+  // ── 1.5 Dynamic Segmentation (Filters) ─────────────────────────────────────────
   fastify.post('/api/ai/segment', async (request, reply) => {
     try {
       const { goal } = request.body as { goal: string };
       
-      // Step 1: Intermediate Structure & SQL Query Generation
-      const step1Prompt = `You are a SQL AI for a CRM database. 
-You must translate the marketer's natural language goal into a valid PostgreSQL WHERE clause for the "customers" table, and extract intent and filters.
-The "customers" table has these columns:
-- total_spent (numeric)
-- health_score (integer)
-- last_order_date (timestamp)
-- signup_date (timestamp)
+      // Step 1: Intermediate Structure & JSON Filters Extraction
+      const step1Prompt = `You are a CRM Data Extraction AI. 
+Extract filters from the marketer's natural language goal.
+The "customers" table supports ONLY these filters:
+- city (string)
+- gender (string)
+- min_spent (numeric)
+- max_spent (numeric)
+- days_since_last_order (integer)
+- health_score_less_than (integer)
 
 Rules:
 - Output ONLY a JSON object containing:
-  "where_clause": The postgres WHERE condition (do not include the word WHERE). E.g., "total_spent > 5000 AND last_order_date < NOW() - INTERVAL '90 days'"
+  "filters": { "city": "Delhi", "min_spent": 5000 }
   "channel": The best channel (WhatsApp, Email, or SMS).
-  "goal_type": A short 1-word category (Win-back, Expansion, Retention).
+  "goal_type": A short 1-word category (Discovery, Win-back, Expansion).
   "detectedIntent": e.g., "Audience Discovery"
-  "filters": An object of the filters extracted, e.g. { "age_gt": 30 }
-- If generic, return "1=1" as where_clause.`;
+  "unsupported_filters": A list of requested filters that DO NOT exist in the allowed list (e.g. "age", "birthday").
+- If the query is completely generic, return empty filters.`;
 
       const step1Text = await generateWithFallback(
         genaiInstances, 
@@ -135,39 +137,67 @@ Rules:
       );
 
       const parsed = JSON.parse(step1Text.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
-      const whereClause = parsed.where_clause || '1=1';
 
-      // Execute dynamic raw query safely
-      const query = `
-        SELECT 
-          COUNT(*)::int as count,
-          COALESCE(SUM(total_spent), 0) as total_revenue
-        FROM "customers"
-        WHERE ${whereClause}
-      `;
-      
-      const result: any = await prisma.$queryRawUnsafe(query);
-      const count = result[0]?.count || 0;
-      const totalRevenue = Number(result[0]?.total_revenue || 0);
-      const aov = count > 0 ? Math.round(totalRevenue / count) : 0;
-      
+      let count = 0;
+      let totalRevenue = 0;
+      let aov = 0;
       let risk = 'Low';
-      if (whereClause.includes('90') || whereClause.includes('60') || whereClause.includes('180')) risk = 'High';
-      else if (whereClause.includes('30')) risk = 'Medium';
-
       const channelName = parsed.channel || 'Email';
-      const channelMetric = await prisma.channelMetric.findFirst({
-        where: { channel: channelName }
-      });
-      const convRate = channelMetric ? Number(channelMetric.conversion_rate) : 5;
-      const expectedPurchasers = Math.max(1, Math.round(count * (convRate / 100)));
-      
+      let expectedPurchasers = 0;
+      let convRate = 5;
       let audienceMatch = 'High';
-      if (count < 50) audienceMatch = 'Low';
-      else if (count < 200) audienceMatch = 'Medium';
 
-      // Step 2: Generate XenoCopilot Revenue Intelligence Text
-      const step2Prompt = `# XenoCopilot Revenue Intelligence System Prompt
+      const hasUnsupportedFilters = parsed.unsupported_filters && parsed.unsupported_filters.length > 0;
+      let aiResponseText = '';
+
+      if (hasUnsupportedFilters) {
+        aiResponseText = "No matching customers found for the selected criteria.";
+      } else {
+        // Build Prisma WHERE clause dynamically
+        let prismaWhere: any = {};
+        if (parsed.filters) {
+          if (parsed.filters.city) prismaWhere.city = { contains: parsed.filters.city, mode: 'insensitive' };
+          if (parsed.filters.gender) prismaWhere.gender = { equals: parsed.filters.gender, mode: 'insensitive' };
+          
+          if (parsed.filters.min_spent || parsed.filters.max_spent) {
+            prismaWhere.total_spent = {};
+            if (parsed.filters.min_spent) prismaWhere.total_spent.gte = parsed.filters.min_spent;
+            if (parsed.filters.max_spent) prismaWhere.total_spent.lte = parsed.filters.max_spent;
+          }
+
+          if (parsed.filters.days_since_last_order) {
+            const date = new Date();
+            date.setDate(date.getDate() - parsed.filters.days_since_last_order);
+            prismaWhere.last_order_date = { lte: date };
+          }
+          if (parsed.filters.health_score_less_than) {
+            prismaWhere.health_score = { lt: parsed.filters.health_score_less_than };
+          }
+        }
+
+        // Run Prisma Query Safely
+        const customers = await prisma.customer.findMany({ where: prismaWhere });
+        count = customers.length;
+        totalRevenue = customers.reduce((sum, c) => sum + Number(c.total_spent), 0);
+        aov = count > 0 ? Math.round(totalRevenue / count) : 0;
+
+        if (parsed.filters?.days_since_last_order > 60) risk = 'High';
+        else if (parsed.filters?.days_since_last_order > 30) risk = 'Medium';
+
+        const channelMetric = await prisma.channelMetric.findFirst({
+          where: { channel: channelName }
+        });
+        convRate = channelMetric ? Number(channelMetric.conversion_rate) : 5;
+        expectedPurchasers = Math.max(1, Math.round(count * (convRate / 100)));
+
+        if (count < 50) audienceMatch = 'Low';
+        else if (count < 200) audienceMatch = 'Medium';
+
+        if (count === 0) {
+           aiResponseText = "No matching customers found for the selected criteria.";
+        } else {
+           // Step 2: Generate XenoCopilot Revenue Intelligence Text
+           const step2Prompt = `# XenoCopilot Revenue Intelligence System Prompt
 
 You are XenoCopilot.
 An AI Revenue Growth Copilot embedded inside a CRM.
@@ -236,28 +266,29 @@ Sound like: Braze, HubSpot, Mixpanel, Salesforce Marketing Cloud
 Not ChatGPT. Not a chatbot. Not an AI assistant.
 Every response should help a marketer make a revenue decision.`;
 
-      // Build intermediate structure to pass as context
-      const intermediateStructure = {
-        userQuery: goal,
-        detectedIntent: parsed.detectedIntent || "Audience Discovery",
-        filters: parsed.filters || {},
-        expectedOutput: "audience_recommendation",
-        databaseMetrics: {
-          audienceSize: count,
-          potentialRevenue: totalRevenue,
-          averageOrderValue: aov,
-          recommendedChannel: channelName
-        }
-      };
+           const intermediateStructure = {
+             userQuery: goal,
+             detectedIntent: parsed.detectedIntent || "Audience Discovery",
+             filters: parsed.filters || {},
+             expectedOutput: "audience_recommendation",
+             databaseMetrics: {
+               audienceSize: count,
+               potentialRevenue: totalRevenue,
+               averageOrderValue: aov,
+               recommendedChannel: channelName
+             }
+           };
 
-      const step2Text = await generateWithFallback(
-        genaiInstances, 
-        groqInstances, 
-        step2Prompt, 
-        `Context Structure:\n${JSON.stringify(intermediateStructure, null, 2)}\n\nGenerate the intelligence response.`, 
-        0.5,
-        false
-      );
+           aiResponseText = await generateWithFallback(
+             genaiInstances, 
+             groqInstances, 
+             step2Prompt, 
+             `Context Structure:\n${JSON.stringify(intermediateStructure, null, 2)}\n\nGenerate the intelligence response.`, 
+             0.5,
+             false
+           );
+        }
+      }
 
       return reply.send({
         id: 'dyn_' + Date.now(),
