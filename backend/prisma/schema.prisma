@@ -136,3 +136,16 @@ model Opportunity {
 
   @@map("opportunities")
 }
+
+model CampaignMemory {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campaign_name    String
+  audience_segment String
+  channel          String
+  revenue          Decimal  @db.Decimal(10, 2)
+  conversion_rate  Decimal  @db.Decimal(5, 2)
+  learnings        String[]
+  created_at       DateTime @default(now())
+
+  @@map("campaign_memories")
+}

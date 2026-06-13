@@ -404,7 +404,7 @@ Output ONLY a JSON object:
         const orders = c.orders.length;
         
         c.orders.forEach(o => {
-          avgOrderValueTotal += Number(o.total_amount);
+          avgOrderValueTotal += Number(o.amount);
           orderCount += 1;
         });
 
