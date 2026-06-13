@@ -269,7 +269,22 @@ function CampaignStudioContent() {
                  
                  <span className="text-[12px] font-bold text-blue-800 uppercase tracking-wider mb-1 flex items-center gap-1.5"><Spark height={14} width={14}/> Revenue Intelligence Copilot</span>
                  
-                 {strategyResult?.ai_response_text ? (
+                 {strategyResult?.structuredInsight ? (
+                   <div className="flex flex-col gap-5">
+                     <div className="flex flex-col gap-1.5">
+                       <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Observation</span>
+                       <span className="text-[14px] text-slate-800 font-medium leading-relaxed">{strategyResult.structuredInsight.observation}</span>
+                     </div>
+                     <div className="flex flex-col gap-1.5 border-t border-blue-100/50 pt-2">
+                       <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Business Impact</span>
+                       <span className="text-[14px] text-slate-800 font-medium leading-relaxed">{strategyResult.structuredInsight.businessImpact}</span>
+                     </div>
+                     <div className="flex flex-col gap-1.5 bg-blue-100/50 p-3 rounded-lg border border-blue-100">
+                       <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider">Recommended Action</span>
+                       <span className="text-[14px] text-blue-900 font-bold leading-relaxed">{strategyResult.structuredInsight.recommendedAction}</span>
+                     </div>
+                   </div>
+                 ) : strategyResult?.ai_response_text ? (
                    <div className="text-[14px] text-slate-800 font-medium whitespace-pre-wrap leading-relaxed">
                      {strategyResult.ai_response_text}
                    </div>

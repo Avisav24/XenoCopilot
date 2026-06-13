@@ -147,9 +147,6 @@ Rules:
       const channelName = 'WhatsApp'; // Default fallback
       let databaseMetrics: any = {};
 
-      if (hasUnsupportedFilters) {
-        aiResponseText = "No matching data found for the selected criteria.";
-      } else {
         // STEP 2: DATA RETRIEVAL
         if (parsed.goal_category === "Audience Discovery" || !parsed.goal_category) {
           let prismaWhere: any = {};
@@ -201,12 +198,8 @@ Rules:
           databaseMetrics = { status: "System Operational" };
         }
 
-        // Apply Fallback Rule if Audience Discovery returned 0
-        if (parsed.goal_category === "Audience Discovery" && count === 0) {
-          aiResponseText = "No matching data found for the selected criteria.";
-        } else {
-          // STEP 3: MASTER SYSTEM PROMPT
-          const universalPrompt = `# XenoCopilot Universal CRM Copilot
+        // STEP 3: MASTER SYSTEM PROMPT
+        const universalPrompt = `# XenoCopilot Universal CRM Copilot
 
 You are XenoCopilot.
 An enterprise CRM operating system for marketers.
@@ -247,48 +240,116 @@ Use customer records, campaign records, revenue records.
 Never invent numbers. Never assume results.
 
 STEP 5: GENERATE BUSINESS INSIGHT
-Return:
-Audience (if applicable)
-Size (if applicable)
-Revenue Potential (if applicable)
-Top Channel (if applicable)
-Risk (if applicable)
-Opportunity (if applicable)
+The AI must analyze:
+Audience size
+Revenue impact
+Customer quality
+Purchase frequency
+Churn risk
+Channel performance
+Campaign history
+
+and derive conclusions.
+
+The AI should answer:
+What is happening?
+Why is it happening?
+What should the marketer do next?
+
+Every answer must include:
+Observation
+Business Impact
 Recommended Action
-
-Only include fields relevant to the question.
-
-STEP 6: RECOMMEND NEXT ACTION
-Every response should end with: What should happen next.
 
 ---
 
-USER EXPERIENCE RULE
-Always answer the actual business question.
-Never return: Intent:, Segment:, Entity:. Provide business answers.
+UNSUPPORTED DATA HANDLING
 
-FAILURE RULE
-If data genuinely does not exist:
-"No matching data found for the selected criteria."
-Never show fake numbers. Never show ₹0 opportunities. Never force unrelated recommendations.`;
+If requested data does not exist (e.g. unsupported filters):
+1. Explain what is unavailable.
+2. Suggest the closest available strategy.
+3. Continue helping the marketer.
 
-          const contextPayload = {
-            userQuery: goal,
-            goalCategory: parsed.goal_category,
-            extractedFilters: parsed.filters,
-            databaseMetrics
-          };
+Example:
+"Age is not currently available in the CRM.
+To approximate this audience, consider targeting:
+• High-value customers
+• Repeat purchasers
+• Premium product buyers"
 
-          aiResponseText = await generateWithFallback(
-            genaiInstances, 
-            groqInstances, 
-            universalPrompt, 
-            `Context:\n${JSON.stringify(contextPayload, null, 2)}\n\nGenerate the business insight.`, 
-            0.5,
-            false
-          );
+Never terminate the conversation.
+Never return empty states.
+
+---
+
+RESPONSE RULES
+
+Never output:
+Intent:
+Segment:
+Classification:
+Entity:
+
+Never expose internal system logic.
+Speak like an enterprise CRM analyst.
+Use concise executive language.
+Maximum 2-3 sentences per insight.
+No AI buzzwords.
+No generic marketing advice.
+Every recommendation must be tied to actual CRM data.
+
+---
+
+RESPONSE STRUCTURE
+
+Return strictly structured JSON.
+
+{
+  "title": "",
+  "summary": "",
+  "observation": "",
+  "businessImpact": "",
+  "recommendedAction": "",
+  "audienceSize": 0,
+  "expectedRevenue": 0,
+  "confidence": 0,
+  "bestChannel": "",
+  "nextSteps": []
+}`;
+
+        const contextPayload = {
+          userQuery: goal,
+          goalCategory: parsed.goal_category,
+          extractedFilters: parsed.filters,
+          unsupportedFilters: parsed.unsupported_filters || [],
+          databaseMetrics
+        };
+
+        const rawJsonText = await generateWithFallback(
+          genaiInstances, 
+          groqInstances, 
+          universalPrompt, 
+          `Context:\n${JSON.stringify(contextPayload, null, 2)}\n\nGenerate the business insight. Return ONLY valid JSON matching the schema.`, 
+          0.5,
+          true
+        );
+        
+        let structuredInsight = null;
+        try {
+            structuredInsight = JSON.parse(rawJsonText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
+            aiResponseText = structuredInsight.summary || structuredInsight.observation;
+            
+            // Override metrics if AI calculated them based on fallback logic
+            if (structuredInsight.audienceSize !== undefined && structuredInsight.audienceSize !== null) {
+                count = structuredInsight.audienceSize;
+            }
+            if (structuredInsight.expectedRevenue !== undefined && structuredInsight.expectedRevenue !== null) {
+                totalRevenue = structuredInsight.expectedRevenue;
+            }
+        } catch (e) {
+            console.error("Failed to parse JSON from AI response", e);
+            aiResponseText = rawJsonText;
         }
-      }
 
       // Return unified structure
       return reply.send({
@@ -298,15 +359,16 @@ Never show fake numbers. Never show ₹0 opportunities. Never force unrelated re
         count: count,
         revenue: '₹' + (totalRevenue > 100000 ? (totalRevenue/100000).toFixed(2) + 'L' : totalRevenue.toLocaleString('en-IN')),
         revenueRaw: totalRevenue,
-        expectedRevenue: Math.round(expectedPurchasers * aov),
+        expectedRevenue: Math.round(expectedPurchasers * aov) || totalRevenue,
         expectedPurchasers: expectedPurchasers,
         conversionRate: convRate,
         audienceMatch: count > 200 ? 'High' : (count > 50 ? 'Medium' : 'Low'),
         aov: '₹' + aov.toLocaleString('en-IN'),
         risk: risk,
-        channel: channelName,
+        channel: structuredInsight?.bestChannel || channelName,
         goal: parsed.goal_category || 'Insight',
-        ai_response_text: aiResponseText
+        ai_response_text: aiResponseText,
+        structuredInsight: structuredInsight
       });
 
     } catch (err) {
