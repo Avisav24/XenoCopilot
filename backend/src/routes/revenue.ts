@@ -179,62 +179,62 @@ export async function revenueRoutes(fastify: FastifyInstance) {
       });
 
       const now = Date.now();
-      const stats = customers.map(c => {
-        const daysSince = c.last_order_date ? (now - c.last_order_date.getTime()) / (1000 * 60 * 60 * 24) : 999;
-        return {
-          id: c.id,
-          health: c.health_score,
-          daysSince,
-          spent: Number(c.total_spent),
-          ordersCount: c.orders.length,
-          personas: c.customer_personas.map(cp => cp.persona.name)
-        };
-      });
-
-      const dbContext = {
-        totalCustomers: stats.length,
-        atRiskCount: stats.filter(s => s.health < 40).length,
-        dormantCount: stats.filter(s => s.daysSince > 90).length,
-        avgSpend: stats.reduce((sum, s) => sum + s.spent, 0) / (stats.length || 1),
+      
+      const dormantBucket = {
+        id: 'dormant-leak',
+        title: 'Dormant Customers',
+        customersAffected: 0,
+        revenueAtRisk: 0,
+        recoverableRevenue: 0,
+        evidence: ['Last purchase > 60 days', 'Engagement dropping'],
+        recommendation: 'Launch Reactivation Campaign',
+        confidenceReason: 'Based on Purchase Cycle',
+        predictedLossDate: '21 Days'
       };
 
-      const systemPrompt = `You are the XenoCopilot Revenue Leak Detection Engine.
-Analyze the CRM metrics and identify 3 critical areas where future revenue will be lost.
-Revenue at risk must be calculated mathematically based on expected future spend and churn probability.
+      const atRiskBucket = {
+        id: 'at-risk-leak',
+        title: 'High Risk Customers',
+        customersAffected: 0,
+        revenueAtRisk: 0,
+        recoverableRevenue: 0,
+        evidence: ['Health Score < 60', 'High Churn Probability (> 0.5)'],
+        recommendation: 'Launch VIP Retention',
+        confidenceReason: 'Based on Health Score',
+        predictedLossDate: '14 Days'
+      };
 
-Output ONLY a strictly formatted JSON array of objects with the exact keys:
-[
-  {
-    "id": "uuid",
-    "title": "Clear issue title",
-    "customersAffected": 120,
-    "revenueAtRisk": 500000,
-    "recoverableRevenue": 200000,
-    "evidence": ["Point 1", "Point 2", "Point 3"],
-    "recommendation": "Launch X Campaign",
-    "confidenceReason": "Based on Y",
-    "predictedLossDate": "21 Days"
-  }
-]`;
+      customers.forEach(c => {
+        const daysSince = c.last_order_date ? (now - c.last_order_date.getTime()) / (1000 * 60 * 60 * 24) : 999;
+        const churnProb = 1 - (c.health_score / 100);
+        const ltv = Number(c.total_spent);
+        
+        let isLeak = false;
+        let revAtRisk = ltv * churnProb;
 
-      const aiResponse = await generateWithFallback(
-        genaiInstances,
-        groqInstances,
-        systemPrompt,
-        `Database Stats: ${JSON.stringify(dbContext)}`,
-        0.3,
-        true
-      );
+        if (c.health_score < 60 || churnProb > 0.5) {
+          atRiskBucket.customersAffected += 1;
+          atRiskBucket.revenueAtRisk += revAtRisk;
+          isLeak = true;
+        } else if (daysSince > 60) {
+          dormantBucket.customersAffected += 1;
+          dormantBucket.revenueAtRisk += revAtRisk;
+          isLeak = true;
+        }
+      });
 
-      let leaks = [];
-      try {
-        leaks = JSON.parse(aiResponse.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
-        if (!Array.isArray(leaks)) leaks = [leaks];
-      } catch (e) {
-        console.error("Failed to parse leaks JSON", e);
-        leaks = [];
-      }
+      atRiskBucket.recoverableRevenue = atRiskBucket.revenueAtRisk * 0.4;
+      dormantBucket.recoverableRevenue = dormantBucket.revenueAtRisk * 0.4;
 
+      const leaks = [];
+      if (atRiskBucket.customersAffected > 0) leaks.push(atRiskBucket);
+      if (dormantBucket.customersAffected > 0) leaks.push(dormantBucket);
+
+      console.log(`[Revenue Leaks] Customers Loaded: ${customers.length}`);
+      console.log(`[Revenue Leaks] At Risk Found: ${atRiskBucket.customersAffected + dormantBucket.customersAffected}`);
+      console.log(`[Revenue Leaks] Total Rev At Risk: ${atRiskBucket.revenueAtRisk + dormantBucket.revenueAtRisk}`);
+      console.log("LEAKS API RESPONSE:", JSON.stringify(leaks, null, 2));
+      
       return reply.send(leaks);
     } catch (err) {
       console.error(err);
@@ -376,32 +376,59 @@ Output ONLY a JSON object:
         }
       });
       
-      const systemPrompt = `You are the XenoCopilot Revenue Opportunity Engine.
-Identify 3 positive revenue creation opportunities (e.g. Upsells, Cross-sells).
-Output ONLY a JSON array:
-[
-  {
-    "opportunity": "Dormant Customer Recovery",
-    "potentialRevenue": 170000,
-    "audience": 428,
-    "confidence": 82,
-    "channel": "WhatsApp",
-    "reasoning": ["Previously active", "Historical recovery 3.1%"],
-    "action": "Launch Campaign"
-  }
-]`;
+      const frequentBuyersBucket = {
+        opportunity: "High Frequency Cross-Sell",
+        potentialRevenue: 0,
+        audience: 0,
+        confidence: 85,
+        channel: "WhatsApp",
+        reasoning: ["Frequent buyers (>3 orders)", "High engagement"],
+        action: "Launch Cross-Sell Campaign"
+      };
 
-      const aiResponse = await generateWithFallback(
-        genaiInstances,
-        groqInstances,
-        systemPrompt,
-        `Find opportunities from ${customers.length} customers.`,
-        0.3,
-        true
-      );
+      const highLtvBucket = {
+        opportunity: "VIP Upsell",
+        potentialRevenue: 0,
+        audience: 0,
+        confidence: 78,
+        channel: "Email",
+        reasoning: ["High LTV (>₹10k)", "Brand loyalists"],
+        action: "Launch VIP Exclusive Offer"
+      };
 
-      const opps = JSON.parse(aiResponse.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
-      return reply.send(Array.isArray(opps) ? opps : [opps]);
+      let avgOrderValueTotal = 0;
+      let orderCount = 0;
+
+      customers.forEach(c => {
+        const ltv = Number(c.total_spent);
+        const orders = c.orders.length;
+        
+        c.orders.forEach(o => {
+          avgOrderValueTotal += Number(o.total_amount);
+          orderCount += 1;
+        });
+
+        if (orders > 3) {
+          frequentBuyersBucket.audience += 1;
+        } else if (ltv > 10000) {
+          highLtvBucket.audience += 1;
+        }
+      });
+
+      const globalAOV = orderCount > 0 ? avgOrderValueTotal / orderCount : 3000;
+      const expectedConv = 0.05;
+
+      frequentBuyersBucket.potentialRevenue = Math.round(frequentBuyersBucket.audience * globalAOV * expectedConv);
+      highLtvBucket.potentialRevenue = Math.round(highLtvBucket.audience * globalAOV * expectedConv);
+
+      const opps = [];
+      if (frequentBuyersBucket.audience > 0) opps.push(frequentBuyersBucket);
+      if (highLtvBucket.audience > 0) opps.push(highLtvBucket);
+
+      console.log(`[Revenue Opps] Customers Loaded: ${customers.length}`);
+      console.log(`[Revenue Opps] Total Orders: ${orderCount}`);
+      console.log("OPPS API RESPONSE:", JSON.stringify(opps, null, 2));
+      return reply.send(opps);
     } catch (err) {
       console.error(err);
       return reply.status(500).send({ error: 'Failed to find opportunities' });
