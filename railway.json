@@ -2,10 +2,10 @@
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "cd backend && npm install && npx prisma generate && npm run build"
+    "buildCommand": "pnpm --filter @xenocopilot/backend db:generate && pnpm --filter @xenocopilot/backend build"
   },
   "deploy": {
-    "startCommand": "cd backend && npm run start",
+    "startCommand": "pnpm --filter @xenocopilot/backend start",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",

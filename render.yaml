@@ -3,8 +3,8 @@ services:
     name: xenocopilot-backend
     env: node
     rootDir: backend
-    buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npm run start
+    buildCommand: pnpm --filter @xenocopilot/backend db:generate && pnpm --filter @xenocopilot/backend build
+    startCommand: pnpm --filter @xenocopilot/backend start
     envVars:
       - key: DATABASE_URL
         sync: false
