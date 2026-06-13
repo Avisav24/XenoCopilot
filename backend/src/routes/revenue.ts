@@ -302,17 +302,17 @@ export async function revenueRoutes(fastify: FastifyInstance) {
 
       const leaks = [];
       if (vipRiskBucket.customersAffected > 0) {
-        vipRiskBucket.evidence = [`LTV > Top 20% (₹${Math.round(top20LtvThreshold)})`, 'Delay exceeds normal purchase cycle'];
+        vipRiskBucket.evidence = [`${vipRiskBucket.customersAffected} Dormant VIP Customers`, `₹${Math.round(vipRiskBucket.revenueAtRisk)} Revenue At Risk`, `LTV > Top 20% (₹${Math.round(top20LtvThreshold)})`, 'Delay exceeds normal purchase cycle'];
         vipRiskBucket.recoverableRevenue = vipRiskBucket.revenueAtRisk * 0.5;
         leaks.push(vipRiskBucket);
       }
       if (dormantBucket.customersAffected > 0) {
-        dormantBucket.evidence = ['Purchase delay > 1.5x normal frequency', 'High churn probability'];
+        dormantBucket.evidence = [`${dormantBucket.customersAffected} Dormant Customers`, `₹${Math.round(dormantBucket.revenueAtRisk)} Revenue At Risk`, 'Purchase delay > 1.5x normal frequency', 'High churn probability'];
         dormantBucket.recoverableRevenue = dormantBucket.revenueAtRisk * 0.35;
         leaks.push(dormantBucket);
       }
       if (engagementBucket.customersAffected > 0) {
-        engagementBucket.evidence = ['Open rate dropped significantly', 'Low interaction over last 3 campaigns'];
+        engagementBucket.evidence = [`${engagementBucket.customersAffected} Unengaged Customers`, `₹${Math.round(engagementBucket.revenueAtRisk)} Revenue At Risk`, 'Open rate dropped significantly', 'Low interaction over last 3 campaigns'];
         engagementBucket.recoverableRevenue = engagementBucket.revenueAtRisk * 0.2;
         leaks.push(engagementBucket);
       }
@@ -334,7 +334,7 @@ export async function revenueRoutes(fastify: FastifyInstance) {
       audience: 0,
       confidence: 72,
       channel: "WhatsApp",
-      reasoning: ["Previously active", "Historical recovery 3.1%"],
+      reasoning: ["0 Targetable Customers", "0 Revenue Potential", "Previously active", "Historical recovery 3.1%"],
       action: "Launch Reactivation Campaign"
     };
 
@@ -344,7 +344,7 @@ export async function revenueRoutes(fastify: FastifyInstance) {
       audience: 0,
       confidence: 85,
       channel: "Email",
-      reasoning: ["High LTV", "Strong brand affinity"],
+      reasoning: ["0 Targetable Customers", "0 Revenue Potential", "High LTV", "Strong brand affinity"],
       action: "Launch VIP Collection"
     };
 
@@ -354,7 +354,7 @@ export async function revenueRoutes(fastify: FastifyInstance) {
       audience: 0,
       confidence: 78,
       channel: "SMS",
-      reasoning: ["Frequent buyers", "High conversion probability"],
+      reasoning: ["0 Targetable Customers", "0 Revenue Potential", "Frequent buyers", "High conversion probability"],
       action: "Launch Subscription Offer"
     };
 
@@ -389,6 +389,15 @@ export async function revenueRoutes(fastify: FastifyInstance) {
     dormantBucket.potentialRevenue = Math.round(dormantBucket.audience * globalAOV * 0.03);
     highValueBucket.potentialRevenue = Math.round(highValueBucket.audience * globalAOV * 0.08);
     repeatBucket.potentialRevenue = Math.round(repeatBucket.audience * globalAOV * 0.1);
+
+    dormantBucket.reasoning[0] = `${dormantBucket.audience} Targetable Customers`;
+    dormantBucket.reasoning[1] = `₹${dormantBucket.potentialRevenue} Revenue Potential`;
+    
+    highValueBucket.reasoning[0] = `${highValueBucket.audience} Targetable Customers`;
+    highValueBucket.reasoning[1] = `₹${highValueBucket.potentialRevenue} Revenue Potential`;
+
+    repeatBucket.reasoning[0] = `${repeatBucket.audience} Targetable Customers`;
+    repeatBucket.reasoning[1] = `₹${repeatBucket.potentialRevenue} Revenue Potential`;
 
     const opps = [];
     if (highValueBucket.audience > 0) opps.push(highValueBucket);
@@ -436,19 +445,27 @@ export async function revenueRoutes(fastify: FastifyInstance) {
       let expectedConversion = 0;
       let expectedRevenue = 0;
       let expectedROI = 0;
-      let reasoning = "";
+      let reasoning: string[] = [];
 
       if (memories.length > 0) {
         expectedConversion = memories.reduce((sum, m) => sum + Number(m.conversion_rate), 0) / memories.length;
         expectedRevenue = memories.reduce((sum, m) => sum + Number(m.revenue), 0) / memories.length;
         expectedROI = expectedRevenue * 0.15;
-        reasoning = `Based on ${memories.length} similar historical campaigns for ${input.audienceName || 'this audience'}.`;
+        reasoning = [
+          `${memories.length} similar historical campaigns for ${input.audienceName || 'this audience'}`,
+          `Historical conversion: ${expectedConversion.toFixed(1)}%`,
+          `Historical expected revenue: ₹${Math.round(expectedRevenue)}`
+        ];
       } else {
         const metrics = await prisma.channelMetric.findUnique({ where: { channel: input.channel } });
         expectedConversion = metrics ? Number(metrics.conversion_rate) : 2.5;
         expectedRevenue = 35000;
         expectedROI = 5000;
-        reasoning = `Insufficient history for exact match. Fallback to global metrics for ${input.channel}.`;
+        reasoning = [
+          `Insufficient exact history for ${input.audienceName || 'this audience'}`,
+          `Fallback to global metrics for ${input.channel}`,
+          `Baseline conversion: ${expectedConversion}%`
+        ];
       }
 
       return reply.send({

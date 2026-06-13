@@ -173,11 +173,12 @@ export default function CommandCenterPage() {
                     
                     <div className="grid grid-cols-2">
                       <div className="p-5 border-r border-hairline flex flex-col gap-3">
-                        <span className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Why This Exists</span>
-                        <ul className="flex flex-col gap-2">
+                        <span className="text-[12px] font-bold text-ink-muted uppercase tracking-wider">Recommendation Provenance</span>
+                        <ul className="flex flex-col gap-2 mt-1">
                           {leak.evidence.map((ev: string, idx: number) => (
-                            <li key={idx} className="text-[13px] text-ink flex items-start gap-2">
-                              <span className="text-ink-muted mt-0.5">•</span> <span>{ev}</span>
+                            <li key={idx} className="text-[12px] text-ink flex flex-col">
+                              <span className="text-[10px] font-bold text-ink-muted uppercase mb-0.5">Source {idx + 1}</span>
+                              <span className="font-medium text-[13px]">{ev}</span>
                             </li>
                           ))}
                         </ul>
@@ -240,8 +241,16 @@ export default function CommandCenterPage() {
                   ) : opportunities?.map((opp: any, idx: number) => (
                     <tr key={idx} className="border-b border-hairline hover:bg-canvas-soft transition-colors">
                       <td className="p-3">
-                        <div className="font-semibold text-ink">{opp.opportunity}</div>
-                        <div className="text-[11px] text-ink-muted mt-1">{opp.reasoning.join(' • ')}</div>
+                        <div className="font-semibold text-ink text-[14px]">{opp.opportunity}</div>
+                        <div className="mt-3 flex flex-col gap-2 p-2 bg-canvas-soft border border-hairline rounded">
+                          <span className="text-[10px] font-bold text-ink-muted uppercase tracking-wider">Recommendation Provenance</span>
+                          {opp.reasoning.map((r: string, rIdx: number) => (
+                            <div key={rIdx} className="text-[11px] text-ink flex items-center gap-2">
+                              <span className="text-[9px] font-bold text-ink-muted uppercase w-[50px]">Source {rIdx + 1}</span>
+                              <span className="font-medium">{r}</span>
+                            </div>
+                          ))}
+                        </div>
                       </td>
                       <td className="p-3 text-right font-mono-numbers font-semibold text-semantic-up">{formatCurrency(opp.potentialRevenue)}</td>
                       <td className="p-3 font-mono-numbers">{opp.audience} Users</td>
@@ -339,14 +348,15 @@ export default function CommandCenterPage() {
                        <span className={clsx("text-[13px] font-bold px-2 py-0.5 rounded", simulateMutation.data.risk === 'Low' ? 'bg-semantic-success/10 text-semantic-success' : 'bg-semantic-warning/10 text-semantic-warning')}>{simulateMutation.data.risk}</span>
                     </div>
                     <div className="mt-2 pt-4 border-t border-hairline flex flex-col gap-2">
-                      <span className="text-[12px] font-bold uppercase tracking-wider text-primary">System Memory Reasoning</span>
-                      <ul className="flex flex-col gap-2">
-                        {simulateMutation.data.reasoning.map((r: string, idx: number) => (
-                          <li key={idx} className="text-[13px] text-ink flex items-start gap-2">
-                            <Spark height={14} width={14} className="text-primary mt-0.5 shrink-0" /> <span>{r}</span>
-                          </li>
+                      <span className="text-[12px] font-bold uppercase tracking-wider text-primary">Recommendation Provenance</span>
+                      <div className="flex flex-col gap-2 mt-2 p-3 bg-canvas-soft border border-hairline rounded">
+                        {simulateMutation.data.reasoning?.map((r: string, idx: number) => (
+                          <div key={idx} className="text-[12px] text-ink flex items-center gap-3">
+                            <span className="text-[10px] font-bold text-ink-muted uppercase w-[55px] shrink-0">Source {idx + 1}</span>
+                            <span className="font-medium text-[13px]">{r}</span>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
