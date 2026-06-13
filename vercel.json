@@ -3,5 +3,5 @@
   "buildCommand": "pnpm --filter @xenocopilot/frontend build",
   "outputDirectory": "frontend/.next",
   "installCommand": "pnpm install",
-  "framework": "other"
+  "framework": null
 }
