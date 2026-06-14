@@ -22,7 +22,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
   useEffect(() => {
     if (campaign?.status === 'completed' && !learning) {
       // Auto-generate learning when completed (could also be done automatically by backend, but we trigger it here)
-      fetchAPI(`/api/campaigns/${params.id}/learn`, { method: 'POST' }).then(setLearning).catch(() => {});
+      fetchAPI(`/api/campaigns/${params.id}/learn`, { method: 'POST', body: '{}' }).then(setLearning).catch(() => {});
     }
   }, [campaign?.status, learning, params.id]);
 
@@ -69,7 +69,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
           {campaign.status === 'review' && (
             <div className="ml-auto">
               <button onClick={async () => {
-                await fetchAPI(`/api/campaigns/${campaign.id}/launch`, { method: 'POST' });
+                await fetchAPI(`/api/campaigns/${campaign.id}/launch`, { method: 'POST', body: '{}' });
                 // Revalidate SWR automatically via interval
               }} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-[8px] font-bold text-[14px] transition-colors flex items-center gap-2">
                 <Megaphone width={18} height={18}/> Launch Now

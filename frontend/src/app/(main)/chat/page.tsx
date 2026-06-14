@@ -126,7 +126,10 @@ function CampaignStudioContent() {
         })
       });
 
-      await fetchAPI(`/api/campaigns/${campaign.id}/launch`, { method: 'POST' });
+      await fetchAPI(`/api/campaigns/${campaign.id}/launch`, { 
+        method: 'POST',
+        body: JSON.stringify({}) 
+      });
       router.push(`/campaigns/${campaign.id}`);
     } catch (e) {
       console.error(e);
