@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { GoogleGenAI } from '@google/genai';
 import prisma from '../lib/prisma';
 import { redis } from '../lib/redis';
+import { runSimulation } from './simulator';
 
 function formatRate(num: number, den: number): string {
   if (den === 0) return '0%';
@@ -124,16 +125,12 @@ export async function campaignRoutes(fastify: FastifyInstance) {
       }
     });
 
-    // Fire webhook simulator in background
+    // Run simulator in background directly
     setTimeout(async () => {
       try {
-        await fetch(`http://127.0.0.1:${process.env.PORT || 3001}/api/simulator/run`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ campaign_id: id })
-        });
+        await runSimulation(campaign);
       } catch (e) {
-        console.error('Failed to trigger simulator', e);
+        console.error('Failed to run simulator', e);
       }
     }, 1000);
 

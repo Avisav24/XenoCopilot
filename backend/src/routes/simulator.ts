@@ -29,7 +29,7 @@ export async function simulatorRoutes(fastify: FastifyInstance) {
   });
 }
 
-async function runSimulation(campaign: any) {
+export async function runSimulation(campaign: any) {
   // Step 1: Create Communications (fetch target audience limit to 200 to not overload)
   // Assuming persona_id is what we use, or audience_type.
   let customers: any[] = [];
