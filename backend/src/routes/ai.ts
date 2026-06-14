@@ -1591,7 +1591,7 @@ Return JSON:
        const systemPrompt = `You are the XenoCopilot AI Decision Engine. The user has provided a business goal.
 Analyze the goal and recommend: 
 1) Audience (Name and Count)
-2) Channel
+2) Channel (Choose ONLY ONE from: "WhatsApp", "Email", "SMS", "Email & SMS")
 3) Offer
 4) Expected Revenue (in ₹)
 5) Expected Conversion (%)
@@ -1672,14 +1672,29 @@ Return ONLY valid JSON matching this structure:
         revenue = "₹1.05L"; roi = "2.0x"; conversion = "4.1%";
       } else if (channel === "SMS") {
         revenue = "₹82K"; roi = "1.4x"; conversion = "3.2%";
+      } else if (channel === "Email & SMS") {
+        revenue = "₹2.2L"; roi = "4.1x"; conversion = "10.5%";
+      }
+
+      const defaultScenarios = [
+        { channel: "WhatsApp", revenue: "₹1.72L", roi: "3.2x", conversion: "8.2%" },
+        { channel: "Email", revenue: "₹1.05L", roi: "2.0x", conversion: "4.1%" },
+        { channel: "SMS", revenue: "₹82K", roi: "1.4x", conversion: "3.2%" },
+        { channel: "Email & SMS", revenue: "₹2.2L", roi: "4.1x", conversion: "10.5%" }
+      ];
+
+      // If the AI recommended a channel not in our standard list, ensure it's included
+      if (!defaultScenarios.find(s => s.channel === channel)) {
+        defaultScenarios.unshift({
+          channel: channel,
+          revenue: "₹" + (Math.random() * 2 + 1).toFixed(1) + "L",
+          roi: (Math.random() * 2 + 1.5).toFixed(1) + "x",
+          conversion: (Math.random() * 5 + 4).toFixed(1) + "%"
+        });
       }
 
       return reply.send({
-        scenarios: [
-          { channel: "WhatsApp", revenue: "₹1.72L", roi: "3.2x", conversion: "8.2%" },
-          { channel: "Email", revenue: "₹1.05L", roi: "2.0x", conversion: "4.1%" },
-          { channel: "SMS", revenue: "₹82K", roi: "1.4x", conversion: "3.2%" }
-        ],
+        scenarios: defaultScenarios,
         selected: { revenue, roi, conversion }
       });
     } catch (e) {
@@ -1740,35 +1755,46 @@ Return ONLY valid JSON matching this structure:
       if (channel === "WhatsApp") {
         variantA = {
           type: "urgency",
-          copy: `Hi [Name],\nYou've been one of our most valued customers. We noticed you haven't shopped recently.\nEnjoy ${offer} off your next order.\nOffer expires in 48 hours.\n[ Shop Now ]`,
+          copy: `Hi <var>Rahul</var>,\nYou've been one of our most valued customers at <var>StyleCo</var>. We noticed you haven't shopped recently.\nEnjoy <var>${offer}</var> off your next order.\nOffer expires in 48 hours.\n[ Shop Now ]`,
           preview: "WhatsApp Preview Text"
         };
         variantB = {
           type: "reward",
-          copy: `Hi [Name],\nExclusive offer for our valued customers!\nWe noticed you haven't shopped recently. Enjoy ${offer} off your next order.\n[ Shop Now ]`,
+          copy: `Hi <var>Rahul</var>,\nExclusive offer for our valued customers!\nWe noticed you haven't shopped recently. Enjoy <var>${offer}</var> off your next order.\n[ Shop Now ]`,
           preview: "WhatsApp Preview Text"
         };
       } else if (channel === "Email") {
         variantA = {
           type: "urgency",
-          copy: `Subject: [Name], an exclusive ${offer} offer expiring soon\n\nHi [Name],\nWe've missed you. As one of our top customers we reserved an exclusive ${offer} offer.\nOffer expires in 48 hours.\n[ Redeem Offer ]`,
+          copy: `Subject: <var>Rahul</var>, an exclusive <var>${offer}</var> offer expiring soon\n\nHi <var>Rahul</var>,\nWe've missed you at <var>StyleCo</var>. As one of our top customers we reserved an exclusive <var>${offer}</var> offer.\nOffer expires in 48 hours.\n[ Redeem Offer ]`,
           preview: `${offer} off your next order - Expiring soon`
         };
         variantB = {
           type: "reward",
-          copy: `Subject: [Name], a special ${offer} offer just for you\n\nHi [Name],\nWe've missed you. As one of our top customers we reserved an exclusive ${offer} offer.\n[ Redeem Offer ]`,
+          copy: `Subject: <var>Rahul</var>, a special <var>${offer}</var> offer just for you\n\nHi <var>Rahul</var>,\nWe've missed you. As one of our top customers we reserved an exclusive <var>${offer}</var> offer.\n[ Redeem Offer ]`,
           preview: `${offer} off your next order`
         };
       } else if (channel === "SMS") {
         variantA = {
           type: "urgency",
-          copy: `[Name], enjoy ${offer} OFF your next purchase. Offer valid for 48 hours. Shop now: yourbrand.com/recover`,
+          copy: `<var>Rahul</var>, enjoy <var>${offer}</var> OFF your next purchase at <var>StyleCo</var>. Offer valid for 48 hours. Shop now: <var>styleco.com/recover</var>`,
           preview: "SMS Preview"
         };
         variantB = {
           type: "reward",
-          copy: `Exclusive offer for valued customers! [Name], enjoy ${offer} OFF your next purchase. Shop now: yourbrand.com/recover`,
+          copy: `Exclusive offer for valued customers! <var>Rahul</var>, enjoy <var>${offer}</var> OFF your next purchase. Shop now: <var>styleco.com/recover</var>`,
           preview: "SMS Preview"
+        };
+      } else if (channel === "Email & SMS") {
+        variantA = {
+          type: "urgency",
+          copy: `[Email]\nSubject: <var>Rahul</var>, an exclusive <var>${offer}</var> offer expiring soon\n\nHi <var>Rahul</var>,\nWe've missed you at <var>StyleCo</var>. As one of our top customers we reserved an exclusive <var>${offer}</var> offer.\nOffer expires in 48 hours.\n[ Redeem Offer ]\n\n[SMS]\n<var>Rahul</var>, enjoy <var>${offer}</var> OFF your next purchase at <var>StyleCo</var>. Offer valid for 48 hours. Shop now: <var>styleco.com/recover</var>`,
+          preview: "Email & SMS Preview"
+        };
+        variantB = {
+          type: "reward",
+          copy: `[Email]\nSubject: <var>Rahul</var>, a special <var>${offer}</var> offer just for you\n\nHi <var>Rahul</var>,\nWe've missed you. As one of our top customers we reserved an exclusive <var>${offer}</var> offer.\n[ Redeem Offer ]\n\n[SMS]\nExclusive offer for valued customers! <var>Rahul</var>, enjoy <var>${offer}</var> OFF your next purchase. Shop now: <var>styleco.com/recover</var>`,
+          preview: "Email & SMS Preview"
         };
       }
 

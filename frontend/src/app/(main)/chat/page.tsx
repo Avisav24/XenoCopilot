@@ -99,6 +99,18 @@ function CampaignStudioContent() {
     }
   };
 
+  const renderMessageWithVars = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(<var>.*?<\/var>)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('<var>') && part.endsWith('</var>')) {
+         const val = part.slice(5, -6);
+         return <span key={i} className="inline-block bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-[4px] font-bold text-[11px] mx-0.5 shadow-sm border border-indigo-200">{val}</span>;
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
   const handleLaunchCampaign = async () => {
     setIsProcessing(true);
     try {
@@ -359,7 +371,7 @@ function CampaignStudioContent() {
                                    {/* Fake tail */}
                                    <div className="absolute top-0 -left-2 w-0 h-0 border-[6px] border-transparent border-t-white border-r-white"></div>
                                    <div className="text-[13px] text-[#111b21] leading-snug whitespace-pre-wrap pr-10">
-                                     {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy}
+                                     {renderMessageWithVars(messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy)}
                                    </div>
                                    <div className="text-[10px] text-slate-400 text-right mt-1.5 float-right -mb-1">
                                      8:00 PM
@@ -387,10 +399,10 @@ function CampaignStudioContent() {
                                <div className="p-6 flex flex-col items-center">
                                  <div className="bg-white w-full rounded-[8px] p-6 shadow-sm border border-gray-100 flex flex-col gap-4">
                                    <div className="text-[14px] font-bold text-slate-900">
-                                     {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.split('\n\n')[1]?.split('\n')[0] || "Hi there,"}
+                                     {renderMessageWithVars(messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.split('\n\n')[1]?.split('\n')[0] || "Hi there,")}
                                    </div>
                                    <div className="text-[13px] text-slate-600 leading-relaxed whitespace-pre-wrap">
-                                     {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.split('\n\n').slice(1).join('\n\n').replace(/^.*?\n/, '')}
+                                     {renderMessageWithVars(messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.split('\n\n').slice(1).join('\n\n').replace(/^.*?\n/, ''))}
                                    </div>
                                    <button className="mt-2 w-full bg-[#3b5998] hover:bg-[#344e86] text-white font-semibold py-2.5 rounded-[4px] text-[13px] transition-colors">
                                      Redeem Offer
@@ -420,7 +432,7 @@ function CampaignStudioContent() {
                                  {/* Incoming Bubble */}
                                  <div className="relative self-start max-w-[85%]">
                                    <div className="bg-[#E9E9EB] text-black text-[14px] leading-snug px-4 py-2.5 rounded-[18px] rounded-bl-sm">
-                                     {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy}
+                                     {renderMessageWithVars(messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy)}
                                    </div>
                                    <div className="text-[9px] text-gray-400 mt-1 ml-1">{messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.length} / 160 char</div>
                                  </div>
@@ -438,6 +450,49 @@ function CampaignStudioContent() {
                                </div>
                              </div>
                            )}
+                           {messagePreview.channel === 'Email & SMS' && (() => {
+                             const fullCopy = messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy || '';
+                             const emailCopyRaw = fullCopy.split('[SMS]')[0]?.replace('[Email]\n', '').trim() || '';
+                             const smsCopyRaw = fullCopy.split('[SMS]')[1]?.trim() || '';
+                             
+                             return (
+                               <div className="flex gap-4 w-full justify-center">
+                                 {/* Email Preview Compact */}
+                                 <div className="bg-[#f4f5f7] flex-1 max-w-[280px] rounded-[16px] shadow-[0_5px_20px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden border border-gray-200">
+                                   <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+                                     <div className="text-[11px] font-bold text-slate-800 line-clamp-1">
+                                       {renderMessageWithVars(emailCopyRaw.split('\n\n')[0]?.replace('Subject: ', ''))}
+                                     </div>
+                                   </div>
+                                   <div className="p-4 flex flex-col items-center flex-1">
+                                     <div className="bg-white w-full rounded-[8px] p-4 shadow-sm border border-gray-100 flex flex-col gap-3">
+                                       <div className="text-[13px] font-bold text-slate-900">
+                                         {renderMessageWithVars(emailCopyRaw.split('\n\n')[1]?.split('\n')[0] || "Hi there,")}
+                                       </div>
+                                       <div className="text-[12px] text-slate-600 leading-relaxed whitespace-pre-wrap">
+                                         {renderMessageWithVars(emailCopyRaw.split('\n\n').slice(1).join('\n\n').replace(/^.*?\n/, ''))}
+                                       </div>
+                                       <button className="mt-1 w-full bg-[#3b5998] text-white font-semibold py-2 rounded-[4px] text-[12px]">Redeem Offer</button>
+                                     </div>
+                                   </div>
+                                 </div>
+                                 
+                                 {/* SMS Preview Compact */}
+                                 <div className="bg-white flex-1 max-w-[240px] rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden border border-gray-200 relative pb-2">
+                                   <div className="bg-[#F9F9F9] border-b border-gray-200 px-3 py-2 flex items-center justify-center z-10">
+                                     <div className="text-[10px] text-slate-900 font-medium tracking-wide">Your Brand</div>
+                                   </div>
+                                   <div className="px-3 py-4 flex flex-col flex-1 bg-white min-h-[140px]">
+                                     <div className="relative self-start max-w-[90%]">
+                                       <div className="bg-[#E9E9EB] text-black text-[13px] leading-snug px-3 py-2 rounded-[16px] rounded-bl-sm">
+                                         {renderMessageWithVars(smsCopyRaw)}
+                                       </div>
+                                     </div>
+                                   </div>
+                                 </div>
+                               </div>
+                             );
+                           })()}
                          </div>
                        </div>
 
