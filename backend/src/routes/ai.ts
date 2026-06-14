@@ -1492,7 +1492,7 @@ C3: Loyal Customer Upsell (Audience: ${loyalCount}, Rev: ₹${revLoyal}, Channel
        // Mock actuals deterministically slightly off from expected
        const actualRevenue = expectedRevenue * (0.9 + Math.random() * 0.2);
        const actualConversion = expectedConversion * (0.85 + Math.random() * 0.3);
-       const accuracy = 100 - Math.abs((actualRevenue - expectedRevenue) / expectedRevenue * 100);
+       const accuracy = expectedRevenue === 0 && actualRevenue === 0 ? 100 : (expectedRevenue === 0 || actualRevenue === 0 ? 0 : (Math.min(actualRevenue, expectedRevenue) / Math.max(actualRevenue, expectedRevenue)) * 100);
 
        const systemPrompt = `You are an AI Campaign Reviewer. Based on the metrics, generate narratives for "whatWorked", "whatFailed", and a reusable "learning".
 Return JSON:

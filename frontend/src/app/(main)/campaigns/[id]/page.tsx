@@ -181,7 +181,15 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
                   </div>
                   <div className="flex flex-col gap-1.5 p-8">
                     <span className="text-[11px] font-[600] text-gray-500 uppercase tracking-widest">Prediction Accuracy</span>
-                    <span className="text-[20px] font-[600] text-gray-900 font-mono tracking-tight">{Math.max(0, 100 - Math.abs(Number(insights?.performance_pct || 0))).toFixed(1).replace('.0', '')}%</span>
+                    <span className="text-[20px] font-[600] text-gray-900 font-mono tracking-tight">
+                      {(() => {
+                        const actual = Number(campaign.actual_revenue || 0);
+                        const predicted = Number(campaign.predicted_revenue || 0);
+                        if (actual === 0 && predicted === 0) return '100%';
+                        if (predicted === 0 || actual === 0) return '0%';
+                        return (Math.min(actual, predicted) / Math.max(actual, predicted) * 100).toFixed(1).replace('.0', '') + '%';
+                      })()}
+                    </span>
                   </div>
                   <div className="flex flex-col gap-1.5 p-8">
                     <span className="text-[11px] font-[600] text-gray-500 uppercase tracking-widest">Variance</span>
