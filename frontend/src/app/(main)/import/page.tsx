@@ -86,7 +86,13 @@ export default function ImportPage() {
                
                {/* Upload Section */}
                <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex flex-col gap-6">
-                  <span className="text-[14px] font-bold text-slate-900 uppercase tracking-wider">Step 1: Upload Files</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[14px] font-bold text-slate-900 uppercase tracking-wider">Step 1: Upload Files</span>
+                    <div className="flex gap-4">
+                       <a href="/sample_customers.csv" download className="text-[12px] font-bold text-blue-600 hover:text-blue-700 underline underline-offset-2 decoration-blue-200 hover:decoration-blue-400 transition-colors">Download Sample Customers</a>
+                       <a href="/sample_orders.csv" download className="text-[12px] font-bold text-blue-600 hover:text-blue-700 underline underline-offset-2 decoration-blue-200 hover:decoration-blue-400 transition-colors">Download Sample Orders</a>
+                    </div>
+                  </div>
                   <div className="grid grid-cols-2 gap-6">
                      
                      <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center gap-3 relative hover:border-blue-500 transition-colors group">

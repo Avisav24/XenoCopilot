@@ -1,0 +1,21 @@
+customer_id,name,email,phone,city,gender,signup_date
+C2001,Aarav Patel,aarav.p@example.com,9876541001,Mumbai,M,2023-01-10T10:00:00Z
+C2002,Priya Sharma,priya.s@example.com,9876541002,Delhi,F,2023-01-15T11:30:00Z
+C2003,Rohan Gupta,rohan.g@example.com,9876541003,Bangalore,M,2023-02-05T09:15:00Z
+C2004,Neha Desai,neha.d@example.com,9876541004,Pune,F,2023-02-20T14:45:00Z
+C2005,Vikram Singh,vikram.s@example.com,9876541005,Hyderabad,M,2023-03-12T16:20:00Z
+C2006,Anjali Reddy,anjali.r@example.com,9876541006,Chennai,F,2023-04-01T10:10:00Z
+C2007,Sanjay Kumar,sanjay.k@example.com,9876541007,Kolkata,M,2023-04-18T13:40:00Z
+C2008,Kavita Joshi,kavita.j@example.com,9876541008,Ahmedabad,F,2023-05-22T11:05:00Z
+C2009,Arjun Nair,arjun.n@example.com,9876541009,Jaipur,M,2023-06-05T08:50:00Z
+C2010,Pooja Verma,pooja.v@example.com,9876541010,Lucknow,F,2023-07-11T15:25:00Z
+C2011,Rahul Mehta,rahul.m@example.com,9876541011,Chandigarh,M,2023-08-09T12:15:00Z
+C2012,Sneha Kapoor,sneha.k@example.com,9876541012,Surat,F,2023-09-02T17:30:00Z
+C2013,Amit Bhatia,amit.b@example.com,9876541013,Indore,M,2023-10-14T09:40:00Z
+C2014,Divya Menon,divya.m@example.com,9876541014,Bhopal,F,2023-11-25T14:10:00Z
+C2015,Karan Iyer,karan.i@example.com,9876541015,Vadodara,M,2023-12-08T10:55:00Z
+C2016,Riya Chauhan,riya.c@example.com,9876541016,Nagpur,F,2024-01-19T11:20:00Z
+C2017,Tarun Das,tarun.d@example.com,9876541017,Patna,M,2024-02-28T16:00:00Z
+C2018,Meera Pillai,meera.p@example.com,9876541018,Thiruvananthapuram,F,2024-03-15T13:35:00Z
+C2019,Vishal Rao,vishal.r@example.com,9876541019,Visakhapatnam,M,2024-04-05T09:50:00Z
+C2020,Aarti Sen,aarti.s@example.com,9876541020,Guwahati,F,2024-05-12T14:25:00Z
