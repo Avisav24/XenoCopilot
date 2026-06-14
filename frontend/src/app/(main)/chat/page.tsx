@@ -18,7 +18,7 @@ function CampaignStudioContent() {
   
   const [recommendation, setRecommendation] = useState<any>(null);
   const [simulations, setSimulations] = useState<any>(null);
-  const [selectedChannel, setSelectedChannel] = useState('WhatsApp');
+  const [selectedChannels, setSelectedChannels] = useState<string[]>(['WhatsApp']);
   const [messagePreview, setMessagePreview] = useState<any>(null);
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [editableMessage, setEditableMessage] = useState('');
@@ -48,16 +48,19 @@ function CampaignStudioContent() {
       });
       setRecommendation(res);
       
-      const defaultChannel = ['WhatsApp', 'Email', 'SMS'].includes(res.channel) ? res.channel : 'WhatsApp';
-      setSelectedChannel(defaultChannel);
+      const supportedChannels = ['WhatsApp', 'Email', 'SMS', 'Instagram', 'Facebook'];
+      let defaultChannels = supportedChannels.filter(c => res.channel?.toLowerCase().includes(c.toLowerCase()));
+      if (defaultChannels.length === 0) defaultChannels = ['WhatsApp'];
+      
+      setSelectedChannels(defaultChannels);
       
       const simRes = await fetchAPI<any>('/api/copilot/simulate', {
         method: 'POST',
-        body: JSON.stringify({ channel: defaultChannel, offer: res.offer })
+        body: JSON.stringify({ channel: defaultChannels[0], offer: res.offer })
       });
       setSimulations(simRes);
       
-      await fetchMessagePreview(defaultChannel, res, query);
+      await fetchMessagePreview(defaultChannels[0], res, query);
       
       setHasAnalyzed(true);
     } catch (e) {
@@ -69,8 +72,16 @@ function CampaignStudioContent() {
   };
 
   const handleSimulateChannelChange = async (channel: string) => {
-    setSelectedChannel(channel);
-    await fetchMessagePreview(channel, recommendation, goalInput);
+    let newChannels = [...selectedChannels];
+    if (newChannels.includes(channel)) {
+      if (newChannels.length > 1) {
+        newChannels = newChannels.filter(c => c !== channel);
+      }
+    } else {
+      newChannels.push(channel);
+    }
+    setSelectedChannels(newChannels);
+    await fetchMessagePreview(newChannels[0], recommendation, goalInput);
   };
 
   const fetchMessagePreview = async (channel: string, rec: any, query?: string) => {
@@ -106,7 +117,7 @@ function CampaignStudioContent() {
   const handleLaunchCampaign = async () => {
     setIsProcessing(true);
     try {
-      const selectedSim = simulations?.scenarios?.find((s: any) => s.channel === selectedChannel) || recommendation;
+      const selectedSim = simulations?.scenarios?.find((s: any) => selectedChannels.includes(s.channel)) || recommendation;
       
       const convStr = String(selectedSim?.conversion || recommendation?.expectedConversion || recommendation?.confidence || '0');
       let predictedConversion = Number(convStr.replace(/[^0-9.-]+/g, ""));
@@ -124,7 +135,7 @@ function CampaignStudioContent() {
           goal: goalInput,
           audience_type: recommendation.audience?.name || 'Target Audience',
           audience_size: recommendation.audience?.count || 0,
-          channel: selectedChannel,
+          channel: selectedChannels.join(', '),
           offer: recommendation.offer || 'Promo',
           message: editableMessage,
           predicted_revenue: predictedRevenue,
@@ -313,8 +324,8 @@ function CampaignStudioContent() {
                       key={channel}
                       onClick={() => handleSimulateChannelChange(channel)}
                       className={clsx(
-                        "pb-2 text-[14px] font-[600] transition-colors border-b-2",
-                        selectedChannel === channel 
+                        "pb-2 text-[14px] font-[600] transition-colors border-b-2 whitespace-nowrap",
+                        selectedChannels.includes(channel) 
                           ? "border-ink text-ink" 
                           : "border-transparent text-ink-muted hover:text-ink"
                       )}
@@ -349,9 +360,9 @@ function CampaignStudioContent() {
               </div>
 
               {/* Right: Actual Mockup */}
-              <div className="flex-1 bg-canvas-soft border border-hairline rounded-[8px] flex items-center justify-center p-8 min-h-[400px]">
-                {selectedChannel === 'WhatsApp' && (
-                  <div className="w-[320px] bg-[#EFEAE2] rounded-[24px] border-[8px] border-slate-800 overflow-hidden flex flex-col shadow-sm relative">
+              <div className="flex-1 bg-canvas-soft border border-hairline rounded-[8px] flex flex-nowrap gap-8 items-center justify-start p-8 min-h-[400px] overflow-x-auto custom-scrollbar">
+                {selectedChannels.includes('WhatsApp') && (
+                  <div className="w-[320px] shrink-0 bg-[#EFEAE2] rounded-[24px] border-[8px] border-slate-800 overflow-hidden flex flex-col shadow-sm relative">
                     <div className="bg-[#008069] text-white px-4 py-3 flex items-center gap-3 z-10">
                       <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center overflow-hidden shrink-0">
                         <UserStar height={18} width={18} className="text-slate-500" />
@@ -377,8 +388,8 @@ function CampaignStudioContent() {
                   </div>
                 )}
 
-                {selectedChannel === 'Email' && (
-                  <div className="w-full max-w-[400px] bg-white rounded-lg border border-hairline shadow-sm flex flex-col overflow-hidden">
+                {selectedChannels.includes('Email') && (
+                  <div className="w-[400px] shrink-0 bg-white rounded-lg border border-hairline shadow-sm flex flex-col overflow-hidden">
                     <div className="bg-canvas-soft border-b border-hairline px-4 py-3 flex flex-col gap-1 text-[13px]">
                       <div className="flex items-center gap-2"><span className="text-ink-muted w-12">From:</span><span className="font-[500] text-ink">Brand Team</span></div>
                       <div className="flex items-center gap-2"><span className="text-ink-muted w-12">Subject:</span><span className="font-[600] text-ink">Exclusive Offer</span></div>
@@ -392,8 +403,8 @@ function CampaignStudioContent() {
                   </div>
                 )}
 
-                {selectedChannel === 'SMS' && (
-                  <div className="w-[300px] bg-white rounded-[28px] border-[8px] border-slate-200 overflow-hidden flex flex-col shadow-sm">
+                {selectedChannels.includes('SMS') && (
+                  <div className="w-[300px] shrink-0 bg-white rounded-[28px] border-[8px] border-slate-200 overflow-hidden flex flex-col shadow-sm">
                     <div className="bg-canvas-soft px-4 py-3 flex items-center justify-center border-b border-hairline">
                       <span className="text-[11px] font-[600] text-ink leading-none">BRAND</span>
                     </div>
@@ -406,8 +417,8 @@ function CampaignStudioContent() {
                   </div>
                 )}
 
-                {selectedChannel === 'Instagram' && (
-                  <div className="w-[320px] bg-black rounded-[24px] border-[8px] border-slate-800 overflow-hidden flex flex-col shadow-sm relative text-white">
+                {selectedChannels.includes('Instagram') && (
+                  <div className="w-[320px] shrink-0 bg-black rounded-[24px] border-[8px] border-slate-800 overflow-hidden flex flex-col shadow-sm relative text-white">
                     {/* Header */}
                     <div className="px-4 py-3 flex items-center justify-between border-b border-white/10 z-10">
                        <div className="flex items-center gap-2">
@@ -439,8 +450,8 @@ function CampaignStudioContent() {
                   </div>
                 )}
 
-                {selectedChannel === 'Facebook' && (
-                  <div className="w-[320px] bg-white rounded-[24px] border-[8px] border-slate-800 overflow-hidden flex flex-col shadow-sm relative text-slate-900">
+                {selectedChannels.includes('Facebook') && (
+                  <div className="w-[320px] shrink-0 bg-white rounded-[24px] border-[8px] border-slate-800 overflow-hidden flex flex-col shadow-sm relative text-slate-900">
                     {/* Header */}
                     <div className="px-4 py-3 flex items-center gap-2 z-10">
                         <div className="w-10 h-10 rounded-full bg-[#0866FF] flex items-center justify-center text-white shrink-0">
