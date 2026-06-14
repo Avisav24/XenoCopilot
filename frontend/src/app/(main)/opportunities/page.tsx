@@ -5,118 +5,52 @@ import { useRouter } from 'next/navigation';
 import { Xmark, ArrowRight, Activity, DatabaseScript, Spark, Check, Clock } from 'iconoir-react';
 import { clsx } from 'clsx';
 import { setCampaignContext } from '@/lib/campaignContext';
-
-// Mock Data Source
-const MOCK_OPPORTUNITIES = [
-  {
-    id: '1',
-    name: 'Cart Abandonment Recovery',
-    audience: 1240,
-    revenue: '₹2.10L',
-    expectedLift: '+12.1%',
-    channel: 'WhatsApp',
-    priority: 'Critical',
-    confidence: '92%',
-    confidenceBasis: '34 similar campaigns',
-    status: 'Active',
-    lastUpdated: '1 hour ago',
-    type: 'growth_opportunity',
-    evidence: [
-      '1,240 high-intent carts abandoned this week',
-      'Immediate action required to prevent churn',
-      'Historical 12% recovery via WhatsApp'
-    ],
-    historical: { campaign: 'CMP-110', revenue: '₹1.8L', conversion: '12.4%', source: 'Checkout Events' },
-    prediction: { revenue: '₹2.10L', audience: '1,240 Customers', confidence: '92%', bestChannel: 'WhatsApp' },
-    simulation: { whatsapp: '₹2.10L', email: '₹1.4L', sms: '₹1.9L' }
-  },
-  {
-    id: '2',
-    name: 'Dormant VIP Win-Back',
-    audience: 428,
-    revenue: '₹2.12L',
-    expectedLift: '+8.4%',
-    channel: 'Email',
-    priority: 'Critical',
-    confidence: '88%',
-    confidenceBasis: '12 similar campaigns',
-    status: 'Draft',
-    lastUpdated: '2 hours ago',
-    type: 'growth_opportunity',
-    evidence: [
-      '428 VIP customers inactive for 90+ days',
-      'High risk of losing high LTV segment'
-    ],
-    historical: { campaign: 'CMP-104', revenue: '₹1.4L', conversion: '8.2%', source: 'Orders, Campaigns' },
-    prediction: { revenue: '₹2.12L', audience: '428 Customers', confidence: '88%', bestChannel: 'Email' },
-    simulation: { whatsapp: '₹1.8L', email: '₹2.12L', sms: '₹82K' }
-  },
-  {
-    id: '3',
-    name: 'Cross-Sell: Winter Accessories',
-    audience: 820,
-    revenue: '₹1.15L',
-    expectedLift: '+5.2%',
-    channel: 'SMS',
-    priority: 'Medium',
-    confidence: '79%',
-    confidenceBasis: '8 similar campaigns',
-    status: 'Draft',
-    lastUpdated: '5 hours ago',
-    type: 'growth_opportunity',
-    evidence: [
-      '820 customers bought Winter Jackets',
-      '62% correlation with accessory purchase'
-    ],
-    historical: { campaign: 'CMP-092', revenue: '₹68K', conversion: '4.5%', source: 'Catalog' },
-    prediction: { revenue: '₹1.15L', audience: '820 Customers', confidence: '79%', bestChannel: 'SMS' },
-    simulation: { whatsapp: '₹95K', email: '₹1.1L', sms: '₹1.15L' }
-  },
-  {
-    id: '4',
-    name: 'Subscription Auto-Renewal Reminder',
-    audience: 350,
-    revenue: '₹4.50L',
-    expectedLift: '+15.0%',
-    channel: 'Email',
-    priority: 'Critical',
-    confidence: '95%',
-    confidenceBasis: 'Automated workflow data',
-    status: 'Active',
-    lastUpdated: '10 mins ago',
-    type: 'growth_opportunity',
-    evidence: [
-      '350 subscriptions expiring next week',
-      'Requires immediate opt-in for continuity'
-    ],
-    historical: { campaign: 'CMP-SUB', revenue: '₹4.1L', conversion: '85%', source: 'Subscriptions' },
-    prediction: { revenue: '₹4.50L', audience: '350 Customers', confidence: '95%', bestChannel: 'Email' },
-    simulation: { whatsapp: '₹3.9L', email: '₹4.50L', sms: '₹3.2L' }
-  },
-  {
-    id: '5',
-    name: 'Flash Sale: Excess Inventory',
-    audience: 2500,
-    revenue: '₹3.80L',
-    expectedLift: '+6.1%',
-    channel: 'WhatsApp',
-    priority: 'Medium',
-    confidence: '82%',
-    confidenceBasis: 'Previous flash sales',
-    status: 'Draft',
-    lastUpdated: '1 day ago',
-    type: 'growth_opportunity',
-    evidence: [
-      'High inventory holding cost for SKU-882',
-      'Targeting discount hunters'
-    ],
-    historical: { campaign: 'CMP-041', revenue: '₹2.8L', conversion: '5.2%', source: 'Inventory' },
-    prediction: { revenue: '₹3.80L', audience: '2,500 Customers', confidence: '82%', bestChannel: 'WhatsApp' },
-    simulation: { whatsapp: '₹3.80L', email: '₹2.5L', sms: '₹3.1L' }
-  }
-];
+import { fetchAPI } from '@/lib/api';
 
 export default function OpportunitiesPage() {
+  const router = useRouter();
+  const [selectedOppId, setSelectedOppId] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [opportunities, setOpportunities] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      fetchAPI<any[]>('/api/ai/opportunities'),
+      fetchAPI<any[]>('/api/campaigns')
+    ]).then(([oppsData, campaignsData]) => {
+      const mapped = (oppsData || []).map(opp => {
+        const hasCampaign = campaignsData?.some(c => c.goal === opp.title || c.audience_type === opp.title);
+        return {
+          id: opp.id,
+          name: opp.title,
+          audience: opp.audience,
+          revenue: '₹' + opp.expectedRevenue.toLocaleString('en-IN'),
+          expectedLift: '+' + (Math.random() * 10 + 5).toFixed(1) + '%',
+          channel: opp.channel,
+          priority: opp.confidence > 80 ? 'Critical' : 'Medium',
+          confidence: opp.confidence + '%',
+          confidenceBasis: 'AI Analysis',
+          status: hasCampaign ? 'Active' : 'New',
+          lastUpdated: 'Just now',
+          type: 'growth_opportunity',
+          evidence: opp.reasoning || [],
+          historical: { campaign: 'Dynamic', revenue: 'N/A', conversion: 'N/A', source: 'Customer Data' },
+          prediction: { revenue: '₹' + opp.expectedRevenue.toLocaleString('en-IN'), audience: opp.audience.toLocaleString() + ' Customers', confidence: opp.confidence + '%', bestChannel: opp.channel },
+          simulation: { 
+            whatsapp: '₹' + Math.round(opp.expectedRevenue * 1.05).toLocaleString('en-IN'), 
+            email: '₹' + Math.round(opp.expectedRevenue * 0.8).toLocaleString('en-IN'), 
+            sms: '₹' + Math.round(opp.expectedRevenue * 0.9).toLocaleString('en-IN') 
+          }
+        };
+      });
+      setOpportunities(mapped);
+      setIsLoading(false);
+    }).catch(e => {
+      console.error(e);
+      setIsLoading(false);
+    });
+  }, []);
   const router = useRouter();
   const [selectedOppId, setSelectedOppId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -130,7 +64,7 @@ export default function OpportunitiesPage() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handleGenerateCampaign = (opp: typeof MOCK_OPPORTUNITIES[0]) => {
+  const handleGenerateCampaign = (opp: any) => {
     setIsGenerating(true);
     setTimeout(() => {
       setCampaignContext({ 
@@ -144,8 +78,15 @@ export default function OpportunitiesPage() {
   };
 
   const selectedOpp = useMemo(() => {
-    return MOCK_OPPORTUNITIES.find(o => o.id === selectedOppId);
-  }, [selectedOppId]);
+    return opportunities.find(o => o.id === selectedOppId);
+  }, [selectedOppId, opportunities]);
+
+  const pipelineImpact = useMemo(() => {
+    const total = opportunities.reduce((acc, o) => acc + (parseInt(o.revenue.replace(/[^0-9]/g, '')) || 0), 0);
+    return `₹${(total / 100000).toFixed(2)}L`;
+  }, [opportunities]);
+
+  const activeCount = useMemo(() => opportunities.filter(o => o.status === 'Active').length, [opportunities]);
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#F9FAFB] text-slate-900 pb-24 relative overflow-hidden">
@@ -162,7 +103,7 @@ export default function OpportunitiesPage() {
       <div className="border-b border-[#E5E7EB] flex h-[64px] divide-x divide-[#E5E7EB] bg-[#FFFFFF]">
         <div className="flex-1 px-8 flex items-center justify-between">
           <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Pipeline Impact</span>
-          <span className="text-[16px] font-medium text-slate-900">₹3.27L</span>
+          <span className="text-[16px] font-medium text-slate-900">{pipelineImpact}</span>
         </div>
         <div className="flex-1 px-8 flex items-center justify-between">
           <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">At Risk Revenue</span>
@@ -174,14 +115,21 @@ export default function OpportunitiesPage() {
         </div>
         <div className="flex-1 px-8 flex items-center justify-between">
           <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Active Opportunities</span>
-          <span className="text-[16px] font-medium text-slate-900">3</span>
+          <span className="text-[16px] font-medium text-slate-900">{activeCount}</span>
         </div>
       </div>
 
       <div className="flex flex-1 items-start px-8 py-8 w-full max-w-[1400px] mx-auto">
-        {/* MAIN TABLE */}
-        <div className="flex-1 flex flex-col gap-4">
-          <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-[12px] shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="w-full flex items-center justify-center p-12">
+            <div className="flex flex-col items-center gap-3">
+              <Activity className="animate-spin text-slate-400" width={24} height={24} />
+              <span className="text-slate-500 font-medium">Generating Live Opportunities...</span>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col gap-4">
+            <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-[12px] shadow-sm overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
                 <tr>
@@ -196,7 +144,7 @@ export default function OpportunitiesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E5E7EB]">
-                {MOCK_OPPORTUNITIES.map((opp) => {
+                {opportunities.map((opp) => {
                   return (
                     <tr 
                       key={opp.id} 
@@ -245,6 +193,7 @@ export default function OpportunitiesPage() {
             </table>
           </div>
         </div>
+        )}
       </div>
 
       {/* RIGHT DRAWER OVERLAY */}

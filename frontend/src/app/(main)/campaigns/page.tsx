@@ -167,7 +167,7 @@ export default function AllCampaigns() {
                       <td className="font-mono-numbers font-[500] text-ink text-right">{c.conversion.toFixed(1)}%</td>
                       <td className="text-[13px] text-ink-muted">{new Date(c.created_at).toLocaleDateString()}</td>
                       <td className="text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-2 opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
                           <button onClick={() => handleDelete(c.id)} className="p-1.5 text-ink-muted hover:text-red-600 transition-colors">
                             <Trash width={14} height={14} />
                           </button>
