@@ -286,14 +286,7 @@ export async function importRoutes(fastify: FastifyInstance) {
          ]
       });
 
-      // 4. Generate Opportunities
-      await prisma.opportunity.deleteMany();
-      await prisma.opportunity.createMany({
-         data: [
-            { name: 'Dormant VIP Recovery', audience_size: dormantVips.length, potential_revenue: dormantVips.length * 2000, confidence: '82%', recommended_channel: 'WhatsApp', status: 'active' },
-            { name: 'Cross-Sell Expansion', audience_size: frequentBuyers.length, potential_revenue: frequentBuyers.length * 800, confidence: '74%', recommended_channel: 'Email', status: 'active' }
-         ]
-      });
+      // Opportunities removed
 
       return reply.send({ success: true, message: 'Processing complete' });
     } catch (err: any) {

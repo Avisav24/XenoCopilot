@@ -194,8 +194,7 @@ Rules:
             insight: "Overall CRM health is stable. Revenue drops usually correlate with dormant VIPs."
           };
         } else if (parsed.goal_category === "Campaign Recommendation") {
-          const opportunities = await prisma.opportunity.findMany({ take: 3, orderBy: { potential_revenue: 'desc' } });
-          databaseMetrics = { topOpportunities: opportunities };
+          databaseMetrics = { topOpportunities: [] };
         } else {
           databaseMetrics = { status: "System Operational" };
         }
