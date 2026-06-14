@@ -1562,6 +1562,15 @@ Return JSON:
        
        const totalCustomers = await prisma.customer.count();
        
+       let matchedCustomerName = null;
+       const allCustomers = await prisma.customer.findMany({ select: { name: true } });
+       for (const c of allCustomers) {
+         if (goal.toLowerCase().includes(c.name.toLowerCase())) {
+           matchedCustomerName = c.name;
+           break;
+         }
+       }
+       
        // Simulate fetching RevenueMemory and DB Context
        // In a real scenario we'd do: await prisma.revenueMemory.findMany({ limit: 5 })
        
@@ -1577,7 +1586,7 @@ Analyze the goal and recommend:
 8) Evidence for Channel (3 bullet points)
 9) Evidence for Offer (3 bullet points)
 
-CRITICAL: The database currently has a total of ${totalCustomers} customers. Your recommended audience count MUST NOT exceed ${totalCustomers}. Be realistic based on this maximum cap.
+${matchedCustomerName ? `CRITICAL: The user explicitly wants to target the individual customer "${matchedCustomerName}". You MUST set "audience": { "name": "${matchedCustomerName}", "count": 1 }.` : `CRITICAL: The database currently has a total of ${totalCustomers} customers. Your recommended audience count MUST NOT exceed ${totalCustomers}. Be realistic based on this maximum cap.`}
 
 Return ONLY valid JSON matching this structure:
 {

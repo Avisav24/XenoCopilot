@@ -201,7 +201,7 @@ function CampaignStudioContent() {
         <p className="text-[14px] text-ink-muted">AI-assisted campaign creation and intelligence.</p>
       </div>
 
-      <div className="flex flex-col p-6 max-w-[1000px]">
+      <div className="flex flex-col p-6 max-w-[1400px] w-full mx-auto">
         
         {/* COMMAND BAR */}
         <form onSubmit={handleAnalyzeGoal} className="relative flex items-center w-full mb-6">
