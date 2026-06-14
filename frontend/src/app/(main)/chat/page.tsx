@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchAPI } from '@/lib/api';
-import { Search, NavArrowDown, NavArrowRight, FastArrowRight, UserStar } from 'iconoir-react';
+import { Search, NavArrowDown, NavArrowRight, FastArrowRight, UserStar, Xmark } from 'iconoir-react';
 import { getCampaignContext, clearCampaignContext } from '@/lib/campaignContext';
 import { clsx } from 'clsx';
 
@@ -135,6 +135,57 @@ function CampaignStudioContent() {
     }
   };
 
+  const handleReviewCampaign = async () => {
+    setIsProcessing(true);
+    try {
+      const selectedSim = simulations?.scenarios?.find((s: any) => s.channel === selectedChannel) || recommendation;
+      
+      let revStr = String(selectedSim?.revenue || recommendation?.expectedRevenue || '0');
+      let predictedRevenue = 0;
+      if (revStr.includes('L')) {
+        predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, "")) * 100000;
+      } else if (revStr.includes('K')) {
+        predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, "")) * 1000;
+      } else {
+        predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, ""));
+      }
+      if (isNaN(predictedRevenue)) predictedRevenue = 0;
+      
+      const convStr = String(selectedSim?.conversion || recommendation?.expectedConversion || recommendation?.confidence || '0');
+      let predictedConversion = Number(convStr.replace(/[^0-9.-]+/g, ""));
+      if (isNaN(predictedConversion)) predictedConversion = 0;
+      
+      const campaign = await fetchAPI<any>('/api/campaigns', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: goalInput.slice(0, 40) + (goalInput.length > 40 ? '...' : ''),
+          goal: goalInput,
+          audience_type: recommendation.audience?.name || 'Target Audience',
+          audience_size: recommendation.audience?.count || 0,
+          channel: selectedChannel,
+          offer: recommendation.offer || 'Promo',
+          message: messagePreview?.variantA?.copy || '',
+          predicted_revenue: predictedRevenue,
+          predicted_conversion: predictedConversion
+        })
+      });
+
+      router.push(`/campaigns/${campaign.id}/review`);
+    } catch (e) {
+      console.error(e);
+      alert('Review failed. Ensure backend is running.');
+      setIsProcessing(false);
+    }
+  };
+
+  const handleResetSearch = () => {
+    setGoalInput('');
+    setHasAnalyzed(false);
+    setRecommendation(null);
+    setSimulations(null);
+    setMessagePreview(null);
+  };
+
   const getPriorityColor = (rev: number, conf: number) => {
     const score = rev * conf;
     if (score > 10000000) return { label: 'Critical', color: 'bg-red-50 text-red-700 border-red-200' };
@@ -175,8 +226,18 @@ function CampaignStudioContent() {
               onChange={(e) => setGoalInput(e.target.value)}
               placeholder="e.g. Recover dormant customers"
               disabled={isProcessing}
-              className="w-full bg-white border border-slate-300 pl-11 pr-32 py-3.5 text-[14px] font-medium focus:outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 disabled:bg-slate-50 rounded-lg transition-all"
+              className="w-full bg-white border border-slate-300 pl-11 pr-36 py-3.5 text-[14px] font-medium focus:outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 disabled:bg-slate-50 rounded-lg transition-all"
             />
+            {hasAnalyzed && (
+              <button
+                type="button"
+                onClick={handleResetSearch}
+                className="absolute right-28 p-2 text-slate-400 hover:text-slate-600 transition-colors"
+                title="Clear Search"
+              >
+                <Xmark height={18} width={18} />
+              </button>
+            )}
             <button
               type="submit"
               disabled={!goalInput.trim() || isProcessing}
@@ -278,7 +339,8 @@ function CampaignStudioContent() {
 
                 <div className="flex flex-col gap-3 mt-2">
                   <button 
-                    onClick={() => {}}
+                    onClick={handleReviewCampaign}
+                    disabled={isProcessing}
                     className="w-full border border-slate-300 hover:bg-slate-50 text-slate-900 px-4 py-2 rounded-md text-[13px] font-medium transition-colors"
                   >
                     Review Campaign
