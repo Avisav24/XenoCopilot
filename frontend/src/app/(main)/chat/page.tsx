@@ -160,6 +160,8 @@ function CampaignStudioContent() {
     
     const parts = text.split(/(\{\{Name\}\}|\[(?:Customer )?Name\]|\[\s*First Name\s*\]|\[\s*Shop Now\s*\]|\{\{Link\}\})/gi);
     return parts.map((part, i) => {
+      if (i % 2 === 0) return part;
+
       const p = part.toLowerCase();
       if (p.includes('name')) {
         return (
