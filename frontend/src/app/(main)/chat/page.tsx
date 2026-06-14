@@ -138,7 +138,7 @@ function CampaignStudioContent() {
           audience_size: recommendation.audience.count,
           channel: selectedChannel,
           offer: recommendation.offer,
-          message: messagePreview?.variants?.[selectedVariant] || '',
+          message: messagePreview?.[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy || '',
           predicted_revenue: predictedRevenue,
           predicted_conversion: predictedConversion
         })
