@@ -266,8 +266,8 @@ function CampaignStudioContent() {
                 <span className="text-[16px] font-mono-numbers font-[600] text-ink">{recommendation.confidence || '85%'}</span>
               </div>
               <div className="card !p-4 flex flex-col gap-1">
-                <span className="text-[12px] font-[600] text-ink-muted uppercase tracking-wider">Channel Lift</span>
-                <span className="text-[16px] font-mono-numbers font-[600] text-ink">+12% via {selectedChannel}</span>
+                <span className="text-[12px] font-[600] text-ink-muted uppercase tracking-wider">Recommended Channel</span>
+                <span className="text-[16px] font-[600] text-ink">Based on customer data</span>
               </div>
             </div>
 

@@ -1560,6 +1560,8 @@ Return JSON:
     try {
        const { goal } = request.body as any;
        
+       const totalCustomers = await prisma.customer.count();
+       
        // Simulate fetching RevenueMemory and DB Context
        // In a real scenario we'd do: await prisma.revenueMemory.findMany({ limit: 5 })
        
@@ -1574,6 +1576,8 @@ Analyze the goal and recommend:
 7) Evidence for Audience (3 bullet points referencing data/history)
 8) Evidence for Channel (3 bullet points)
 9) Evidence for Offer (3 bullet points)
+
+CRITICAL: The database currently has a total of ${totalCustomers} customers. Your recommended audience count MUST NOT exceed ${totalCustomers}. Be realistic based on this maximum cap.
 
 Return ONLY valid JSON matching this structure:
 {
@@ -1601,12 +1605,12 @@ Return ONLY valid JSON matching this structure:
        if (!aiResult) {
          // Deterministic Fallback if LLM fails
          aiResult = {
-           audience: { name: "Dormant VIP Customers", count: 428 },
+           audience: { name: "Target Audience", count: Math.min(428, totalCustomers) },
            channel: "WhatsApp",
            offer: "15% Recovery Offer",
            expectedRevenue: "₹1.72L",
            expectedConversion: "8.2%",
-           expectedPurchasers: 35,
+           expectedPurchasers: Math.min(35, totalCustomers),
            evidence: {
              audience: [
                "428 VIP customers inactive for 60+ days",
