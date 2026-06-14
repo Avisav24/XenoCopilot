@@ -4,6 +4,33 @@ import { parse } from 'csv-parse/sync';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 
+function parseCustomDate(dateStr: string | null | undefined): Date | null {
+  if (!dateStr) return null;
+  // Handle DD.MM.YY or DD.MM.YYYY
+  const parts = dateStr.split(/[\.\-\/]/);
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    let year = parseInt(parts[2], 10);
+    if (year < 100) year += 2000;
+    
+    const d = new Date(year, month, day);
+    if (!isNaN(d.getTime())) return d;
+  }
+  
+  // Fallback to standard parsing
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function parsePhone(phoneStr: string | null | undefined): string | null {
+  if (!phoneStr) return null;
+  if (phoneStr.toUpperCase().includes('E+')) {
+    return Number(phoneStr).toString();
+  }
+  return phoneStr;
+}
+
 const CustomerCsvRow = z.preprocess((val: any) => {
   if (typeof val === 'object' && val !== null) {
     if (!val.customer_id) {
@@ -91,23 +118,29 @@ export async function importRoutes(fastify: FastifyInstance) {
           continue;
         }
 
+        let signupDate = new Date();
+        const parsedSignup = parseCustomDate(parsed.data.signup_date);
+        if (parsedSignup) signupDate = parsedSignup;
+
         operations.push(
           prisma.customer.upsert({
             where: { external_id: parsed.data.customer_id },
             update: {
               name: parsed.data.name,
               email: parsed.data.email || null,
-              phone: parsed.data.phone || null,
+              phone: parsePhone(parsed.data.phone),
               city: parsed.data.city || null,
               gender: parsed.data.gender || null,
+              signup_date: signupDate
             },
             create: {
               external_id: parsed.data.customer_id,
               name: parsed.data.name,
               email: parsed.data.email || null,
-              phone: parsed.data.phone || null,
+              phone: parsePhone(parsed.data.phone),
               city: parsed.data.city || null,
               gender: parsed.data.gender || null,
+              signup_date: signupDate
             }
           })
         );
@@ -193,12 +226,8 @@ export async function importRoutes(fastify: FastifyInstance) {
         }
 
         let orderDate = new Date();
-        if (parsed.data.order_date) {
-           const parsedDate = new Date(parsed.data.order_date);
-           if (!isNaN(parsedDate.getTime())) {
-              orderDate = parsedDate;
-           }
-        }
+        const parsedOrderDate = parseCustomDate(parsed.data.order_date);
+        if (parsedOrderDate) orderDate = parsedOrderDate;
 
         operations.push(
           prisma.order.upsert({
