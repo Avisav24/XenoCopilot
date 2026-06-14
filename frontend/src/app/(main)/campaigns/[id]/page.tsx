@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchAPI } from '@/lib/api';
 import useSWR from 'swr';
-import { Megaphone, ArrowLeft, Send, CheckCircle, Eye, HandCard, ShoppingCart, RefreshDouble, Spark } from 'iconoir-react';
+import { Megaphone, ArrowLeft, Send, CheckCircle, Eye, HandCard, ShoppingBag, RefreshDouble, Spark } from 'iconoir-react';
 import { useRouter } from 'next/navigation';
 import clsx from 'clsx';
 import Link from 'next/link';
@@ -125,7 +125,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
               <FunnelRow icon={<CheckCircle />} label="Delivered" value={funnel.delivered} total={audienceTotal} color="bg-blue-500" />
               <FunnelRow icon={<Eye />} label="Read / Opened" value={funnel.opened} total={audienceTotal} color="bg-purple-500" />
               <FunnelRow icon={<HandCard />} label="Clicked CTA" value={funnel.clicked} total={audienceTotal} color="bg-orange-500" />
-              <FunnelRow icon={<ShoppingCart />} label="Purchased" value={funnel.purchased} total={audienceTotal} color="bg-emerald-500" />
+              <FunnelRow icon={<ShoppingBag />} label="Purchased" value={funnel.purchased} total={audienceTotal} color="bg-emerald-500" />
             </div>
           </div>
 
