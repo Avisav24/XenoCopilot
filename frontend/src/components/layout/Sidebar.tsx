@@ -16,7 +16,7 @@ const navGroups = [
     label: 'Campaigns',
     items: [
       { href: '/chat', label: 'Campaign Studio', icon: <Spark height={18} width={18} /> },
-      { href: '/engagement', label: 'All Campaigns', icon: <Megaphone height={18} width={18} /> },
+      { href: '/campaigns', label: 'All Campaigns', icon: <Megaphone height={18} width={18} /> },
     ]
   },
   {
