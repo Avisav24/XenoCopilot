@@ -87,41 +87,41 @@ export default function OpportunitiesPage() {
   const activeCount = useMemo(() => opportunities.filter(o => o.status === 'Active').length, [opportunities]);
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-[#F9FAFB] text-slate-900 relative overflow-hidden">
+    <div className="flex flex-col w-full min-h-screen bg-canvas pb-20 relative overflow-hidden">
       
       {/* HEADER */}
-      <div className="px-4 md:px-8 pt-6 pb-6 border-b border-[#E5E7EB] bg-[#FFFFFF]">
-        <h1 className="text-[20px] font-semibold text-slate-900 tracking-tight">Growth Opportunities</h1>
-        <p className="text-[14px] text-slate-500 mt-1">
+      <div className="px-4 md:px-6 py-6 border-b border-hairline sticky top-0 z-10 bg-canvas/80 backdrop-blur-md">
+        <h1 className="text-[24px] font-[700] text-ink leading-tight tracking-tight">Growth Opportunities</h1>
+        <p className="text-[14px] text-ink-muted mt-1">
           Analytical recommendations for pipeline expansion and revenue recovery.
         </p>
       </div>
 
       {/* KPI STRIP */}
-      <div className="border-b border-[#E5E7EB] grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#E5E7EB] bg-[#FFFFFF]">
-        <div className="flex-1 px-4 md:px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
-          <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Pipeline Impact</span>
-          <span className="text-[16px] font-medium text-slate-900">{pipelineImpact}</span>
+      <div className="border-b border-hairline grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-hairline bg-white">
+        <div className="flex-1 px-4 md:px-6 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
+          <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider">Pipeline Impact</span>
+          <span className="text-[16px] font-[600] text-ink font-mono-numbers">{pipelineImpact}</span>
         </div>
-        <div className="flex-1 px-4 md:px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
-          <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">At Risk Revenue</span>
-          <span className="text-[16px] font-medium text-slate-900">₹2.1L</span>
+        <div className="flex-1 px-4 md:px-6 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
+          <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider">At Risk Revenue</span>
+          <span className="text-[16px] font-[600] text-ink font-mono-numbers">₹2.1L</span>
         </div>
-        <div className="flex-1 px-4 md:px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
-          <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Recoverable Customers</span>
-          <span className="text-[16px] font-medium text-slate-900">1,668</span>
+        <div className="flex-1 px-4 md:px-6 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
+          <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider">Recoverable Customers</span>
+          <span className="text-[16px] font-[600] text-ink font-mono-numbers">1,668</span>
         </div>
-        <div className="flex-1 px-4 md:px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
-          <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Active Opportunities</span>
-          <span className="text-[16px] font-medium text-slate-900">{activeCount}</span>
+        <div className="flex-1 px-4 md:px-6 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
+          <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider">Active Opportunities</span>
+          <span className="text-[16px] font-[600] text-ink font-mono-numbers">{activeCount}</span>
         </div>
       </div>
 
-      <div className="flex flex-1 items-start px-4 md:px-8 py-8 w-full max-w-[1400px] mx-auto overflow-hidden">
+      <div className="flex flex-1 items-start px-4 md:px-6 py-8 w-full max-w-[1400px] mx-auto overflow-hidden">
         {isLoading ? (
           <div className="w-full flex items-center justify-center p-12">
             <div className="flex flex-col items-center gap-3">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="animate-spin text-slate-400">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="animate-spin text-ink-muted">
                 <line x1="12" y1="2" x2="12" y2="6"></line>
                 <line x1="12" y1="18" x2="12" y2="22"></line>
                 <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
@@ -131,64 +131,64 @@ export default function OpportunitiesPage() {
                 <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
                 <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
               </svg>
-              <span className="text-slate-500 font-medium">Generating Live Opportunities...</span>
+              <span className="text-ink-muted font-[500] text-[14px]">Generating Live Opportunities...</span>
             </div>
           </div>
         ) : (
           <div className="flex-1 flex flex-col gap-4 overflow-hidden w-full">
-            <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-[12px] shadow-sm overflow-x-auto w-full">
-            <table className="w-full text-left border-collapse whitespace-nowrap md:whitespace-normal">
-              <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+            <div className="table-container w-full">
+            <table className="table-enterprise">
+              <thead>
                 <tr>
-                  <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Opportunity</th>
-                  <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Revenue Impact</th>
-                  <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Audience</th>
-                  <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Channel</th>
-                  <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Confidence</th>
-                  <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Priority</th>
-                  <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                  <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider text-right">Action</th>
+                  <th>Opportunity</th>
+                  <th>Revenue Impact</th>
+                  <th>Audience</th>
+                  <th>Channel</th>
+                  <th>Confidence</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th className="text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E5E7EB]">
+              <tbody className="bg-white">
                 {opportunities.map((opp) => {
                   return (
                     <tr 
                       key={opp.id} 
                       className={clsx(
                         "transition-colors group",
-                        selectedOppId === opp.id ? "bg-[#F3F4F6]" : "hover:bg-[#F9FAFB]"
+                        selectedOppId === opp.id ? "bg-canvas" : "hover:bg-canvas-soft"
                       )}
                     >
-                      <td className="py-4 px-5">
-                        <span className="text-[14px] font-medium text-slate-900 block min-w-[200px]">{opp.name}</span>
-                        <div className="text-[12px] text-slate-500 mt-0.5">Last updated {opp.lastUpdated}</div>
+                      <td>
+                        <span className="text-[14px] font-[600] text-ink block min-w-[200px]">{opp.name}</span>
+                        <div className="text-[12px] text-ink-muted mt-0.5">Last updated {opp.lastUpdated}</div>
                       </td>
-                      <td className="py-4 px-5">
-                        <span className="text-[14px] font-medium text-slate-900">{opp.revenue}</span>
-                        <div className="text-[12px] text-slate-500 mt-0.5">Expected Lift {opp.expectedLift}</div>
+                      <td>
+                        <span className="text-[14px] font-mono-numbers font-[600] text-green-600">{opp.revenue}</span>
+                        <div className="text-[12px] text-ink-muted mt-0.5">Expected Lift {opp.expectedLift}</div>
                       </td>
-                      <td className="py-4 px-5 text-[14px] text-slate-700">{opp.audience.toLocaleString()}</td>
-                      <td className="py-4 px-5 text-[14px] text-slate-700">{opp.channel}</td>
-                      <td className="py-4 px-5">
-                        <span className="text-[14px] text-slate-700">{opp.confidence}</span>
-                        <div className="text-[12px] text-slate-500 mt-0.5">Based on {opp.confidenceBasis}</div>
+                      <td className="text-[14px] font-mono-numbers font-[600] text-ink">{opp.audience.toLocaleString()}</td>
+                      <td className="text-[14px] font-[500] text-ink">{opp.channel}</td>
+                      <td>
+                        <span className="text-[14px] font-mono-numbers font-[600] text-ink">{opp.confidence}</span>
+                        <div className="text-[12px] text-ink-muted mt-0.5">Based on {opp.confidenceBasis}</div>
                       </td>
-                      <td className="py-4 px-5">
-                        <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-700 min-w-[100px]">
+                      <td>
+                        <span className="inline-flex items-center gap-1.5 text-[13px] font-[500] text-ink min-w-[100px]">
                           <span className={clsx("w-2 h-2 rounded-full", opp.priority === 'Critical' ? "bg-red-500" : "bg-amber-500")} />
                           {opp.priority}
                         </span>
                       </td>
-                      <td className="py-4 px-5">
-                        <span className="px-2.5 py-1 rounded-[6px] text-[12px] font-medium bg-[#F3F4F6] text-slate-700">
+                      <td>
+                        <span className="px-2.5 py-1 rounded-[6px] text-[11px] font-[600] uppercase tracking-wider bg-canvas border border-hairline text-ink">
                           {opp.status}
                         </span>
                       </td>
-                      <td className="py-4 px-5 text-right">
+                      <td className="text-right">
                         <button 
                           onClick={() => setSelectedOppId(opp.id)}
-                          className="text-slate-600 hover:text-slate-900 text-[13px] font-medium transition-colors flex items-center justify-end w-full gap-1 min-w-[80px]"
+                          className="text-ink-muted hover:text-ink text-[13px] font-[600] transition-colors flex items-center justify-end w-full gap-1 min-w-[80px]"
                         >
                           Review <ArrowRight width={14} height={14} />
                         </button>
@@ -207,16 +207,16 @@ export default function OpportunitiesPage() {
       {selectedOppId && (
         <div className="fixed inset-0 z-50 flex justify-end">
           <div 
-            className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm transition-opacity" 
+            className="absolute inset-0 bg-ink/20 backdrop-blur-sm transition-opacity" 
             onClick={() => setSelectedOppId(null)}
           />
-          <div className="relative w-full md:w-[420px] h-full bg-[#FFFFFF] shadow-2xl border-l border-[#E5E7EB] flex flex-col animate-in slide-in-from-right duration-200">
+          <div className="relative w-full md:w-[420px] h-full bg-white shadow-2xl border-l border-hairline flex flex-col animate-in slide-in-from-right duration-200">
             {/* Drawer Header */}
-            <div className="px-6 py-5 border-b border-[#E5E7EB] flex justify-between items-center bg-[#F9FAFB]">
-              <h2 className="text-[16px] font-semibold text-slate-900">Review Recommendation</h2>
+            <div className="px-6 py-5 border-b border-hairline flex justify-between items-center bg-canvas">
+              <h2 className="text-[16px] font-[700] text-ink">Review Recommendation</h2>
               <button 
                 onClick={() => setSelectedOppId(null)}
-                className="text-slate-400 hover:text-slate-700 transition-colors p-1"
+                className="text-ink-muted hover:text-ink hover:bg-canvas-soft rounded transition-colors p-1"
               >
                 <Xmark width={20} height={20} />
               </button>
@@ -228,85 +228,85 @@ export default function OpportunitiesPage() {
                   
                   {/* Title & Core Metrics */}
                   <div className="flex flex-col gap-4">
-                    <h3 className="text-[20px] font-medium text-slate-900">{selectedOpp.name}</h3>
+                    <h3 className="text-[20px] font-[700] text-ink">{selectedOpp.name}</h3>
                     
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="flex flex-col border border-[#E5E7EB] rounded-[8px] p-3 bg-[#F9FAFB]">
-                        <span className="text-[12px] font-medium text-slate-500 uppercase">Expected Revenue</span>
-                        <span className="text-[18px] font-medium text-slate-900 mt-1">{selectedOpp.prediction.revenue}</span>
+                      <div className="flex flex-col border border-hairline rounded-[8px] p-3 bg-canvas-soft">
+                        <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider">Expected Revenue</span>
+                        <span className="text-[18px] font-mono-numbers font-[600] text-green-600 mt-1">{selectedOpp.prediction.revenue}</span>
                       </div>
-                      <div className="flex flex-col border border-[#E5E7EB] rounded-[8px] p-3 bg-[#F9FAFB]">
-                        <span className="text-[12px] font-medium text-slate-500 uppercase">Audience</span>
-                        <span className="text-[18px] font-medium text-slate-900 mt-1">{selectedOpp.prediction.audience}</span>
+                      <div className="flex flex-col border border-hairline rounded-[8px] p-3 bg-canvas-soft">
+                        <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider">Audience</span>
+                        <span className="text-[18px] font-mono-numbers font-[600] text-ink mt-1">{selectedOpp.prediction.audience}</span>
                       </div>
-                      <div className="flex flex-col border border-[#E5E7EB] rounded-[8px] p-3 bg-[#F9FAFB]">
-                        <span className="text-[12px] font-medium text-slate-500 uppercase">Confidence</span>
-                        <span className="text-[18px] font-medium text-slate-900 mt-1">{selectedOpp.prediction.confidence}</span>
+                      <div className="flex flex-col border border-hairline rounded-[8px] p-3 bg-canvas-soft">
+                        <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider">Confidence</span>
+                        <span className="text-[18px] font-mono-numbers font-[600] text-ink mt-1">{selectedOpp.prediction.confidence}</span>
                       </div>
-                      <div className="flex flex-col border border-[#E5E7EB] rounded-[8px] p-3 bg-[#F9FAFB]">
-                        <span className="text-[12px] font-medium text-slate-500 uppercase">Best Channel</span>
-                        <span className="text-[18px] font-medium text-slate-900 mt-1">{selectedOpp.prediction.bestChannel}</span>
+                      <div className="flex flex-col border border-hairline rounded-[8px] p-3 bg-canvas-soft">
+                        <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider">Best Channel</span>
+                        <span className="text-[18px] font-[600] text-ink mt-1">{selectedOpp.prediction.bestChannel}</span>
                       </div>
                     </div>
                   </div>
 
-                  <hr className="border-[#E5E7EB]" />
+                  <div className="h-px w-full bg-hairline" />
 
                   {/* Why This Recommendation */}
                   <div className="flex flex-col gap-3">
-                    <h4 className="text-[13px] font-medium text-slate-500 uppercase tracking-wider">Why This Recommendation</h4>
+                    <h4 className="text-[12px] font-[600] text-ink uppercase tracking-wider">Why This Recommendation</h4>
                     <ul className="flex flex-col gap-2.5">
                       {selectedOpp.evidence.map((item, i) => (
-                        <li key={i} className="text-[14px] text-slate-700 flex items-start gap-3 leading-snug">
-                          <span className="mt-1 flex-shrink-0 text-slate-400 w-1.5 h-1.5 rounded-full bg-slate-300" />
+                        <li key={i} className="text-[14px] text-ink-muted flex items-start gap-3 leading-snug">
+                          <span className="mt-1.5 flex-shrink-0 text-ink-muted w-1.5 h-1.5 rounded-full bg-ink-muted/50" />
                           {item}
                         </li>
                       ))}
                     </ul>
                   </div>
 
-                  <hr className="border-[#E5E7EB]" />
+                  <div className="h-px w-full bg-hairline" />
 
                   {/* Simulation */}
                   <div className="flex flex-col gap-3">
-                    <h4 className="text-[13px] font-medium text-slate-500 uppercase tracking-wider">Simulation</h4>
+                    <h4 className="text-[12px] font-[600] text-ink uppercase tracking-wider">Simulation</h4>
                     <div className="flex flex-col gap-2">
                       <div className="flex justify-between items-center py-1">
-                        <span className="text-[14px] text-slate-600">WhatsApp</span>
-                        <span className="text-[14px] font-medium text-slate-900">{selectedOpp.simulation.whatsapp}</span>
+                        <span className="text-[14px] text-ink-muted">WhatsApp</span>
+                        <span className="text-[14px] font-mono-numbers font-[600] text-ink">{selectedOpp.simulation.whatsapp}</span>
                       </div>
                       <div className="flex justify-between items-center py-1">
-                        <span className="text-[14px] text-slate-600">Email</span>
-                        <span className="text-[14px] font-medium text-slate-900">{selectedOpp.simulation.email}</span>
+                        <span className="text-[14px] text-ink-muted">Email</span>
+                        <span className="text-[14px] font-mono-numbers font-[600] text-ink">{selectedOpp.simulation.email}</span>
                       </div>
                       <div className="flex justify-between items-center py-1">
-                        <span className="text-[14px] text-slate-600">SMS</span>
-                        <span className="text-[14px] font-medium text-slate-900">{selectedOpp.simulation.sms}</span>
+                        <span className="text-[14px] text-ink-muted">SMS</span>
+                        <span className="text-[14px] font-mono-numbers font-[600] text-ink">{selectedOpp.simulation.sms}</span>
                       </div>
                     </div>
                   </div>
 
-                  <hr className="border-[#E5E7EB]" />
+                  <div className="h-px w-full bg-hairline" />
 
                   {/* Provenance */}
                   <div className="flex flex-col gap-3">
-                    <h4 className="text-[13px] font-medium text-slate-500 uppercase tracking-wider">Recommendation Provenance</h4>
+                    <h4 className="text-[12px] font-[600] text-ink uppercase tracking-wider">Recommendation Provenance</h4>
                     <div className="flex flex-col gap-3">
                       <div className="flex flex-col">
-                        <span className="text-[12px] text-slate-500 mb-0.5">Historical Campaign:</span>
-                        <span className="text-[14px] font-medium text-slate-900">{selectedOpp.historical.campaign}</span>
+                        <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider mb-0.5">Historical Campaign:</span>
+                        <span className="text-[14px] font-[600] text-ink">{selectedOpp.historical.campaign}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[12px] text-slate-500 mb-0.5">Historical Revenue:</span>
-                        <span className="text-[14px] font-medium text-slate-900">{selectedOpp.historical.revenue}</span>
+                        <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider mb-0.5">Historical Revenue:</span>
+                        <span className="text-[14px] font-[600] text-ink">{selectedOpp.historical.revenue}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[12px] text-slate-500 mb-0.5">Historical Conversion:</span>
-                        <span className="text-[14px] font-medium text-slate-900">{selectedOpp.historical.conversion}</span>
+                        <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider mb-0.5">Historical Conversion:</span>
+                        <span className="text-[14px] font-[600] text-ink">{selectedOpp.historical.conversion}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[12px] text-slate-500 mb-0.5">Source Data:</span>
-                        <span className="text-[14px] text-slate-700">{selectedOpp.historical.source}</span>
+                        <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider mb-0.5">Source Data:</span>
+                        <span className="text-[14px] font-[500] text-ink">{selectedOpp.historical.source}</span>
                       </div>
                     </div>
                   </div>
@@ -316,17 +316,17 @@ export default function OpportunitiesPage() {
             )}
 
             {/* Drawer Footer Actions */}
-            <div className="p-6 border-t border-[#E5E7EB] bg-[#FFFFFF] flex gap-3">
+            <div className="p-6 border-t border-hairline bg-white flex gap-3">
               <button 
                 onClick={() => setSelectedOppId(null)}
-                className="flex-1 py-2.5 rounded-[8px] text-[14px] font-medium text-slate-700 bg-white border border-[#E5E7EB] hover:bg-[#F9FAFB] transition-colors"
+                className="btn-secondary flex-1 flex justify-center py-2.5 rounded-[8px]"
               >
                 Cancel
               </button>
               <button 
                 onClick={() => selectedOpp && handleGenerateCampaign(selectedOpp)}
                 disabled={isGenerating}
-                className="flex-[2] py-2.5 rounded-[8px] text-[14px] font-medium text-white bg-slate-900 hover:bg-slate-800 transition-colors flex justify-center items-center gap-2"
+                className="btn-primary flex-[2] py-2.5 rounded-[8px] flex justify-center items-center gap-2"
               >
                 {isGenerating ? (
                   <>

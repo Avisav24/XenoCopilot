@@ -90,12 +90,8 @@ function CampaignStudioContent() {
       const rawMsg = res?.variantA?.copy || '';
       let cleanMsg = rawMsg.replace(/<[^>]*>?/gm, '').replace(/\[(?:Customer )?Name\]/gi, '{{Name}}');
       
-      // If AI hallucinated a specific name like "Hi Nisha," replace it with template
-      if (rec.audience?.count === 1 && rec.audience?.name) {
-        const firstName = rec.audience.name.split(' ')[0];
-        cleanMsg = cleanMsg.replace(new RegExp(`Hi ${firstName},`, 'gi'), 'Hi {{Name}},');
-      }
-      cleanMsg = cleanMsg.replace(/Hi Sarah,/gi, 'Hi {{Name}},');
+      // Aggressive replacement of hallucinated names in greetings
+      cleanMsg = cleanMsg.replace(/(Hi|Hey|Dear)\s+[A-Z][a-z]+,/g, '$1 {{Name}},');
 
       setEditableMessage(cleanMsg || `Hi {{Name}},\n\nWe miss you! Here is a ${rec.offer} just for you.`);
     } catch (e) {
@@ -156,7 +152,7 @@ function CampaignStudioContent() {
     const isSingleCustomer = recommendation?.audience?.count === 1;
     const singleCustomerName = isSingleCustomer && recommendation?.audience?.name 
       ? recommendation.audience.name.split(' ')[0] 
-      : 'First Name';
+      : 'Customer Name';
     
     const parts = text.split(/(\{\{Name\}\}|\[(?:Customer )?Name\]|\[\s*First Name\s*\]|\[\s*Shop Now\s*\]|\{\{Link\}\})/gi);
     return parts.map((part, i) => {
@@ -164,15 +160,19 @@ function CampaignStudioContent() {
 
       const p = part.toLowerCase();
       if (p.includes('name')) {
-        return (
-          <span key={i} className="inline-flex items-center bg-blue-50 text-blue-700 border border-blue-200/80 rounded-[4px] px-1.5 py-px mx-0.5 text-[13px] font-mono leading-none align-baseline shadow-sm">
-            {singleCustomerName}
-          </span>
-        );
+        if (isSingleCustomer) {
+          return <span key={i}>{singleCustomerName}</span>;
+        } else {
+          return (
+            <span key={i} className="inline-flex items-center bg-canvas-soft text-ink border border-hairline rounded-[4px] px-1.5 py-px mx-0.5 text-[11px] font-[600] uppercase tracking-wider leading-none align-baseline shadow-sm">
+              Customer Name
+            </span>
+          );
+        }
       }
       if (p.includes('shop') || p.includes('link')) {
         return (
-          <span key={i} className="inline-flex items-center bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-[4px] px-1.5 py-px mx-0.5 text-[13px] font-mono leading-none align-baseline shadow-sm cursor-pointer hover:bg-emerald-100 transition-colors">
+          <span key={i} className="inline-flex items-center bg-ink text-white border border-ink rounded-[4px] px-1.5 py-px mx-0.5 text-[12px] font-[600] uppercase tracking-wider leading-none align-baseline shadow-sm cursor-pointer hover:opacity-90 transition-opacity">
             Shop Now
           </span>
         );
