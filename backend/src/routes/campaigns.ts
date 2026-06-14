@@ -127,7 +127,6 @@ export async function campaignRoutes(fastify: FastifyInstance) {
     // Fire webhook simulator in background
     setTimeout(async () => {
       try {
-        const fetch = (await import('node-fetch')).default;
         await fetch(`http://127.0.0.1:${process.env.PORT || 3001}/api/simulator/run`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
