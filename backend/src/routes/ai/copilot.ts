@@ -57,13 +57,18 @@ CRITICAL INSTRUCTION: If the marketer's goal is targeting a SINGLE specific pers
            }
            
            if (aiResult.audience.count > 1) {
-             const realisticCap = Math.floor(totalCustomers * 0.4); // Max 40% of our real DB
-             if (aiResult.audience.count > totalCustomers) {
-               aiResult.audience.count = Math.min(aiResult.audience.count, realisticCap);
-             }
-             // Ensure it's never 0 if totalCustomers > 0
-             if (aiResult.audience.count === 0 && totalCustomers > 0) {
-               aiResult.audience.count = Math.min(42, totalCustomers);
+             // If the user explicitly asks for "all" customers, give them the full DB count
+             if (goal.toLowerCase().includes('all ') || goal.toLowerCase() === 'all') {
+               aiResult.audience.count = totalCustomers;
+             } else {
+               // If it hallucinates a number larger than our DB, cap it at totalCustomers
+               if (aiResult.audience.count > totalCustomers) {
+                 aiResult.audience.count = totalCustomers;
+               }
+               // Ensure it's never 0 if totalCustomers > 0
+               if (aiResult.audience.count === 0 && totalCustomers > 0) {
+                 aiResult.audience.count = Math.min(42, totalCustomers);
+               }
              }
            }
          }
