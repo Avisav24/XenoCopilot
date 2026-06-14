@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
-import { Spark, Group, Megaphone, Settings } from 'iconoir-react';
+import { Spark, Group, Megaphone, Settings, DatabaseScript } from 'iconoir-react';
 
 const navGroups = [
   {
@@ -17,6 +17,12 @@ const navGroups = [
     items: [
       { href: '/chat', label: 'Campaign Studio', icon: <Spark height={18} width={18} /> },
       { href: '/engagement', label: 'All Campaigns', icon: <Megaphone height={18} width={18} /> },
+    ]
+  },
+  {
+    label: 'Settings',
+    items: [
+      { href: '/import', label: 'Data Import', icon: <DatabaseScript height={18} width={18} /> },
     ]
   },
 ];
