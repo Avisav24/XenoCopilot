@@ -100,20 +100,14 @@ function CampaignStudioContent() {
     try {
       const selectedSim = simulations?.scenarios?.find((s: any) => s.channel === selectedChannel) || recommendation;
       
-      let revStr = String(selectedSim?.revenue || recommendation?.expectedRevenue || '0');
-      let predictedRevenue = 0;
-      if (revStr.includes('L')) {
-        predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, "")) * 100000;
-      } else if (revStr.includes('K')) {
-        predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, "")) * 1000;
-      } else {
-        predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, ""));
-      }
-      if (isNaN(predictedRevenue)) predictedRevenue = 0;
-      
       const convStr = String(selectedSim?.conversion || recommendation?.expectedConversion || recommendation?.confidence || '0');
       let predictedConversion = Number(convStr.replace(/[^0-9.-]+/g, ""));
       if (isNaN(predictedConversion)) predictedConversion = 0;
+
+      const audienceCount = recommendation.audience?.count || 0;
+      const realisticAov = 1500; // Historical average AOV
+      const predictedPurchasers = Math.ceil(audienceCount * (predictedConversion / 100));
+      const predictedRevenue = Math.round(predictedPurchasers * realisticAov);
       
       const campaign = await fetchAPI<any>('/api/campaigns', {
         method: 'POST',

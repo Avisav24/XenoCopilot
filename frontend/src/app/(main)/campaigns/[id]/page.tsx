@@ -112,7 +112,23 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
           {/* Funnel */}
           <div className="col-span-2 flex flex-col gap-4">
             <h2 className="text-[18px] font-[600] text-ink">Delivery Funnel</h2>
-            <div className="card !p-6 flex flex-col gap-5">
+            <div className="card !p-6 flex flex-col gap-5 relative overflow-hidden">
+              {campaign.status !== 'completed' && campaign.status !== 'draft' && (
+                <div className="absolute inset-0 bg-white/70 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center rounded-[12px]">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="animate-spin text-ink mb-3">
+                    <line x1="12" y1="2" x2="12" y2="6"></line>
+                    <line x1="12" y1="18" x2="12" y2="22"></line>
+                    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                    <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                    <line x1="2" y1="12" x2="6" y2="12"></line>
+                    <line x1="18" y1="12" x2="22" y2="12"></line>
+                    <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                    <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                  </svg>
+                  <span className="text-[14px] font-[600] text-ink">Simulating Delivery...</span>
+                  <span className="text-[12px] text-ink-muted mt-1">Real-time stats updating</span>
+                </div>
+              )}
               <FunnelRow icon={<Send />} label="Sent" value={funnel.sent} total={audienceTotal} color="bg-ink" />
               <FunnelRow icon={<CheckCircle />} label="Delivered" value={funnel.delivered} total={audienceTotal} color="bg-blue-500" />
               <FunnelRow icon={<Eye />} label="Read / Opened" value={funnel.opened} total={audienceTotal} color="bg-purple-500" />
