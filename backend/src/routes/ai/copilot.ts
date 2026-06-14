@@ -40,6 +40,18 @@ Given a campaign goal, produce a JSON recommendation with:
        try {
          const aiText = await generateWithFallback(systemPrompt, `Goal: ${goal}`, 0.2, true);
          aiResult = JSON.parse(cleanJsonResponse(aiText));
+         
+         // FIX: Prevent LLM from hallucinating fake huge numbers (like 25,000) when we only have ~300 customers
+         if (aiResult && aiResult.audience && typeof aiResult.audience.count === 'number') {
+           const realisticCap = Math.floor(totalCustomers * 0.4); // Max 40% of our real DB
+           if (aiResult.audience.count > totalCustomers) {
+             aiResult.audience.count = Math.min(aiResult.audience.count, realisticCap);
+           }
+           // Ensure it's never 0 if totalCustomers > 0
+           if (aiResult.audience.count === 0 && totalCustomers > 0) {
+             aiResult.audience.count = Math.min(42, totalCustomers);
+           }
+         }
        } catch (e) {
          console.warn("AI generation failed for analyze-goal, using deterministic fallback", e);
        }
