@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchAPI } from '@/lib/api';
 import { Spark, ArrowRight, CheckCircle, DatabaseScript, Presentation, FastArrowRight, NavArrowRight, RefreshDouble, GraphUp } from 'iconoir-react';
@@ -9,7 +9,7 @@ import { clsx } from 'clsx';
 
 type Step = 'GOAL' | 'RECOMMENDATION' | 'REVIEW' | 'LEARN';
 
-export default function CampaignStudioV5() {
+function CampaignStudioContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const audienceParam = searchParams.get('audience');
@@ -408,5 +408,13 @@ export default function CampaignStudioV5() {
 
       </div>
     </div>
+  );
+}
+
+export default function CampaignStudioV5() {
+  return (
+    <Suspense fallback={<div className="flex w-full h-screen items-center justify-center bg-white"><div className="w-6 h-6 border-2 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div></div>}>
+      <CampaignStudioContent />
+    </Suspense>
   );
 }
