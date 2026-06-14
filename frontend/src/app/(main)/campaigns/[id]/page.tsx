@@ -167,7 +167,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
                     <tbody className="divide-y divide-hairline">
                       <tr>
                         <th className="w-[120px] !text-[12px] whitespace-nowrap bg-canvas-soft border-r border-hairline align-top">Prediction</th>
-                        <td className="!text-[13px] leading-relaxed whitespace-pre-wrap p-4">{learning.learning.split('.')[0]}.</td>
+                        <td className="!text-[13px] leading-relaxed whitespace-pre-wrap p-4">{learning.learning.includes('). ') ? learning.learning.split('). ')[0] + ').' : learning.learning}</td>
                       </tr>
                       <tr>
                         <th className="!text-[12px] whitespace-nowrap bg-canvas-soft border-r border-hairline align-top">Actual Output</th>
@@ -175,7 +175,7 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
                       </tr>
                       <tr>
                         <th className="!text-[12px] whitespace-nowrap bg-canvas-soft border-r border-hairline align-top">Key Insight</th>
-                        <td className="!text-[13px] font-[500] leading-relaxed whitespace-pre-wrap p-4">{learning.learning.substring(learning.learning.indexOf('.') + 1).trim() || 'No additional insights.'}</td>
+                        <td className="!text-[13px] font-[500] leading-relaxed whitespace-pre-wrap p-4">{learning.learning.includes('). ') ? learning.learning.split('). ').slice(1).join('). ').trim() : 'No additional insights.'}</td>
                       </tr>
                     </tbody>
                   </table>

@@ -273,7 +273,7 @@ export async function campaignRoutes(fastify: FastifyInstance) {
         aiSummary = cachedSummary;
       } else if (process.env.GEMINI_API_KEY && sent > 0) {
         const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-        const prompt = `Campaign: "${campaign.name}" targeting ${campaign.persona.name}.
+        const prompt = `Campaign: "${campaign.name}" targeting ${campaign.persona?.name || campaign.audience_type || 'Target Audience'}.
 Results: ${sent} sent, ${delivered} delivered (${formatRate(delivered, sent)}), ${opened} opened (${formatRate(opened, delivered)}), ${clicked} clicked (${formatRate(clicked, opened)}), ${purchased} purchased (${formatRate(purchased, sent)}).
 Channel: ${campaign.channel}
 Estimated revenue: ${formatRupees(actualRevenue)}.
@@ -342,7 +342,7 @@ Do not use markdown formatting.`;
     const insights = {
       campaign_id: id,
       campaign_name: campaign.name,
-      persona: campaign.persona.name,
+      persona: campaign.persona?.name || campaign.audience_type || 'Target Audience',
       channel: campaign.channel,
       audience_count: total,
       funnel: {
