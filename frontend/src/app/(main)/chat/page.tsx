@@ -197,8 +197,9 @@ function CampaignStudioContent() {
             <div className="flex flex-col gap-3 mt-6">
               <h2 className="text-[14px] font-semibold text-slate-800 uppercase tracking-wider mb-2">Growth Opportunities</h2>
               <div className="flex flex-col gap-3 w-full">
-                {opportunities.map((opp, i) => {
-                  const score = opp.expectedRevenue * opp.confidence;
+                {(Array.isArray(opportunities) ? opportunities : []).map((opp, i) => {
+                  if (!opp) return null;
+                  const score = (opp.expectedRevenue || 0) * (opp.confidence || 0);
                   let colorClass = "bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300";
                   let tagClass = "bg-slate-200 text-slate-700";
                   let tagLabel = "Low";
@@ -215,17 +216,17 @@ function CampaignStudioContent() {
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-3">
                           <span className={clsx("text-[10px] font-bold uppercase px-2 py-0.5 rounded", tagClass)}>{tagLabel}</span>
-                          <span className="text-[15px] font-semibold text-slate-900">{opp.title}</span>
+                          <span className="text-[15px] font-semibold text-slate-900">{opp.title || 'Opportunity'}</span>
                         </div>
-                        <span className="text-[14px] font-mono font-semibold text-slate-900">₹{opp.expectedRevenue.toLocaleString()}</span>
+                        <span className="text-[14px] font-mono font-semibold text-slate-900">₹{opp.expectedRevenue?.toLocaleString() || '0'}</span>
                       </div>
                       <div className="flex gap-6 text-[13px] text-slate-600 pl-[56px]">
-                        <span className="font-medium">Audience: <span className="text-slate-900">{opp.audience.toLocaleString()}</span></span>
-                        <span className="font-medium">Channel: <span className="text-slate-900">{opp.channel}</span></span>
-                        <span className="font-medium">Confidence: <span className="text-slate-900">{opp.confidence}%</span></span>
+                        <span className="font-medium">Audience: <span className="text-slate-900">{opp.audience?.toLocaleString() || '0'}</span></span>
+                        <span className="font-medium">Channel: <span className="text-slate-900">{opp.channel || 'Multi'}</span></span>
+                        <span className="font-medium">Confidence: <span className="text-slate-900">{opp.confidence || '0'}%</span></span>
                       </div>
                       <div className="text-[12px] text-slate-500 bg-white/60 px-3 py-2 rounded-lg border border-white/50 ml-[56px] shadow-sm">
-                        <span className="font-medium text-slate-700">Reason:</span> {opp.reasoning.join(' • ')}
+                        <span className="font-medium text-slate-700">Reason:</span> {opp.reasoning?.join(' • ') || 'Data-driven insight'}
                       </div>
                     </button>
                   );
