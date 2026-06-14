@@ -34,22 +34,37 @@ Given a campaign goal, produce a JSON recommendation with:
     "channel": ["...", "..."],
     "offer": ["...", "..."]
   }
-}`;
+}
+CRITICAL INSTRUCTION: If the marketer's goal is targeting a SINGLE specific person by name (e.g., "Launch campaign for Kritika Pandey"), you MUST set the audience count strictly to 1.`;
        
        let aiResult: any = null;
        try {
-         const aiText = await generateWithFallback(systemPrompt, `Goal: ${goal}`, 0.2, true);
+         const aiText = await generateWithFallback(systemPrompt, `Goal: ${goal}`, 0.1, true);
          aiResult = JSON.parse(cleanJsonResponse(aiText));
          
-         // FIX: Prevent LLM from hallucinating fake huge numbers (like 25,000) when we only have ~300 customers
+         // FIX: Prevent LLM from hallucinating fake huge numbers when we only have ~640 customers
          if (aiResult && aiResult.audience && typeof aiResult.audience.count === 'number') {
-           const realisticCap = Math.floor(totalCustomers * 0.4); // Max 40% of our real DB
-           if (aiResult.audience.count > totalCustomers) {
-             aiResult.audience.count = Math.min(aiResult.audience.count, realisticCap);
+           // If the goal specifically mentions 1 person, force it to 1
+           if (aiResult.audience.count === 1 || goal.toLowerCase().includes(' for ') && goal.split(' ').length < 8) {
+              const possibleName = goal.toLowerCase().split(' for ')[1]?.trim();
+              if (possibleName) {
+                 const personExists = await prisma.customer.findFirst({ where: { name: { contains: possibleName, mode: 'insensitive' } }});
+                 if (personExists) {
+                    aiResult.audience.count = 1;
+                    aiResult.audience.name = personExists.name;
+                 }
+              }
            }
-           // Ensure it's never 0 if totalCustomers > 0
-           if (aiResult.audience.count === 0 && totalCustomers > 0) {
-             aiResult.audience.count = Math.min(42, totalCustomers);
+           
+           if (aiResult.audience.count > 1) {
+             const realisticCap = Math.floor(totalCustomers * 0.4); // Max 40% of our real DB
+             if (aiResult.audience.count > totalCustomers) {
+               aiResult.audience.count = Math.min(aiResult.audience.count, realisticCap);
+             }
+             // Ensure it's never 0 if totalCustomers > 0
+             if (aiResult.audience.count === 0 && totalCustomers > 0) {
+               aiResult.audience.count = Math.min(42, totalCustomers);
+             }
            }
          }
        } catch (e) {
