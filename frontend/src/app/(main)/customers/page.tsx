@@ -44,7 +44,7 @@ export default function CustomersPage() {
     <div className="flex flex-col w-full min-h-screen bg-canvas pb-20">
       
       {/* HEADER */}
-      <div className="px-6 py-6 border-b border-hairline flex items-center justify-between sticky top-0 z-10 bg-canvas/80 backdrop-blur-md">
+      <div className="px-4 md:px-6 py-6 border-b border-hairline flex items-center justify-between sticky top-0 z-10 bg-canvas/80 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded border border-hairline flex items-center justify-center bg-white text-ink">
             <UserStar height={16} width={16} />
@@ -53,7 +53,7 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      <div className="w-full max-w-[1200px] mx-auto p-6 flex flex-col gap-6">
+      <div className="w-full max-w-[1200px] mx-auto p-4 md:p-6 flex flex-col gap-6">
         
         {/* ACTION BAR */}
         <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white p-4 rounded-[8px] border border-hairline">

@@ -87,10 +87,10 @@ export default function OpportunitiesPage() {
   const activeCount = useMemo(() => opportunities.filter(o => o.status === 'Active').length, [opportunities]);
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-[#F9FAFB] text-slate-900 pb-24 relative overflow-hidden">
+    <div className="flex flex-col w-full min-h-screen bg-[#F9FAFB] text-slate-900 relative overflow-hidden">
       
       {/* HEADER */}
-      <div className="px-8 pt-8 pb-6 border-b border-[#E5E7EB] bg-[#FFFFFF]">
+      <div className="px-4 md:px-8 pt-6 pb-6 border-b border-[#E5E7EB] bg-[#FFFFFF]">
         <h1 className="text-[20px] font-semibold text-slate-900 tracking-tight">Growth Opportunities</h1>
         <p className="text-[14px] text-slate-500 mt-1">
           Analytical recommendations for pipeline expansion and revenue recovery.
@@ -99,19 +99,19 @@ export default function OpportunitiesPage() {
 
       {/* KPI STRIP */}
       <div className="border-b border-[#E5E7EB] grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#E5E7EB] bg-[#FFFFFF]">
-        <div className="flex-1 px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
+        <div className="flex-1 px-4 md:px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
           <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Pipeline Impact</span>
           <span className="text-[16px] font-medium text-slate-900">{pipelineImpact}</span>
         </div>
-        <div className="flex-1 px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
+        <div className="flex-1 px-4 md:px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
           <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">At Risk Revenue</span>
           <span className="text-[16px] font-medium text-slate-900">₹2.1L</span>
         </div>
-        <div className="flex-1 px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
+        <div className="flex-1 px-4 md:px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
           <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Recoverable Customers</span>
           <span className="text-[16px] font-medium text-slate-900">1,668</span>
         </div>
-        <div className="flex-1 px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
+        <div className="flex-1 px-4 md:px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
           <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Active Opportunities</span>
           <span className="text-[16px] font-medium text-slate-900">{activeCount}</span>
         </div>

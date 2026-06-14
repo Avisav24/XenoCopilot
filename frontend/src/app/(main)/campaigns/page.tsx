@@ -67,17 +67,17 @@ export default function AllCampaigns() {
     <div className="flex flex-col w-full min-h-screen bg-canvas pb-20">
       
       {/* HEADER */}
-      <div className="px-6 py-6 border-b border-hairline flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="px-4 md:px-6 py-6 border-b border-hairline flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <h1 className="text-[24px] font-[700] text-ink leading-tight">All Campaigns</h1>
           <p className="text-[14px] text-ink-muted">Manage and monitor all active and past marketing campaigns.</p>
         </div>
-        <button onClick={() => router.push('/chat')} className="btn-primary">
+        <button onClick={() => router.push('/chat')} className="btn-primary w-full md:w-auto">
           New Campaign
         </button>
       </div>
 
-      <div className="p-6 flex flex-col gap-8 max-w-[1400px]">
+      <div className="p-4 md:p-6 flex flex-col gap-8 max-w-[1400px]">
         
         {/* KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -185,12 +185,12 @@ function CampaignStudioContent() {
     <div className="flex flex-col w-full min-h-screen bg-canvas pb-20">
       
       {/* PAGE HEADER */}
-      <div className="px-6 py-6 border-b border-hairline flex flex-col gap-1">
+      <div className="px-4 md:px-6 py-6 border-b border-hairline flex flex-col gap-1">
         <h1 className="text-[24px] font-[700] text-ink leading-tight">Campaign Studio</h1>
         <p className="text-[14px] text-ink-muted">AI-assisted campaign creation and intelligence.</p>
       </div>
 
-      <div className="flex flex-col p-6 max-w-[1000px]">
+      <div className="flex flex-col p-4 md:p-6 max-w-[1000px]">
         
         {/* COMMAND BAR */}
         <form onSubmit={handleAnalyzeGoal} className="relative flex items-center w-full mb-6">
