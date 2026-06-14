@@ -324,12 +324,12 @@ function CampaignStudioContent() {
                   ))}
                 </div>
 
-                <div className="flex flex-col gap-2 flex-1">
+                <div className="flex flex-col gap-2">
                   <label className="text-[13px] font-[600] text-ink">Message Content</label>
                   <textarea
                     value={editableMessage}
                     onChange={(e) => setEditableMessage(e.target.value)}
-                    className="w-full flex-1 min-h-[200px] border border-hairline rounded-[8px] p-4 text-[14px] leading-relaxed resize-none focus:outline-none focus:border-ink bg-white font-sans"
+                    className="w-full min-h-[140px] border border-hairline rounded-[8px] p-4 text-[14px] leading-relaxed resize-none focus:outline-none focus:border-ink bg-white font-sans"
                   />
                   <div className="flex items-center justify-between text-[12px] text-ink-muted mt-1">
                     <span>Variables: [Name], [Offer], [Link]</span>
@@ -367,7 +367,7 @@ function CampaignStudioContent() {
               </div>
 
               {/* Right: Actual Mockup */}
-              <div className="flex-1 bg-canvas-soft border border-hairline rounded-[8px] flex items-center justify-center p-8 min-h-[400px]">
+              <div className="flex-1 flex items-start justify-center min-h-[400px] pt-4">
                 {selectedChannel === 'WhatsApp' && (
                   <div className="w-[320px] bg-[#EFEAE2] rounded-[24px] border-[8px] border-slate-800 overflow-hidden flex flex-col shadow-sm relative">
                     <div className="bg-[#008069] text-white px-4 py-3 flex items-center gap-3 z-10">
