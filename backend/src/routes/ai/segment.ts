@@ -247,12 +247,8 @@ Return strictly structured JSON.
         structuredInsight = JSON.parse(cleanJsonResponse(rawJsonText));
         aiResponseText = structuredInsight.summary || structuredInsight.observation;
         
-        if (structuredInsight.audienceSize !== undefined && structuredInsight.audienceSize !== null) {
-          count = structuredInsight.audienceSize;
-        }
-        if (structuredInsight.expectedRevenue !== undefined && structuredInsight.expectedRevenue !== null) {
-          totalRevenue = structuredInsight.expectedRevenue;
-        }
+        // Removed the lines where the LLM's hallucinated audienceSize and expectedRevenue 
+        // would overwrite the real database metrics. We must trust the real DB calculation.
       } catch (e) {
         console.error("Failed to parse JSON from AI response", e);
         aiResponseText = rawJsonText;
