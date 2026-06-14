@@ -46,19 +46,27 @@ export async function customerRoutes(fastify: FastifyInstance) {
     ]);
 
     return reply.send({
-      customers: customers.map((c) => ({
-        id: c.id,
-        name: c.name,
-        email: c.email,
-        phone: c.phone,
-        city: c.city,
-        personas: c.customer_personas.map(cp => cp.persona.name),
-        total_spent: Number(c.total_spent),
-        last_order_date: c.last_order_date?.toISOString() ?? null,
-        signup_date: c.signup_date.toISOString(),
-        health_score: c.health_score,
-        preferred_channel: c.preferred_channel
-      })),
+      customers: customers.map((c) => {
+        const personasList = c.customer_personas.map(cp => cp.persona.name);
+        personasList.sort((a, b) => {
+          if (a.toLowerCase() === 'beauty vip') return -1;
+          if (b.toLowerCase() === 'beauty vip') return 1;
+          return 0;
+        });
+        return {
+          id: c.id,
+          name: c.name,
+          email: c.email,
+          phone: c.phone,
+          city: c.city,
+          personas: personasList,
+          total_spent: Number(c.total_spent),
+          last_order_date: c.last_order_date?.toISOString() ?? null,
+          signup_date: c.signup_date.toISOString(),
+          health_score: c.health_score,
+          preferred_channel: c.preferred_channel
+        };
+      }),
       total,
       limit,
       offset,
