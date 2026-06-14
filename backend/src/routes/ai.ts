@@ -1577,7 +1577,7 @@ Return JSON:
        const systemPrompt = `You are the XenoCopilot AI Decision Engine. The user has provided a business goal.
 Analyze the goal and recommend: 
 1) Audience (Name and Count)
-2) Channel (Choose ONLY ONE from: "WhatsApp", "Email", "SMS", "Email & SMS")
+2) Channel (Choose ONLY ONE from: "WhatsApp", "Email", "SMS", "Instagram", "Facebook")
 3) Offer
 4) Expected Revenue (in ₹)
 5) Expected Conversion (%)
@@ -1784,12 +1784,32 @@ Return ONLY valid JSON matching this structure:
           copy: `[Email]\nSubject: <var>Rahul</var>, a special <var>${offer}</var> offer just for you\n\nHi <var>Rahul</var>,\nWe've missed you. As one of our top customers we reserved an exclusive <var>${offer}</var> offer.\n[ Redeem Offer ]\n\n[SMS]\nExclusive offer for valued customers! <var>Rahul</var>, enjoy <var>${offer}</var> OFF your next purchase. Shop now: <var>styleco.com/recover</var>`,
           preview: "Email & SMS Preview"
         };
+      } else if (channel === "Instagram" || channel === "Facebook") {
+        variantA = {
+          type: "urgency",
+          copy: `Don't miss out! <var>Rahul</var>, enjoy <var>${offer}</var> OFF your next purchase at <var>StyleCo</var>. Offer valid for 48 hours.\n\nShop now at the link below.`,
+          preview: "Ad Copy"
+        };
+        variantB = {
+          type: "reward",
+          copy: `Exclusive offer for valued customers! <var>Rahul</var>, enjoy <var>${offer}</var> OFF your next purchase. Shop now at the link below.`,
+          preview: "Ad Copy"
+        };
       }
+
+      // Simple keyword matching for images
+      let imageUrl = "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=800"; // default clothing
+      const g = (goal || "").toLowerCase();
+      if (g.includes("winter") || g.includes("jacket")) imageUrl = "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&q=80&w=800"; // leather jacket
+      else if (g.includes("shoe") || g.includes("sneaker") || g.includes("footwear")) imageUrl = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=800"; // red sneaker
+      else if (g.includes("access") || g.includes("watch")) imageUrl = "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800"; // watch
+      else if (g.includes("beauty") || g.includes("makeup") || g.includes("cosmetic")) imageUrl = "https://images.unsplash.com/photo-1596462502278-27bf85033e5a?auto=format&fit=crop&q=80&w=800"; // cosmetics
 
       return reply.send({
         channel,
         variantA,
         variantB,
+        imageUrl,
         reasoning: [
           `Similar campaign generated ₹1.4L`,
           `Urgency messaging improved CTR by 22%`,

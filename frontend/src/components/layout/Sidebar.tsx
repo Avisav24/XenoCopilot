@@ -79,11 +79,11 @@ export function Sidebar() {
         <div className="p-4 w-full flex flex-col gap-2">
           <div className="flex items-center gap-3 px-3 py-2 hover:bg-canvas-soft rounded-md cursor-pointer transition-colors w-full">
             <div className="w-8 h-8 rounded-md bg-canvas-soft flex items-center justify-center text-ink text-[12px] font-bold border border-hairline flex-shrink-0">
-              D
+              S
             </div>
             <div className="overflow-hidden whitespace-nowrap flex-1">
               <p className="text-ink text-[14px] font-bold leading-tight">Workspace</p>
-              <p className="text-ink-muted text-[12px] font-medium">Drape & Co.</p>
+              <p className="text-ink-muted text-[12px] font-medium">StyleCo.</p>
             </div>
           </div>
         </div>
