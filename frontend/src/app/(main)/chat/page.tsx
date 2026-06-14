@@ -364,23 +364,64 @@ function CampaignStudioContent() {
                              </div>
                            )}
                            {messagePreview.channel === 'Email' && (
-                             <div className="bg-white w-full max-w-[320px] rounded-[8px] p-0 shadow-sm border border-gray-200 flex flex-col overflow-hidden">
-                               <div className="bg-slate-100 p-3 border-b border-gray-200">
-                                 <div className="text-[11px] font-bold text-slate-500 mb-1">Subject:</div>
-                                 <div className="text-[13px] font-bold text-slate-900 line-clamp-1">{messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.split('\n\n')[0]?.replace('Subject: ', '')}</div>
+                             <div className="bg-[#f4f5f7] w-full max-w-[320px] rounded-[16px] shadow-[0_5px_20px_rgba(0,0,0,0.08)] flex flex-col overflow-hidden border border-gray-200">
+                               {/* Mock Browser/Email Client Header */}
+                               <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+                                 <div className="text-[12px] font-bold text-slate-800 line-clamp-1">{messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.split('\n\n')[0]?.replace('Subject: ', '')}</div>
                                </div>
-                               <div className="p-4 text-[13px] text-slate-700 whitespace-pre-wrap leading-relaxed">
-                                 {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.split('\n\n').slice(1).join('\n\n')}
+                               
+                               {/* Email Body Area */}
+                               <div className="p-6 flex flex-col items-center">
+                                 <div className="bg-white w-full rounded-[8px] p-6 shadow-sm border border-gray-100 flex flex-col gap-4">
+                                   <div className="text-[14px] font-bold text-slate-900">
+                                     {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.split('\n\n')[1]?.split('\n')[0] || "Hi there,"}
+                                   </div>
+                                   <div className="text-[13px] text-slate-600 leading-relaxed whitespace-pre-wrap">
+                                     {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.split('\n\n').slice(1).join('\n\n').replace(/^.*?\n/, '')}
+                                   </div>
+                                   <button className="mt-2 w-full bg-[#3b5998] hover:bg-[#344e86] text-white font-semibold py-2.5 rounded-[4px] text-[13px] transition-colors">
+                                     Redeem Offer
+                                   </button>
+                                 </div>
                                </div>
                              </div>
                            )}
                            {messagePreview.channel === 'SMS' && (
-                             <div className="bg-white w-full max-w-[260px] rounded-[16px] p-4 shadow-sm border border-gray-200 flex flex-col">
-                               <div className="bg-gray-100 rounded-[12px] rounded-bl-none p-3 text-[13px] text-slate-800 whitespace-pre-wrap leading-relaxed">
-                                 {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy}
+                             <div className="bg-white w-full max-w-[280px] rounded-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] flex flex-col overflow-hidden border border-gray-200 relative pb-2">
+                               {/* iOS Top Bar */}
+                               <div className="bg-[#F9F9F9] border-b border-gray-200 px-3 py-2 flex items-center justify-between z-10">
+                                 <div className="text-[#007AFF] text-[20px] font-light">&lt;</div>
+                                 <div className="flex flex-col items-center">
+                                   <div className="w-8 h-8 rounded-full bg-gradient-to-b from-gray-300 to-gray-400 flex items-center justify-center text-white mb-0.5 shadow-sm">
+                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                                   </div>
+                                   <div className="text-[10px] text-slate-900 font-medium tracking-wide">Your Brand</div>
+                                 </div>
+                                 <div className="w-5 h-5 rounded-full border border-[#007AFF] text-[#007AFF] flex items-center justify-center text-[12px] font-serif font-bold italic">i</div>
                                </div>
-                               <div className="text-[10px] text-slate-400 mt-2 ml-1">
-                                 {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.length} / 160 characters
+
+                               {/* Chat Body */}
+                               <div className="px-4 py-4 flex flex-col flex-1 bg-white min-h-[160px]">
+                                 <div className="text-[10px] text-gray-400 text-center mb-4 uppercase tracking-wider font-medium">Text Message<br/><span className="text-[9px] font-normal lowercase">Today 12:56</span></div>
+                                 
+                                 {/* Incoming Bubble */}
+                                 <div className="relative self-start max-w-[85%]">
+                                   <div className="bg-[#E9E9EB] text-black text-[14px] leading-snug px-4 py-2.5 rounded-[18px] rounded-bl-sm">
+                                     {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy}
+                                   </div>
+                                   <div className="text-[9px] text-gray-400 mt-1 ml-1">{messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.length} / 160 char</div>
+                                 </div>
+                               </div>
+
+                               {/* Bottom Input Bar */}
+                               <div className="border-t border-gray-200 bg-white px-3 py-2 flex items-center gap-2">
+                                 <div className="flex text-gray-400 gap-2">
+                                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="8" width="18" height="12" rx="2" ry="2"/><circle cx="12" cy="14" r="3"/><path d="M8 8v-2a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                 </div>
+                                 <div className="flex-1 border border-gray-300 rounded-full h-8 px-3 flex items-center justify-between bg-white">
+                                   <span className="text-gray-300 text-[13px]">Text Message</span>
+                                   <div className="w-5 h-5 rounded-full bg-[#007AFF] text-white flex items-center justify-center font-bold text-[10px]">↑</div>
+                                 </div>
                                </div>
                              </div>
                            )}

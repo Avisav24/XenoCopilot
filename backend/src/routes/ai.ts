@@ -1762,12 +1762,12 @@ Return ONLY valid JSON matching this structure:
       } else if (channel === "SMS") {
         variantA = {
           type: "urgency",
-          copy: `XENO: [Name], enjoy ${offer} OFF your next purchase. Offer valid for 48 hours. Shop now: xeno.co/recover`,
+          copy: `[Name], enjoy ${offer} OFF your next purchase. Offer valid for 48 hours. Shop now: yourbrand.com/recover`,
           preview: "SMS Preview"
         };
         variantB = {
           type: "reward",
-          copy: `XENO: Exclusive offer for valued customers! [Name], enjoy ${offer} OFF your next purchase. Shop now: xeno.co/recover`,
+          copy: `Exclusive offer for valued customers! [Name], enjoy ${offer} OFF your next purchase. Shop now: yourbrand.com/recover`,
           preview: "SMS Preview"
         };
       }
