@@ -295,8 +295,8 @@ export default function ImportPage() {
              </div>
 
              <div className="flex items-center gap-4 mt-4">
-                <button onClick={() => router.push('/personas')} className="bg-white border border-slate-200 hover:border-slate-300 text-slate-900 font-bold py-3 px-6 rounded-xl text-[14px] transition-colors shadow-sm flex items-center justify-center gap-2">
-                   View Personas <FastArrowRight height={16} width={16} />
+                <button onClick={() => router.push('/customers')} className="bg-white border border-slate-200 hover:border-slate-300 text-slate-900 font-bold py-3 px-6 rounded-xl text-[14px] transition-colors shadow-sm flex items-center justify-center gap-2">
+                   Customer 360 <FastArrowRight height={16} width={16} />
                 </button>
                 <button onClick={() => router.push('/revenue')} className="bg-white border border-slate-200 hover:border-slate-300 text-slate-900 font-bold py-3 px-6 rounded-xl text-[14px] transition-colors shadow-sm flex items-center justify-center gap-2">
                    Growth OS <FastArrowRight height={16} width={16} />
