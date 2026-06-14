@@ -48,7 +48,7 @@ function CampaignStudioContent() {
       });
       setRecommendation(res);
       
-      const defaultChannel = ['WhatsApp', 'Email', 'SMS', 'Email & SMS', 'Instagram', 'Facebook'].includes(res.channel) ? res.channel : 'WhatsApp';
+      const defaultChannel = ['WhatsApp', 'Email', 'SMS', 'Instagram', 'Facebook'].includes(res.channel) ? res.channel : (res.channel === 'Email & SMS' ? 'Email' : 'WhatsApp');
       setSelectedChannel(defaultChannel);
       
       const simRes = await fetchAPI<any>('/api/copilot/simulate', {
@@ -308,7 +308,7 @@ function CampaignStudioContent() {
               {/* Left: Editor */}
               <div className="flex-1 flex flex-col gap-4">
                 <div className="flex items-center gap-4 border-b border-hairline overflow-x-auto pb-1">
-                  {['WhatsApp', 'Email', 'SMS', 'Email & SMS', 'Instagram', 'Facebook'].map((channel) => (
+                  {['WhatsApp', 'Email', 'SMS', 'Instagram', 'Facebook'].map((channel) => (
                     <button
                       key={channel}
                       onClick={() => handleSimulateChannelChange(channel)}
@@ -406,23 +406,6 @@ function CampaignStudioContent() {
                       <div className="text-[20px] font-serif font-bold tracking-tight">BRAND.</div>
                       <p className="whitespace-pre-wrap text-left w-full">{renderMessagePreview(editableMessage)}</p>
                       <button className="bg-ink text-white px-8 py-3 mt-4 text-[13px] font-[600] tracking-wide w-full">CLAIM OFFER</button>
-                    </div>
-                  </div>
-                )}
-
-                {selectedChannel === 'Email & SMS' && (
-                  <div className="w-full flex justify-center pb-4">
-                    <div className="w-full max-w-[400px] bg-white rounded-lg border border-hairline shadow-sm flex flex-col overflow-hidden shrink-0">
-                      <div className="bg-canvas-soft border-b border-hairline px-4 py-3 flex flex-col gap-1 text-[13px]">
-                        <div className="flex items-center gap-2"><span className="text-ink-muted w-12">From:</span><span className="font-[500] text-ink">Brand Team</span></div>
-                        <div className="flex items-center gap-2"><span className="text-ink-muted w-12">Subject:</span><span className="font-[600] text-ink">Exclusive Offer</span></div>
-                      </div>
-                      <img src={messagePreview?.imageUrl || "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=800"} className="w-full h-[180px] object-cover" alt="Email Header" />
-                      <div className="p-6 flex flex-col gap-4 text-[14px] text-ink leading-relaxed items-center text-center">
-                        <div className="text-[20px] font-serif font-bold tracking-tight">BRAND.</div>
-                        <p className="whitespace-pre-wrap text-left w-full">{renderMessagePreview(editableMessage.split('[SMS]')[0].replace('[Email]', '').trim())}</p>
-                        <button className="bg-ink text-white px-8 py-3 mt-4 text-[13px] font-[600] tracking-wide w-full">CLAIM OFFER</button>
-                      </div>
                     </div>
                   </div>
                 )}
