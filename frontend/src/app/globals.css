@@ -51,10 +51,10 @@
 
   /* Enterprise Buttons */
   .btn-primary {
-    @apply bg-primary text-white px-4 py-2 rounded-md font-medium text-[14px] leading-none hover:bg-primary-press transition-colors flex items-center justify-center gap-2;
+    @apply bg-primary text-on-primary px-4 py-2 rounded-md font-medium text-[14px] leading-none hover:bg-primary-active transition-colors flex items-center justify-center gap-2;
   }
   .btn-secondary {
-    @apply bg-canvas text-ink border border-hairline px-4 py-2 rounded-md font-medium text-[14px] leading-none hover:bg-canvas-soft transition-colors flex items-center justify-center gap-2;
+    @apply bg-canvas text-ink border border-hairline px-4 py-2 rounded-md font-medium text-[14px] leading-none hover:bg-surface-strong transition-colors flex items-center justify-center gap-2;
   }
 
   /* Persona Badges */
