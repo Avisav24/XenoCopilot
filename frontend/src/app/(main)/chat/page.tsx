@@ -90,10 +90,18 @@ function CampaignStudioContent() {
     try {
       const selectedSim = simulations?.scenarios?.find((s: any) => s.channel === selectedChannel) || recommendation;
       
-      const revStr = selectedSim.revenue || recommendation.expectedRevenue;
-      const convStr = selectedSim.conversion || recommendation.expectedConversion;
-      const predictedRevenue = typeof revStr === 'string' ? Number(revStr.replace(/[^0-9.-]+/g, "")) : revStr;
-      const predictedConversion = typeof convStr === 'string' ? Number(convStr.replace(/[^0-9.-]+/g, "")) : convStr;
+      let revStr = String(selectedSim?.revenue || recommendation?.expectedRevenue || '0');
+      let predictedRevenue = 0;
+      if (revStr.includes('L')) {
+        predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, "")) * 100000;
+      } else if (revStr.includes('K')) {
+        predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, "")) * 1000;
+      } else {
+        predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, ""));
+      }
+      
+      const convStr = String(selectedSim?.conversion || recommendation?.expectedConversion || recommendation?.confidence || '0');
+      const predictedConversion = Number(convStr.replace(/[^0-9.-]+/g, ""));
       
       const campaign = await fetchAPI<any>('/api/campaigns', {
         method: 'POST',

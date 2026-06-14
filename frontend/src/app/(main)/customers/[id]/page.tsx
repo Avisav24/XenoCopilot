@@ -14,20 +14,23 @@ export default function CustomerIntelligenceHub() {
   const { id } = useParams();
   const router = useRouter();
 
-  const { data: customer } = useQuery({ queryKey: ['customer', id], queryFn: () => fetchAPI<any>(`/api/customers/${id}`) });
-  const { data: intelligence } = useQuery({ queryKey: ['intelligence', id], queryFn: () => fetchAPI<any>(`/api/customers/${id}/intelligence`) });
-  const { data: timeline } = useQuery({ queryKey: ['timeline', id], queryFn: () => fetchAPI<any[]>(`/api/customers/${id}/timeline`) });
-  const { data: purchaseInt } = useQuery({ queryKey: ['purchase-int', id], queryFn: () => fetchAPI<any>(`/api/customers/${id}/purchase-intelligence`) });
-  const { data: behaviorInt } = useQuery({ queryKey: ['behavior-int', id], queryFn: () => fetchAPI<any>(`/api/customers/${id}/behavior-intelligence`) });
-  const { data: nextAction } = useQuery({ queryKey: ['next-action', id], queryFn: () => fetchAPI<any>(`/api/customers/${id}/next-best-action`) });
-  const { data: memory } = useQuery({ queryKey: ['revenue-memory', id], queryFn: () => fetchAPI<any[]>(`/api/customers/${id}/revenue-memory`) });
-  const { data: similar } = useQuery({ queryKey: ['similar-customers', id], queryFn: () => fetchAPI<any[]>(`/api/customers/${id}/similar-customers`) });
-  const { data: simulate } = useQuery({ queryKey: ['simulate-scenarios', id], queryFn: () => fetchAPI<any>(`/api/customers/${id}/simulate`) });
-  const { data: predictions } = useQuery({ queryKey: ['predictions', id], queryFn: () => fetchAPI<any>(`/api/customers/${id}/predictions`) });
+  const { data: fullProfile, isLoading } = useQuery({ 
+    queryKey: ['customer-full-profile', id], 
+    queryFn: () => fetchAPI<any>(`/api/customers/${id}/full-profile`) 
+  });
 
-  if (!customer || !intelligence || !purchaseInt || !behaviorInt || !nextAction || !predictions) {
+  if (isLoading || !fullProfile) {
     return <div className="p-10 flex justify-center text-slate-500 font-medium">Loading Intelligence Workspace...</div>;
   }
+
+  const customer = fullProfile;
+  const intelligence = fullProfile.intelligence;
+  const timeline = fullProfile.timeline;
+  const nextAction = fullProfile.nextBestAction;
+  const memory = fullProfile.revenueMemory;
+  const similar = fullProfile.similarCustomers;
+  const simulate = fullProfile.simulations;
+  const predictions = fullProfile.predictions;
 
   const { executiveBrief, health } = intelligence;
 
@@ -63,9 +66,17 @@ export default function CustomerIntelligenceHub() {
           </div>
           
           <div className="flex gap-8 border-l border-[#E5E7EB] pl-8">
-            <div className="flex flex-col">
-              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Persona</span>
-              <span className="text-[14px] font-medium text-slate-900 mt-0.5">{executiveBrief.persona}</span>
+            <div className="flex flex-col gap-1.5 max-w-[240px]">
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Personas</span>
+              <div className="flex flex-wrap gap-1.5">
+                {customer.personas && customer.personas.length > 0 ? customer.personas.map((p: string, i: number) => (
+                  <span key={i} className="px-2 py-0.5 bg-indigo-50 text-indigo-700 text-[11px] font-medium rounded-full border border-indigo-100 whitespace-nowrap">
+                    {p}
+                  </span>
+                )) : (
+                  <span className="text-[13px] font-medium text-slate-900">{executiveBrief.persona}</span>
+                )}
+              </div>
             </div>
             <div className="flex flex-col">
               <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">LTV</span>
