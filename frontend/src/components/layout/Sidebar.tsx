@@ -9,7 +9,7 @@ const navGroups = [
   {
     label: 'Audience',
     items: [
-      { href: '/opportunities', label: 'Revenue Opportunities', icon: <Group height={18} width={18} /> },
+      { href: '/opportunities', label: 'Growth Opportunities', icon: <Group height={18} width={18} /> },
       { href: '/customers', label: 'Customer 360', icon: <UserStar height={18} width={18} /> },
     ]
   },
