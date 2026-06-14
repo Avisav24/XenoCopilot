@@ -17,7 +17,8 @@ export async function customerRoutes(fastify: FastifyInstance) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
-        { phone: { contains: search, mode: 'insensitive' } }
+        { phone: { contains: search, mode: 'insensitive' } },
+        { customer_personas: { some: { persona: { name: { contains: search, mode: 'insensitive' } } } } }
       ];
 
       if (numSearch !== undefined) {
