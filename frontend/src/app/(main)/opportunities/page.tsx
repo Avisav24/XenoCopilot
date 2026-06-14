@@ -98,26 +98,26 @@ export default function OpportunitiesPage() {
       </div>
 
       {/* KPI STRIP */}
-      <div className="border-b border-[#E5E7EB] flex h-[64px] divide-x divide-[#E5E7EB] bg-[#FFFFFF]">
-        <div className="flex-1 px-8 flex items-center justify-between">
+      <div className="border-b border-[#E5E7EB] grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#E5E7EB] bg-[#FFFFFF]">
+        <div className="flex-1 px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
           <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Pipeline Impact</span>
           <span className="text-[16px] font-medium text-slate-900">{pipelineImpact}</span>
         </div>
-        <div className="flex-1 px-8 flex items-center justify-between">
+        <div className="flex-1 px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
           <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">At Risk Revenue</span>
           <span className="text-[16px] font-medium text-slate-900">₹2.1L</span>
         </div>
-        <div className="flex-1 px-8 flex items-center justify-between">
+        <div className="flex-1 px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
           <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Recoverable Customers</span>
           <span className="text-[16px] font-medium text-slate-900">1,668</span>
         </div>
-        <div className="flex-1 px-8 flex items-center justify-between">
+        <div className="flex-1 px-8 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
           <span className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Active Opportunities</span>
           <span className="text-[16px] font-medium text-slate-900">{activeCount}</span>
         </div>
       </div>
 
-      <div className="flex flex-1 items-start px-8 py-8 w-full max-w-[1400px] mx-auto">
+      <div className="flex flex-1 items-start px-4 md:px-8 py-8 w-full max-w-[1400px] mx-auto overflow-hidden">
         {isLoading ? (
           <div className="w-full flex items-center justify-center p-12">
             <div className="flex flex-col items-center gap-3">
@@ -135,9 +135,9 @@ export default function OpportunitiesPage() {
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col gap-4">
-            <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-[12px] shadow-sm overflow-hidden">
-            <table className="w-full text-left border-collapse">
+          <div className="flex-1 flex flex-col gap-4 overflow-hidden w-full">
+            <div className="border border-[#E5E7EB] bg-[#FFFFFF] rounded-[12px] shadow-sm overflow-x-auto w-full">
+            <table className="w-full text-left border-collapse whitespace-nowrap md:whitespace-normal">
               <thead className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
                 <tr>
                   <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Opportunity</th>
@@ -161,7 +161,7 @@ export default function OpportunitiesPage() {
                       )}
                     >
                       <td className="py-4 px-5">
-                        <span className="text-[14px] font-medium text-slate-900">{opp.name}</span>
+                        <span className="text-[14px] font-medium text-slate-900 block min-w-[200px]">{opp.name}</span>
                         <div className="text-[12px] text-slate-500 mt-0.5">Last updated {opp.lastUpdated}</div>
                       </td>
                       <td className="py-4 px-5">
@@ -175,7 +175,7 @@ export default function OpportunitiesPage() {
                         <div className="text-[12px] text-slate-500 mt-0.5">Based on {opp.confidenceBasis}</div>
                       </td>
                       <td className="py-4 px-5">
-                        <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-700">
+                        <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-700 min-w-[100px]">
                           <span className={clsx("w-2 h-2 rounded-full", opp.priority === 'Critical' ? "bg-red-500" : "bg-amber-500")} />
                           {opp.priority}
                         </span>
@@ -188,7 +188,7 @@ export default function OpportunitiesPage() {
                       <td className="py-4 px-5 text-right">
                         <button 
                           onClick={() => setSelectedOppId(opp.id)}
-                          className="text-slate-600 hover:text-slate-900 text-[13px] font-medium transition-colors flex items-center justify-end w-full gap-1"
+                          className="text-slate-600 hover:text-slate-900 text-[13px] font-medium transition-colors flex items-center justify-end w-full gap-1 min-w-[80px]"
                         >
                           Review <ArrowRight width={14} height={14} />
                         </button>
@@ -210,7 +210,7 @@ export default function OpportunitiesPage() {
             className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm transition-opacity" 
             onClick={() => setSelectedOppId(null)}
           />
-          <div className="relative w-[420px] h-full bg-[#FFFFFF] shadow-2xl border-l border-[#E5E7EB] flex flex-col animate-in slide-in-from-right duration-200">
+          <div className="relative w-full md:w-[420px] h-full bg-[#FFFFFF] shadow-2xl border-l border-[#E5E7EB] flex flex-col animate-in slide-in-from-right duration-200">
             {/* Drawer Header */}
             <div className="px-6 py-5 border-b border-[#E5E7EB] flex justify-between items-center bg-[#F9FAFB]">
               <h2 className="text-[16px] font-semibold text-slate-900">Review Recommendation</h2>

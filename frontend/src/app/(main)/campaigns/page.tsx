@@ -101,25 +101,25 @@ export default function AllCampaigns() {
 
         {/* Table List */}
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div className="relative">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="relative w-full md:w-auto">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" width={16} height={16} />
-              <input type="text" placeholder="Search campaigns..." className="pl-9 pr-4 py-2 bg-white border border-hairline rounded-[6px] text-[13px] w-[300px] outline-none focus:border-ink transition-all" />
+              <input type="text" placeholder="Search campaigns..." className="pl-9 pr-4 py-2 bg-white border border-hairline rounded-[6px] text-[13px] w-full md:w-[300px] outline-none focus:border-ink transition-all" />
             </div>
-            <div className="flex items-center gap-2">
-              <select className="bg-white border border-hairline rounded-[6px] text-[13px] px-3 py-2 outline-none focus:border-ink">
+            <div className="flex flex-wrap items-center gap-2">
+              <select className="bg-white border border-hairline rounded-[6px] text-[13px] px-3 py-2 outline-none focus:border-ink flex-1 md:flex-none">
                 <option>All Statuses</option>
                 <option>Active</option>
                 <option>Completed</option>
                 <option>Draft</option>
               </select>
-              <select className="bg-white border border-hairline rounded-[6px] text-[13px] px-3 py-2 outline-none focus:border-ink">
+              <select className="bg-white border border-hairline rounded-[6px] text-[13px] px-3 py-2 outline-none focus:border-ink flex-1 md:flex-none">
                 <option>All Channels</option>
                 <option>WhatsApp</option>
                 <option>Email</option>
                 <option>SMS</option>
               </select>
-              <button className="btn-secondary !px-3">
+              <button className="btn-secondary !px-3 w-full md:w-auto mt-2 md:mt-0">
                 <Filter width={14} height={14} /> Filter
               </button>
             </div>

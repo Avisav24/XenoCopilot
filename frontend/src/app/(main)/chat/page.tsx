@@ -281,7 +281,7 @@ function CampaignStudioContent() {
           <div className="flex flex-col gap-8">
             
             {/* Metrics Row */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="card !p-4 flex flex-col gap-1">
                 <span className="text-[12px] font-[600] text-ink-muted uppercase tracking-wider">Audience</span>
                 <span className="text-[16px] font-[600] text-ink">{recommendation.audience?.count?.toLocaleString() || '0'}</span>
@@ -297,8 +297,8 @@ function CampaignStudioContent() {
                 <span className="text-[16px] font-mono-numbers font-[600] text-ink">{recommendation.confidence || '85%'}</span>
               </div>
               <div className="card !p-4 flex flex-col gap-1">
-                <span className="text-[12px] font-[600] text-ink-muted uppercase tracking-wider">Recommended Channel</span>
-                <span className="text-[16px] font-[600] text-ink">{recommendation.channel || 'Based on customer data'}</span>
+                <span className="text-[12px] font-[600] text-ink-muted uppercase tracking-wider break-words line-clamp-1">Channel</span>
+                <span className="text-[16px] font-[600] text-ink truncate">{recommendation.channel || 'Based on customer data'}</span>
               </div>
             </div>
 

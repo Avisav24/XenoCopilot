@@ -32,15 +32,24 @@ const navGroups = [
 export function Sidebar() {
   const pathname = usePathname();
 
+  // For the mobile bottom nav, we'll flatten the main items
+  const mobileNavItems = [
+    { href: '/opportunities', label: 'Growth', icon: <Group height={20} width={20} /> },
+    { href: '/customers', label: 'Customers', icon: <UserStar height={20} width={20} /> },
+    { href: '/chat', label: 'Studio', icon: <Spark height={20} width={20} /> },
+    { href: '/campaigns', label: 'Campaigns', icon: <Megaphone height={20} width={20} /> },
+  ];
+
   return (
     <>
       <div className="flex-shrink-0 w-[240px] hidden md:block" />
-      <aside className="sidebar fixed top-0 left-0 h-full z-40 flex flex-col justify-between bg-canvas border-r border-hairline w-[240px]">
-        
+      
+      {/* DESKTOP SIDEBAR */}
+      <aside className="sidebar fixed top-0 left-0 h-full z-40 hidden md:flex flex-col justify-between bg-canvas border-r border-hairline w-[240px]">
         <nav className="flex flex-col gap-1 p-4 pt-6 flex-1">
           <div className="flex items-center px-3 mb-8 mt-2">
             <Link href="/" className="flex items-center gap-2 w-full">
-              <span className="text-[20px] font-bold text-ink tracking-tight">
+              <span className="text-[20px] font-bold text-ink tracking-tight font-sans">
                 XenoCopilot
               </span>
             </Link>
@@ -88,6 +97,36 @@ export function Sidebar() {
           </div>
         </div>
       </aside>
+
+      {/* MOBILE TOP HEADER */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-canvas border-b border-hairline z-40 flex items-center justify-between px-4">
+        <Link href="/" className="flex items-center gap-2">
+          <span className="font-sans font-bold text-[18px] text-ink tracking-tight">XenoCopilot</span>
+        </Link>
+        <div className="w-8 h-8 rounded-full bg-canvas-soft flex items-center justify-center text-ink text-[12px] font-bold border border-hairline">
+          S
+        </div>
+      </div>
+
+      {/* MOBILE BOTTOM NAV */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 h-[68px] bg-canvas border-t border-hairline z-50 flex items-center justify-around pb-safe">
+        {mobileNavItems.map((item) => {
+          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+          return (
+            <Link 
+              key={item.href} 
+              href={item.href}
+              className={clsx(
+                "flex flex-col items-center justify-center w-full h-full gap-1",
+                isActive ? "text-ink" : "text-ink-muted hover:text-ink"
+              )}
+            >
+              {item.icon}
+              <span className="text-[10px] font-medium">{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
     </>
   );
 }

@@ -56,8 +56,8 @@ export default function CustomersPage() {
       <div className="w-full max-w-[1200px] mx-auto p-8 flex flex-col gap-6">
         
         {/* ACTION BAR */}
-        <div className="flex justify-between items-center bg-white p-4 rounded-[12px] shadow-sm border border-gray-200">
-           <div className="relative w-full max-w-md">
+        <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white p-4 rounded-[12px] shadow-sm border border-gray-200">
+           <div className="relative w-full md:max-w-md">
              <Search height={18} width={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
              <input 
                type="text"
@@ -73,7 +73,7 @@ export default function CustomersPage() {
            
            <button 
              onClick={() => setIsBuilderOpen(true)}
-             className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-[8px] text-[13px] font-bold transition-colors flex items-center gap-2 shadow-sm"
+             className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-[8px] text-[13px] font-bold transition-colors flex items-center justify-center gap-2 shadow-sm w-full md:w-auto"
            >
              <Filter height={16} width={16} />
              Segment Builder
@@ -81,8 +81,8 @@ export default function CustomersPage() {
         </div>
 
         {/* DATA TABLE */}
-        <div className="bg-white border border-gray-200 rounded-[12px] shadow-sm overflow-hidden flex flex-col">
-           <table className="w-full text-left">
+        <div className="bg-white border border-gray-200 rounded-[12px] shadow-sm overflow-x-auto flex flex-col w-full">
+           <table className="w-full text-left whitespace-nowrap md:whitespace-normal">
              <thead className="bg-slate-50 border-b border-gray-200">
                <tr>
                  <th className="py-3 px-6 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Customer</th>
