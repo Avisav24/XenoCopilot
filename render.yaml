@@ -2,7 +2,7 @@ services:
   - type: web
     name: xenocopilot-backend
     env: node
-    buildCommand: npm install -g pnpm && pnpm install --production=false && pnpm --filter @xenocopilot/backend db:generate && pnpm --filter @xenocopilot/backend build
+    buildCommand: npm install -g pnpm && pnpm install --production=false && pnpm --filter @xenocopilot/shared-types build && pnpm --filter @xenocopilot/backend db:generate && pnpm --filter @xenocopilot/backend build
     startCommand: pnpm --filter @xenocopilot/backend start
     envVars:
       - key: DATABASE_URL

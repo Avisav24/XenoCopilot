@@ -146,7 +146,7 @@ export async function customerRoutes(fastify: FastifyInstance) {
         customer_personas: { include: { persona: true } },
         orders: { orderBy: { order_date: 'desc' } },
         communications: { include: { campaign: true }, orderBy: { sent_at: 'desc' }, take: 15 },
-        learnings: { orderBy: { created_at: 'desc' }, take: 5 }
+        customer_learnings: { orderBy: { created_at: 'desc' }, take: 5 }
       }
     });
 
@@ -246,7 +246,7 @@ export async function customerRoutes(fastify: FastifyInstance) {
       if (c.opened_at) timeline.push({ type: 'open', title: `Opened ${channel}`, channel: channel, date: c.opened_at.toISOString() });
       if (c.clicked_at) timeline.push({ type: 'click', title: `Clicked ${channel} Link`, channel: channel, date: c.clicked_at.toISOString() });
     });
-    customer.learnings.forEach(m => {
+    customer.customer_learnings.forEach(m => {
       timeline.push({ type: 'learning', title: `System Learning: ${m.title}`, detail: m.detail, date: m.created_at.toISOString() });
     });
     timeline.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -261,7 +261,7 @@ export async function customerRoutes(fastify: FastifyInstance) {
     };
 
     // Revenue Memory
-    let memories = customer.learnings.map(m => ({ title: m.title, detail: m.detail, date: m.created_at.toISOString() }));
+    let memories = customer.customer_learnings.map(m => ({ title: m.title, detail: m.detail, date: m.created_at.toISOString() }));
     if (memories.length === 0) {
       memories = [
         { title: 'Channel Preference', detail: `Customer prefers ${customer.preferred_channel || 'WhatsApp'} over other channels`, date: new Date().toISOString() },
