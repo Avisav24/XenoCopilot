@@ -10,111 +10,109 @@ import { setCampaignContext } from '@/lib/campaignContext';
 const MOCK_OPPORTUNITIES = [
   {
     id: '1',
-    name: 'Dormant VIP Recovery',
+    name: 'Cart Abandonment Recovery',
+    audience: 1240,
+    revenue: '₹2.10L',
+    expectedLift: '+12.1%',
+    channel: 'WhatsApp',
+    priority: 'Critical',
+    confidence: '92%',
+    confidenceBasis: '34 similar campaigns',
+    status: 'Active',
+    lastUpdated: '1 hour ago',
+    type: 'growth_opportunity',
+    evidence: [
+      '1,240 high-intent carts abandoned this week',
+      'Immediate action required to prevent churn',
+      'Historical 12% recovery via WhatsApp'
+    ],
+    historical: { campaign: 'CMP-110', revenue: '₹1.8L', conversion: '12.4%', source: 'Checkout Events' },
+    prediction: { revenue: '₹2.10L', audience: '1,240 Customers', confidence: '92%', bestChannel: 'WhatsApp' },
+    simulation: { whatsapp: '₹2.10L', email: '₹1.4L', sms: '₹1.9L' }
+  },
+  {
+    id: '2',
+    name: 'Dormant VIP Win-Back',
     audience: 428,
     revenue: '₹2.12L',
     expectedLift: '+8.4%',
-    channel: 'WhatsApp',
+    channel: 'Email',
+    priority: 'Critical',
     confidence: '88%',
     confidenceBasis: '12 similar campaigns',
     status: 'Draft',
     lastUpdated: '2 hours ago',
     type: 'growth_opportunity',
     evidence: [
-      '428 VIP customers inactive 60+ days',
-      'Historical reorder cycle exceeded',
-      'Previous campaign generated ₹1.4L',
-      'WhatsApp converted 2.1x higher'
+      '428 VIP customers inactive for 90+ days',
+      'High risk of losing high LTV segment'
     ],
-    historical: {
-      campaign: 'CMP-104',
-      revenue: '₹1.4L',
-      conversion: '8.2%',
-      source: 'Orders, Campaigns, Communications'
-    },
-    prediction: {
-      revenue: '₹2.12L',
-      audience: '428 Customers',
-      confidence: '88%',
-      bestChannel: 'WhatsApp'
-    },
-    simulation: {
-      whatsapp: '₹2.12L',
-      email: '₹1.15L',
-      sms: '₹82K'
-    }
-  },
-  {
-    id: '2',
-    name: 'Cross-Sell Recent Buyers',
-    audience: 820,
-    revenue: '₹1.15L',
-    expectedLift: '+5.2%',
-    channel: 'Email',
-    confidence: '79%',
-    confidenceBasis: '8 similar campaigns',
-    status: 'Active',
-    lastUpdated: '5 hours ago',
-    type: 'growth_opportunity',
-    evidence: [
-      '820 customers bought Core Product in last 14 days',
-      'High correlation (62%) with Accessory purchase',
-      'Email drives highest incremental AOV',
-      'No discounting required'
-    ],
-    historical: {
-      campaign: 'CMP-092',
-      revenue: '₹68K',
-      conversion: '4.5%',
-      source: 'Orders, Catalog'
-    },
-    prediction: {
-      revenue: '₹1.15L',
-      audience: '820 Customers',
-      confidence: '79%',
-      bestChannel: 'Email'
-    },
-    simulation: {
-      whatsapp: '₹95K',
-      email: '₹1.15L',
-      sms: '₹60K'
-    }
+    historical: { campaign: 'CMP-104', revenue: '₹1.4L', conversion: '8.2%', source: 'Orders, Campaigns' },
+    prediction: { revenue: '₹2.12L', audience: '428 Customers', confidence: '88%', bestChannel: 'Email' },
+    simulation: { whatsapp: '₹1.8L', email: '₹2.12L', sms: '₹82K' }
   },
   {
     id: '3',
-    name: 'Cart Recovery',
-    audience: 1240,
-    revenue: '₹2.10L',
-    expectedLift: '+12.1%',
+    name: 'Cross-Sell: Winter Accessories',
+    audience: 820,
+    revenue: '₹1.15L',
+    expectedLift: '+5.2%',
     channel: 'SMS',
-    confidence: '92%',
-    confidenceBasis: '34 similar campaigns',
+    priority: 'Medium',
+    confidence: '79%',
+    confidenceBasis: '8 similar campaigns',
     status: 'Draft',
-    lastUpdated: '1 hour ago',
-    type: 'at_risk',
+    lastUpdated: '5 hours ago',
+    type: 'growth_opportunity',
     evidence: [
-      '1,240 high-intent carts abandoned this week',
-      'SMS reminder generates 3x recovery rate',
-      'No discount required for 40% of this segment',
-      'Immediate action required to prevent churn'
+      '820 customers bought Winter Jackets',
+      '62% correlation with accessory purchase'
     ],
-    historical: {
-      campaign: 'CMP-110',
-      revenue: '₹1.8L',
-      conversion: '12.4%',
-      source: 'Checkout, Communications'
-    },
-    prediction: {
-      revenue: '₹2.10L',
-      audience: '1,240 Customers',
-      confidence: '92%',
-      bestChannel: 'SMS'
-    },
-    simulation: {
-      whatsapp: '₹1.9L',
-      email: '₹1.4L',
-      sms: '₹2.1L'
-    }
+    historical: { campaign: 'CMP-092', revenue: '₹68K', conversion: '4.5%', source: 'Catalog' },
+    prediction: { revenue: '₹1.15L', audience: '820 Customers', confidence: '79%', bestChannel: 'SMS' },
+    simulation: { whatsapp: '₹95K', email: '₹1.1L', sms: '₹1.15L' }
+  },
+  {
+    id: '4',
+    name: 'Subscription Auto-Renewal Reminder',
+    audience: 350,
+    revenue: '₹4.50L',
+    expectedLift: '+15.0%',
+    channel: 'Email',
+    priority: 'Critical',
+    confidence: '95%',
+    confidenceBasis: 'Automated workflow data',
+    status: 'Active',
+    lastUpdated: '10 mins ago',
+    type: 'growth_opportunity',
+    evidence: [
+      '350 subscriptions expiring next week',
+      'Requires immediate opt-in for continuity'
+    ],
+    historical: { campaign: 'CMP-SUB', revenue: '₹4.1L', conversion: '85%', source: 'Subscriptions' },
+    prediction: { revenue: '₹4.50L', audience: '350 Customers', confidence: '95%', bestChannel: 'Email' },
+    simulation: { whatsapp: '₹3.9L', email: '₹4.50L', sms: '₹3.2L' }
+  },
+  {
+    id: '5',
+    name: 'Flash Sale: Excess Inventory',
+    audience: 2500,
+    revenue: '₹3.80L',
+    expectedLift: '+6.1%',
+    channel: 'WhatsApp',
+    priority: 'Medium',
+    confidence: '82%',
+    confidenceBasis: 'Previous flash sales',
+    status: 'Draft',
+    lastUpdated: '1 day ago',
+    type: 'growth_opportunity',
+    evidence: [
+      'High inventory holding cost for SKU-882',
+      'Targeting discount hunters'
+    ],
+    historical: { campaign: 'CMP-041', revenue: '₹2.8L', conversion: '5.2%', source: 'Inventory' },
+    prediction: { revenue: '₹3.80L', audience: '2,500 Customers', confidence: '82%', bestChannel: 'WhatsApp' },
+    simulation: { whatsapp: '₹3.80L', email: '₹2.5L', sms: '₹3.1L' }
   }
 ];
 
@@ -192,6 +190,7 @@ export default function OpportunitiesPage() {
                   <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Audience</th>
                   <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Channel</th>
                   <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Confidence</th>
+                  <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Priority</th>
                   <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider">Status</th>
                   <th className="py-3 px-5 text-[12px] font-medium text-slate-500 uppercase tracking-wider text-right">Action</th>
                 </tr>
@@ -219,6 +218,14 @@ export default function OpportunitiesPage() {
                       <td className="py-4 px-5">
                         <span className="text-[14px] text-slate-700">{opp.confidence}</span>
                         <div className="text-[12px] text-slate-500 mt-0.5">Based on {opp.confidenceBasis}</div>
+                      </td>
+                      <td className="py-4 px-5">
+                        <span className={clsx(
+                          "px-2.5 py-1 rounded-[6px] text-[12px] font-medium",
+                          opp.priority === 'Critical' ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"
+                        )}>
+                          {opp.priority}
+                        </span>
                       </td>
                       <td className="py-4 px-5">
                         <span className="px-2.5 py-1 rounded-[6px] text-[12px] font-medium bg-[#F3F4F6] text-slate-700">

@@ -113,7 +113,7 @@ export default function Customer360Page() {
           <div className="p-5 flex flex-col gap-1">
             <span className="label-text">Primary Personas</span>
             <div className="flex gap-1.5 flex-wrap mt-1">
-              {personas.slice(0, 2).map((p: string) => (
+              {personas.map((p: string) => (
                 <div key={p} className="badge-persona border border-hairline shadow-sm bg-canvas">
                   <span className={`w-1.5 h-1.5 rounded-full ${getDotColor(p)}`} />
                   {p}
