@@ -72,7 +72,8 @@ export async function importRoutes(fastify: FastifyInstance) {
         columns: (headers) => headers.map((h: string) => h.trim().toLowerCase().replace(/\s+/g, '_')), 
         skip_empty_lines: true, 
         bom: true, 
-        trim: true 
+        trim: true,
+        relax_column_count: true
       });
       
       let validCount = 0;
@@ -148,7 +149,8 @@ export async function importRoutes(fastify: FastifyInstance) {
         columns: (headers) => headers.map((h: string) => h.trim().toLowerCase().replace(/\s+/g, '_')), 
         skip_empty_lines: true, 
         bom: true, 
-        trim: true 
+        trim: true,
+        relax_column_count: true
       });
       
       let validCount = 0;
