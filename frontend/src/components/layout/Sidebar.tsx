@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
-import { Spark, Group, Megaphone, Settings, DatabaseScript } from 'iconoir-react';
+import { Spark, Group, Megaphone, Settings, DatabaseScript, UserStar } from 'iconoir-react';
 
 const navGroups = [
   {
     label: 'Audience',
     items: [
       { href: '/opportunities', label: 'Revenue Opportunities', icon: <Group height={18} width={18} /> },
+      { href: '/customers', label: 'Customer 360', icon: <UserStar height={18} width={18} /> },
     ]
   },
   {
