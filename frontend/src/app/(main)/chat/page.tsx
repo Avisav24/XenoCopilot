@@ -130,7 +130,7 @@ function CampaignStudioContent() {
       router.push(`/campaigns/${campaign.id}`);
     } catch (e) {
       console.error(e);
-      alert('Launch failed. Ensure backend is running.');
+      alert('Launch failed: ' + (e instanceof Error ? e.message : String(e)));
       setIsProcessing(false);
     }
   };
@@ -173,7 +173,7 @@ function CampaignStudioContent() {
       router.push(`/campaigns/${campaign.id}/review`);
     } catch (e) {
       console.error(e);
-      alert('Review failed. Ensure backend is running.');
+      alert('Review failed: ' + (e instanceof Error ? e.message : String(e)));
       setIsProcessing(false);
     }
   };
