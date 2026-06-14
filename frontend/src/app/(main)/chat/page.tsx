@@ -21,8 +21,10 @@ function CampaignStudioContent() {
   const [selectedChannel, setSelectedChannel] = useState('WhatsApp');
   const [messagePreview, setMessagePreview] = useState<any>(null);
   const [showProvenance, setShowProvenance] = useState(false);
+  const [opportunities, setOpportunities] = useState<any[]>([]);
 
   useEffect(() => {
+    fetchAPI<any[]>('/api/ai/opportunities').then(res => setOpportunities(res || [])).catch(console.error);
     const ctx = getCampaignContext();
     if (ctx) {
       setGoalInput(ctx.autoTriggerPrompt || `Launch campaign for ${ctx.audienceName}`);
@@ -32,15 +34,17 @@ function CampaignStudioContent() {
     }
   }, [audienceParam]);
 
-  const handleAnalyzeGoal = async (e?: React.FormEvent) => {
+  const handleAnalyzeGoal = async (e?: React.FormEvent, goalOverride?: string) => {
     if (e) e.preventDefault();
-    if (!goalInput.trim()) return;
+    const query = goalOverride || goalInput;
+    if (!query.trim()) return;
+    if (goalOverride) setGoalInput(goalOverride);
     
     setIsProcessing(true);
     try {
       const res = await fetchAPI<any>('/api/copilot/analyze-goal', {
         method: 'POST',
-        body: JSON.stringify({ goal: goalInput })
+        body: JSON.stringify({ goal: query })
       });
       setRecommendation(res);
       setSelectedChannel(res.channel || 'WhatsApp');
@@ -51,7 +55,7 @@ function CampaignStudioContent() {
       });
       setSimulations(simRes);
       
-      await fetchMessagePreview(res.channel || 'WhatsApp', res);
+      await fetchMessagePreview(res.channel || 'WhatsApp', res, query);
       
       setHasAnalyzed(true);
     } catch (e) {
@@ -64,10 +68,10 @@ function CampaignStudioContent() {
 
   const handleSimulateChannelChange = async (channel: string) => {
     setSelectedChannel(channel);
-    await fetchMessagePreview(channel, recommendation);
+    await fetchMessagePreview(channel, recommendation, goalInput);
   };
 
-  const fetchMessagePreview = async (channel: string, rec: any) => {
+  const fetchMessagePreview = async (channel: string, rec: any, query?: string) => {
     if (!rec) return;
     try {
       const res = await fetchAPI<any>('/api/copilot/message-preview', {
@@ -76,7 +80,7 @@ function CampaignStudioContent() {
           channel, 
           offer: rec.offer,
           audience: rec.audience?.name,
-          goal: goalInput
+          goal: query || goalInput
         })
       });
       setMessagePreview(res);
@@ -186,11 +190,43 @@ function CampaignStudioContent() {
             </button>
           </form>
           {!hasAnalyzed && (
-            <div className="flex items-center gap-3 mt-1 text-[13px] text-slate-500">
-              <span>Examples:</span>
-              <button onClick={() => setGoalInput('Recover dormant customers')} className="hover:text-slate-900 underline decoration-slate-300 underline-offset-2">Recover dormant customers</button>
-              <button onClick={() => setGoalInput('Increase repeat purchases')} className="hover:text-slate-900 underline decoration-slate-300 underline-offset-2">Increase repeat purchases</button>
-              <button onClick={() => setGoalInput('Reduce VIP churn')} className="hover:text-slate-900 underline decoration-slate-300 underline-offset-2">Reduce VIP churn</button>
+            <div className="flex flex-col gap-3 mt-6">
+              <h2 className="text-[14px] font-semibold text-slate-800 uppercase tracking-wider mb-2">Growth Opportunities</h2>
+              <div className="flex flex-col gap-3 w-full">
+                {opportunities.map((opp, i) => {
+                  const score = opp.expectedRevenue * opp.confidence;
+                  let colorClass = "bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300";
+                  let tagClass = "bg-slate-200 text-slate-700";
+                  let tagLabel = "Low";
+                  if (score > 10000000) { colorClass = "bg-red-50 border-red-200 hover:bg-red-100 hover:border-red-300"; tagClass = "bg-red-100 text-red-700 border border-red-200"; tagLabel = "Critical"; }
+                  else if (score > 5000000) { colorClass = "bg-orange-50 border-orange-200 hover:bg-orange-100 hover:border-orange-300"; tagClass = "bg-orange-100 text-orange-700 border border-orange-200"; tagLabel = "High"; }
+                  else if (score > 1000000) { colorClass = "bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300"; tagClass = "bg-blue-100 text-blue-700 border border-blue-200"; tagLabel = "Medium"; }
+                  
+                  return (
+                    <button 
+                      key={i}
+                      onClick={() => handleAnalyzeGoal(undefined, opp.title)}
+                      className={clsx("w-full text-left p-4 rounded-[12px] border flex flex-col gap-3 transition-all", colorClass)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center gap-3">
+                          <span className={clsx("text-[10px] font-bold uppercase px-2 py-0.5 rounded", tagClass)}>{tagLabel}</span>
+                          <span className="text-[15px] font-semibold text-slate-900">{opp.title}</span>
+                        </div>
+                        <span className="text-[14px] font-mono font-semibold text-slate-900">₹{opp.expectedRevenue.toLocaleString()}</span>
+                      </div>
+                      <div className="flex gap-6 text-[13px] text-slate-600 pl-[56px]">
+                        <span className="font-medium">Audience: <span className="text-slate-900">{opp.audience.toLocaleString()}</span></span>
+                        <span className="font-medium">Channel: <span className="text-slate-900">{opp.channel}</span></span>
+                        <span className="font-medium">Confidence: <span className="text-slate-900">{opp.confidence}%</span></span>
+                      </div>
+                      <div className="text-[12px] text-slate-500 bg-white/60 px-3 py-2 rounded-lg border border-white/50 ml-[56px] shadow-sm">
+                        <span className="font-medium text-slate-700">Reason:</span> {opp.reasoning.join(' • ')}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

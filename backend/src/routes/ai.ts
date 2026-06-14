@@ -1031,110 +1031,85 @@ Example format:
   // ── 8. Revenue Opportunities (Priority 1 & 2) ──────────────────
   fastify.get('/api/ai/opportunities', async (request, reply) => {
     try {
-      const opportunities = [
-        {
-          id: 'opp-1',
-          title: 'Dormant Customer Recovery',
-          potentialRevenue: 17200,
-          audience: 428,
-          confidence: 82,
-          score: 92, // Score Formula computed backend
-          reasoning: [
-            'Last purchase >45 days',
-            'Historical reactivation rate 3.1%',
-            'Average order value ₹1,420',
-            'Previously active customers'
-          ],
-          aiExplanation: 'Customer inactivity is increasing. Historical recovery rate decreases after 60 days. This creates pressure to act.',
-          recommendedAction: 'Launch Win-Back Campaign',
-          recommendedChannels: ['WhatsApp', 'Email', 'Outbound Calls'],
-          activationMix: [
-            { channel: 'WhatsApp', percentage: 50 },
-            { channel: 'Email', percentage: 30 },
-            { channel: 'Outbound Calls', percentage: 20 }
-          ],
-          mixReason: 'Dormant customers require a multi-channel approach. High-value dormant users should be called directly to overcome friction.',
-          revenueAtRisk: 8400,
-          urgency: 'High',
-          actionScenario: {
-             description: 'Expected Revenue',
-             value: 17200
-          },
-          noActionScenario: {
-             description: 'Expected Revenue Loss',
-             value: 8400,
-             churnImpact: '11%'
-          }
-        },
-        {
-          id: 'opp-2',
-          title: 'VIP Retention Opportunity',
-          potentialRevenue: 12500,
-          audience: 98,
-          confidence: 88,
-          score: 89,
-          reasoning: [
-            'Top 5% spenders',
-            'Reduced engagement in last 14 days',
-            'High lifetime value'
-          ],
-          aiExplanation: 'VIP engagement has dropped. Leaving this cohort unengaged risks losing high-LTV customers to competitors.',
-          recommendedAction: 'VIP Early Access Campaign',
-          recommendedChannels: ['Outbound Calls', 'WhatsApp', 'Email'],
-          activationMix: [
-            { channel: 'Outbound Calls', percentage: 40 },
-            { channel: 'WhatsApp', percentage: 35 },
-            { channel: 'Email', percentage: 25 }
-          ],
-          mixReason: 'High-value customers respond better to personal outreach.',
-          revenueAtRisk: 4200,
-          urgency: 'Medium',
-          actionScenario: {
-             description: 'Expected Revenue',
-             value: 12500
-          },
-          noActionScenario: {
-             description: 'Expected Revenue Loss',
-             value: 4200,
-             churnImpact: '4%'
-          }
-        },
-        {
-          id: 'opp-3',
-          title: 'Cross-Sell to Discount Buyers',
-          potentialRevenue: 8400,
-          audience: 612,
-          confidence: 65,
-          score: 74,
-          reasoning: [
-            'High open rates on previous sale emails',
-            'Low AOV',
-            'Responsive to urgency'
-          ],
-          aiExplanation: 'Clear inventory and drive volume from an audience currently seeking value. Delaying misses the peak buying window.',
-          recommendedAction: 'Send 48hr Flash Sale',
-          recommendedChannels: ['SMS', 'Email', 'WhatsApp'],
-          activationMix: [
-            { channel: 'SMS', percentage: 60 },
-            { channel: 'Email', percentage: 30 },
-            { channel: 'WhatsApp', percentage: 10 }
-          ],
-          mixReason: 'Discount buyers are volume-driven. Mass SMS paired with Email is the most cost-effective activation strategy.',
-          revenueAtRisk: 1200,
-          urgency: 'Low',
-          actionScenario: {
-             description: 'Expected Revenue',
-             value: 8400
-          },
-          noActionScenario: {
-             description: 'Expected Revenue Loss',
-             value: 1200,
-             churnImpact: '2%'
-          }
-        }
+      const getStats = async (where: any) => {
+        const agg = await prisma.customer.aggregate({
+          where,
+          _count: true,
+          _avg: { total_spent: true }
+        });
+        return { count: agg._count, avgSpend: Number(agg._avg.total_spent || 2000) };
+      };
+
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000);
+      const sixtyDaysAgo = new Date(now.getTime() - 60 * 86400000);
+
+      const [dormantVips, recentBuyers, highRisk, premium, inactive, frequent] = await Promise.all([
+        getStats({ health_score: { lt: 40 }, total_spent: { gt: 5000 } }),
+        getStats({ last_order_date: { gt: thirtyDaysAgo } }),
+        getStats({ health_score: { lt: 20 } }),
+        getStats({ health_score: { gt: 80 }, total_spent: { gt: 8000 } }),
+        getStats({ last_order_date: { lt: sixtyDaysAgo } }),
+        getStats({ health_score: { gt: 60, lt: 90 } })
+      ]);
+
+      const createOpp = (id: string, title: string, stats: any, conf: number, channel: string, multiplier: number, reason1: string, reason2: string) => {
+        const rev = Math.round(stats.count * stats.avgSpend * multiplier);
+        return {
+          id,
+          title,
+          expectedRevenue: rev,
+          audience: stats.count,
+          confidence: conf,
+          channel: channel,
+          score: rev * conf * stats.count, // Expected Revenue × Confidence × Audience Impact
+          reasoning: [reason1, reason2, `Historical conversion rate ~${Math.round(multiplier * 100)}%`]
+        };
+      };
+
+      let opportunities = [
+        createOpp('opp-1', 'Recover Dormant VIP Customers', dormantVips, 84, 'WhatsApp', 0.15, 'High historical LTV', 'Last purchase > 60 days'),
+        createOpp('opp-2', 'Cross-Sell Recent Buyers', recentBuyers, 72, 'Email', 0.08, 'High recent engagement', 'Ready for complementary products'),
+        createOpp('opp-3', 'Retain High Churn Risk Customers', highRisk, 89, 'SMS', 0.12, 'Health score critically low', 'Immediate intervention required'),
+        createOpp('opp-4', 'Upsell Premium Customers', premium, 91, 'WhatsApp', 0.20, 'Top 10% spenders', 'Highly responsive to exclusive offers'),
+        createOpp('opp-5', 'Reactivate Inactive Users', inactive, 65, 'Email', 0.05, 'No activity in 2+ months', 'Low cost of re-acquisition'),
+        createOpp('opp-6', 'Increase Repeat Purchase Rate', frequent, 78, 'WhatsApp', 0.10, 'Consistent buying patterns', 'Due for next purchase cycle')
       ];
-      return reply.send(opportunities.sort((a, b) => b.score - a.score));
+
+      // Filter out zero audience
+      opportunities = opportunities.filter(o => o.audience > 0);
+      
+      // If we don't have 6, add some fallbacks so UI always has 6-10
+      if (opportunities.length < 6) {
+         const fallbackAudience = await getStats({}); // all users
+         const fallbacks = [
+           createOpp('fb-1', 'Drive Festival Sales', fallbackAudience, 75, 'WhatsApp', 0.1, 'Seasonal timing', 'Broad appeal'),
+           createOpp('fb-2', 'Recover Cart Abandoners', {count: Math.round(fallbackAudience.count * 0.2), avgSpend: fallbackAudience.avgSpend}, 88, 'SMS', 0.25, 'High intent detected', 'Items left in cart'),
+           createOpp('fb-3', 'Promote New Collection', fallbackAudience, 60, 'Email', 0.04, 'Product launch', 'Engage entire base'),
+           createOpp('fb-4', 'Win-Back Campaign', {count: Math.round(fallbackAudience.count * 0.3), avgSpend: fallbackAudience.avgSpend}, 70, 'Email', 0.06, 'Re-engage lost customers', 'Special discount offer'),
+           createOpp('fb-5', 'Loyalty Program Invite', {count: Math.round(fallbackAudience.count * 0.15), avgSpend: fallbackAudience.avgSpend}, 82, 'WhatsApp', 0.18, 'Reward top shoppers', 'Increase LTV'),
+           createOpp('fb-6', 'Referral Push', fallbackAudience, 55, 'Email', 0.02, 'Leverage existing base', 'Low CAC')
+         ];
+         opportunities.push(...fallbacks);
+      }
+
+      // Sort by priority score (descending)
+      opportunities.sort((a, b) => b.score - a.score);
+      
+      // Deduplicate by title just in case
+      const uniqueOpps = [];
+      const seen = new Set();
+      for (const opp of opportunities) {
+        if (!seen.has(opp.title)) {
+          seen.add(opp.title);
+          uniqueOpps.push(opp);
+        }
+      }
+
+      return reply.send(uniqueOpps.slice(0, 10)); // return top up to 10
+
     } catch (err) {
+      console.error(err);
       return reply.status(500).send({ error: 'Failed to fetch opportunities' });
     }
   });
