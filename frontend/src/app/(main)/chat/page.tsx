@@ -288,7 +288,7 @@ function CampaignStudioContent() {
               </div>
               <div className="card !p-4 flex flex-col gap-1">
                 <span className="text-[12px] font-[600] text-ink-muted uppercase tracking-wider">Recommended Channel</span>
-                <span className="text-[16px] font-[600] text-ink">Based on customer data</span>
+                <span className="text-[16px] font-[600] text-ink">{recommendation.channel || 'Based on customer data'}</span>
               </div>
             </div>
 
@@ -297,8 +297,8 @@ function CampaignStudioContent() {
               
               {/* Left: Editor */}
               <div className="flex-1 flex flex-col gap-4">
-                <div className="flex items-center gap-4 border-b border-hairline">
-                  {['WhatsApp', 'Email', 'SMS'].map((channel) => (
+                <div className="flex items-center gap-4 border-b border-hairline overflow-x-auto pb-1">
+                  {['WhatsApp', 'Email', 'SMS', 'Instagram', 'Facebook'].map((channel) => (
                     <button
                       key={channel}
                       onClick={() => handleSimulateChannelChange(channel)}
@@ -388,6 +388,77 @@ function CampaignStudioContent() {
                         {renderMessagePreview(editableMessage)}
                       </div>
                       <div className="text-[10px] text-ink-muted text-center mt-2">Read 10:42 AM</div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedChannel === 'Instagram' && (
+                  <div className="w-[320px] bg-black rounded-[24px] border-[8px] border-slate-800 overflow-hidden flex flex-col shadow-sm relative text-white">
+                    {/* Header */}
+                    <div className="px-4 py-3 flex items-center justify-between border-b border-white/10 z-10">
+                       <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-500 p-[2px]">
+                             <div className="w-full h-full bg-black rounded-full flex items-center justify-center">
+                               <span className="text-[10px] font-bold">B</span>
+                             </div>
+                          </div>
+                          <span className="text-[13px] font-[600]">brand_official</span>
+                       </div>
+                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+                    </div>
+                    {/* Image Area */}
+                    <div className="w-full aspect-square bg-slate-900 flex flex-col items-center justify-center relative">
+                       <span className="text-white/30 font-bold tracking-widest uppercase text-[12px]">Post Image / Video</span>
+                    </div>
+                    {/* Actions & Caption */}
+                    <div className="flex-1 p-4 flex flex-col gap-3 relative z-10 bg-black">
+                       <div className="flex items-center gap-4 text-white">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                       </div>
+                       <div className="text-[13px] leading-snug whitespace-pre-wrap">
+                          <span className="font-[600] mr-2">brand_official</span>
+                          <span className="opacity-90">{renderMessagePreview(editableMessage)}</span>
+                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedChannel === 'Facebook' && (
+                  <div className="w-[320px] bg-white rounded-[24px] border-[8px] border-slate-800 overflow-hidden flex flex-col shadow-sm relative text-slate-900">
+                    {/* Header */}
+                    <div className="px-4 py-3 flex items-center gap-2 z-10">
+                        <div className="w-10 h-10 rounded-full bg-[#0866FF] flex items-center justify-center text-white shrink-0">
+                          <span className="text-[16px] font-bold">B</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[14px] font-[600] leading-tight">Brand Page</span>
+                          <span className="text-[11px] text-slate-500 flex items-center gap-1">Sponsored <span className="text-[8px]">•</span> <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></span>
+                        </div>
+                    </div>
+                    {/* Caption */}
+                    <div className="px-4 pb-3 text-[14px] leading-snug whitespace-pre-wrap relative z-10">
+                       {renderMessagePreview(editableMessage)}
+                    </div>
+                    {/* Image Area */}
+                    <div className="w-full h-[200px] bg-slate-100 flex flex-col items-center justify-center border-y border-hairline">
+                       <span className="text-slate-400 font-bold tracking-widest uppercase text-[12px]">Ad Creative</span>
+                    </div>
+                    {/* Actions */}
+                    <div className="px-4 py-3 bg-slate-50 flex items-center justify-between border-b border-hairline">
+                       <div className="flex flex-col">
+                          <span className="text-[11px] text-slate-500 uppercase tracking-wide">brand.com</span>
+                          <span className="text-[14px] font-[600]">Shop the collection today</span>
+                       </div>
+                       <button className="bg-slate-200 hover:bg-slate-300 text-slate-900 px-3 py-1.5 rounded-[4px] text-[13px] font-[600] transition-colors">Shop Now</button>
+                    </div>
+                    <div className="px-4 py-2 flex items-center justify-between text-slate-500">
+                       <div className="flex items-center gap-1">
+                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-sm border border-white"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg></div>
+                          <span className="text-[12px] ml-1">1.2K</span>
+                       </div>
+                       <span className="text-[12px]">45 Comments • 12 Shares</span>
                     </div>
                   </div>
                 )}
