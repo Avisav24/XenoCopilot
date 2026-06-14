@@ -100,8 +100,8 @@ CRITICAL INSTRUCTION: If the marketer's goal is targeting a SINGLE specific pers
        if (channelMetric) {
            aiResult.evidence.channel = [
                `Historical data confirms ${aiResult.channel} has a ${channelMetric.conversion_rate}% conversion rate`,
-               `Average engagement score: ${channelMetric.engagement_score}/100`,
-               `Data backed by ${channelMetric.messages_sent} past interactions`
+               `Average open rate stands at ${channelMetric.open_rate}%`,
+               `Historically drives a CTR of ${channelMetric.ctr}%`
            ];
        } else {
            aiResult.evidence.channel = [`Channel optimal for this audience segment`];
