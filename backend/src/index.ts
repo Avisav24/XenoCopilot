@@ -6,6 +6,7 @@ import { campaignRoutes } from './routes/campaigns';
 import { webhookRoutes } from './routes/webhooks';
 import { customerRoutes } from './routes/customers';
 import { importRoutes } from './routes/import';
+import { simulatorRoutes } from './routes/simulator';
 import { prisma } from './lib/prisma';
 
 const server = Fastify({
@@ -31,6 +32,7 @@ async function main() {
   await server.register(webhookRoutes);
   await server.register(customerRoutes);
   await server.register(importRoutes);
+  await server.register(simulatorRoutes);
 
   // Health check
   server.get('/health', async () => ({

@@ -72,17 +72,30 @@ model CustomerPersona {
 }
 
 model Campaign {
-  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name             String
-  status           String          @default("draft")
-  created_at       DateTime        @default(now())
-  channel          String?
-  message          String?
-  persona_id       String          @db.Uuid
-  opportunity_type String?
-  persona          Persona         @relation(fields: [persona_id], references: [id])
-  communications   Communication[]
-  orders           Order[]
+  id                   String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                 String
+  status               String          @default("draft")
+  goal                 String?
+  audience_type        String?
+  audience_size        Int?
+  channel              String?
+  offer                String?
+  message              String?
+  predicted_revenue    Decimal?        @db.Decimal(10, 2)
+  predicted_conversion Decimal?        @db.Decimal(5, 2)
+  predicted_purchasers Int?
+  actual_revenue       Decimal?        @default(0) @db.Decimal(10, 2)
+  actual_conversion    Decimal?        @default(0) @db.Decimal(5, 2)
+  actual_purchasers    Int?            @default(0)
+  created_at           DateTime        @default(now())
+  launched_at          DateTime?
+  deleted_at           DateTime?
+  
+  persona_id           String?         @db.Uuid
+  opportunity_type     String?
+  persona              Persona?        @relation(fields: [persona_id], references: [id])
+  communications       Communication[]
+  orders               Order[]
 
   @@map("campaigns")
 }

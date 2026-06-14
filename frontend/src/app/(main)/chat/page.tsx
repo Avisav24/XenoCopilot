@@ -104,24 +104,37 @@ function CampaignStudioContent() {
     try {
       const selectedSim = simulations?.scenarios?.find((s: any) => s.channel === selectedChannel) || recommendation;
       
-      const res = await fetchAPI<any>('/api/copilot/learn', {
+      // Parse predicted values to numbers
+      const revStr = selectedSim.revenue || recommendation.expectedRevenue;
+      const convStr = selectedSim.conversion || recommendation.expectedConversion;
+      const predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, ""));
+      const predictedConversion = Number(convStr.replace(/[^0-9.-]+/g, ""));
+      
+      // 1. Create Campaign
+      const campaign = await fetchAPI<any>('/api/campaigns', {
         method: 'POST',
         body: JSON.stringify({
+          name: goalInput.slice(0, 40) + '...',
           goal: goalInput,
-          audience: recommendation.audience.name,
+          audience_type: recommendation.audience.name,
+          audience_size: recommendation.audience.count,
           channel: selectedChannel,
           offer: recommendation.offer,
-          predictedRevenueStr: selectedSim.revenue || recommendation.expectedRevenue,
-          conversionRateStr: selectedSim.conversion || recommendation.expectedConversion
+          message: messagePreview?.variants?.[selectedVariant] || '',
+          predicted_revenue: predictedRevenue,
+          predicted_conversion: predictedConversion
         })
       });
+
+      // 2. Launch Campaign
+      await fetchAPI(`/api/campaigns/${campaign.id}/launch`, { method: 'POST' });
       
-      setLearnings(res);
-      setStep('LEARN');
+      // 3. Redirect to Detail Page
+      router.push(`/campaigns/${campaign.id}`);
+      
     } catch (e) {
       console.error(e);
-      alert('Launch simulation failed.');
-    } finally {
+      alert('Launch failed. Ensure backend is running.');
       setIsProcessing(false);
     }
   };

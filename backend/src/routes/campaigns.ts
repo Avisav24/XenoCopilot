@@ -28,6 +28,7 @@ export async function campaignRoutes(fastify: FastifyInstance) {
   // ── GET /api/campaigns ───────────────────────────────────
   fastify.get('/api/campaigns', async (request, reply) => {
     const campaigns = await prisma.campaign.findMany({
+      where: { deleted_at: null },
       include: { persona: true },
       orderBy: { created_at: 'desc' },
     });
@@ -35,11 +36,38 @@ export async function campaignRoutes(fastify: FastifyInstance) {
     return reply.send(campaigns.map((c) => ({
       id: c.id,
       name: c.name,
-      persona: c.persona.name,
+      persona: c.persona?.name || c.audience_type || 'Unknown',
       channel: c.channel,
       status: c.status,
+      predicted_revenue: c.predicted_revenue ? Number(c.predicted_revenue) : 0,
+      actual_revenue: c.actual_revenue ? Number(c.actual_revenue) : 0,
+      conversion: c.actual_conversion ? Number(c.actual_conversion) : 0,
       created_at: c.created_at.toISOString(),
+      launched_at: c.launched_at?.toISOString() || null,
     })));
+  });
+
+  // ── POST /api/campaigns ───────────────────────────────────
+  fastify.post('/api/campaigns', async (request, reply) => {
+    const { name, goal, audience_type, audience_size, channel, offer, message, predicted_revenue, predicted_conversion, predicted_purchasers } = request.body as any;
+
+    const campaign = await prisma.campaign.create({
+      data: {
+        name: name || 'Untitled Campaign',
+        goal,
+        audience_type,
+        audience_size,
+        channel,
+        offer,
+        message,
+        predicted_revenue,
+        predicted_conversion,
+        predicted_purchasers,
+        status: 'draft'
+      }
+    });
+
+    return reply.send(campaign);
   });
 
   // ── GET /api/campaigns/:id ───────────────────────────────
@@ -48,17 +76,100 @@ export async function campaignRoutes(fastify: FastifyInstance) {
       where: { id: request.params.id },
       include: { persona: true },
     });
-    if (!campaign) return reply.status(404).send({ error: 'Campaign not found' });
+    if (!campaign || campaign.deleted_at) return reply.status(404).send({ error: 'Campaign not found' });
     
     return reply.send({
       id: campaign.id,
       name: campaign.name,
-      persona: campaign.persona.name,
+      goal: campaign.goal,
+      audience_type: campaign.audience_type || campaign.persona?.name,
+      audience_size: campaign.audience_size,
       channel: campaign.channel,
+      offer: campaign.offer,
       status: campaign.status,
       message: campaign.message,
+      predicted_revenue: campaign.predicted_revenue,
+      actual_revenue: campaign.actual_revenue,
+      predicted_conversion: campaign.predicted_conversion,
+      actual_conversion: campaign.actual_conversion,
+      predicted_purchasers: campaign.predicted_purchasers,
+      actual_purchasers: campaign.actual_purchasers,
       created_at: campaign.created_at.toISOString(),
+      launched_at: campaign.launched_at?.toISOString() || null,
     });
+  });
+
+  // ── DELETE /api/campaigns/:id ───────────────────────────────
+  fastify.delete<{ Params: { id: string } }>('/api/campaigns/:id', async (request, reply) => {
+    const campaign = await prisma.campaign.update({ 
+      where: { id: request.params.id },
+      data: { deleted_at: new Date() }
+    });
+    return reply.send({ success: true, id: campaign.id });
+  });
+
+  // ── POST /api/campaigns/:id/launch ───────────────────────────────
+  fastify.post<{ Params: { id: string } }>('/api/campaigns/:id/launch', async (request, reply) => {
+    const { id } = request.params;
+    
+    const campaign = await prisma.campaign.findUnique({ where: { id }});
+    if (!campaign) return reply.status(404).send({ error: 'Campaign not found' });
+
+    // Update to active
+    const updated = await prisma.campaign.update({
+      where: { id },
+      data: { 
+        status: 'active',
+        launched_at: new Date()
+      }
+    });
+
+    // Fire webhook simulator in background
+    setTimeout(async () => {
+      try {
+        const fetch = (await import('node-fetch')).default;
+        await fetch(`http://127.0.0.1:${process.env.PORT || 3001}/api/simulator/run`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ campaign_id: id })
+        });
+      } catch (e) {
+        console.error('Failed to trigger simulator', e);
+      }
+    }, 1000);
+
+    return reply.send(updated);
+  });
+
+  // ── POST /api/campaigns/:id/learn ───────────────────────────
+  fastify.post<{ Params: { id: string } }>('/api/campaigns/:id/learn', async (request, reply) => {
+    const { id } = request.params;
+    
+    const campaign = await prisma.campaign.findUnique({ 
+      where: { id },
+      include: { persona: true }
+    });
+    if (!campaign) return reply.status(404).send({ error: 'Campaign not found' });
+
+    const predicted = Number(campaign.predicted_revenue || 0);
+    const actual = Number(campaign.actual_revenue || 0);
+    const difference = actual - predicted;
+    const errorPct = predicted > 0 ? (difference / predicted) * 100 : 0;
+
+    // Save learning
+    const memory = await prisma.revenueMemory.create({
+      data: {
+        campaign_id: campaign.id,
+        audience_type: campaign.audience_type || campaign.persona?.name || 'Unknown',
+        channel: campaign.channel || 'Unknown',
+        offer: campaign.offer || '',
+        revenue: actual,
+        conversion_rate: Number(campaign.actual_conversion || 0),
+        learning: `Campaign achieved ₹${actual} vs predicted ₹${predicted} (Error: ${errorPct.toFixed(1)}%). Channel ${campaign.channel} proved effective.`
+      }
+    });
+
+    return reply.send(memory);
   });
 
   // ── GET /api/campaigns/:id/insights ─────────────────────
