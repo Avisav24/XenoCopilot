@@ -161,37 +161,68 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
         </div>
 
         {/* Big Centered Operational Learnings */}
-        <div className="w-full flex flex-col gap-6 items-center mt-4">
-          <h2 className="text-[20px] font-[600] text-ink flex items-center justify-center gap-2">
-            <Spark height={20} width={20} className={campaign.status === 'completed' && learning ? "text-primary" : "text-ink-muted"} /> Operational Learnings
-          </h2>
+        <div className="w-full flex flex-col items-center mt-8 mb-12">
           
-          <div className="card !p-10 flex flex-col items-center text-center gap-8 max-w-[900px] w-full shadow-sm">
+          <div className="bg-white border border-[#E5E7EB] rounded-[12px] flex flex-col w-full max-w-[700px] shadow-sm overflow-hidden">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-[#E5E7EB] flex flex-col gap-1 bg-white">
+               <h2 className="text-[15px] font-[600] text-gray-900">Operational Learnings</h2>
+               <span className="text-[13px] text-gray-500">Prediction vs Actual</span>
+            </div>
+
             {campaign.status === 'completed' && learning ? (
               <>
-                <div className="flex flex-col gap-3">
-                  <span className="text-[12px] font-[600] text-ink-muted uppercase tracking-widest">Prediction vs Actual</span>
-                  <p className="text-[16px] text-ink leading-relaxed">
-                    {learning.learning.includes('). ') ? learning.learning.split('). ')[0] + ').' : learning.learning}
-                    <br/>
-                    <strong className="text-[18px] mt-2 block font-mono-numbers">₹{Number(campaign.actual_revenue || 0).toLocaleString('en-IN')} revenue generated</strong>
-                  </p>
+                {/* Stats Row */}
+                <div className="grid grid-cols-3 divide-x divide-[#E5E7EB] border-b border-[#E5E7EB] bg-white">
+                  <div className="flex flex-col gap-1 p-6">
+                    <span className="text-[12px] font-[500] text-gray-500">Revenue Generated</span>
+                    <span className="text-[18px] font-[600] text-gray-900 font-mono tracking-tight">₹{Number(campaign.actual_revenue || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex flex-col gap-1 p-6">
+                    <span className="text-[12px] font-[500] text-gray-500">Prediction Accuracy</span>
+                    <span className="text-[18px] font-[600] text-gray-900 font-mono tracking-tight">{Math.max(0, 100 - Math.abs(Number(insights?.performance_pct || 0))).toFixed(1).replace('.0', '')}%</span>
+                  </div>
+                  <div className="flex flex-col gap-1 p-6">
+                    <span className="text-[12px] font-[500] text-gray-500">Variance</span>
+                    <span className="text-[18px] font-[600] text-gray-900 font-mono tracking-tight">{Number(insights?.performance_pct || 0) > 0 ? '+' : ''}{insights?.performance_pct || '0'}%</span>
+                  </div>
                 </div>
-                
-                <div className="w-24 h-px bg-hairline"></div>
-                
-                <div className="flex flex-col gap-3 items-center">
-                  <span className="text-[12px] font-[700] text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full flex items-center gap-1.5">
-                    <Spark width={14} height={14}/> Key Insight
-                  </span>
-                  <p className="text-[20px] font-[500] text-ink leading-snug max-w-[700px] italic">
-                    "{learning.learning.includes('). ') ? learning.learning.split('). ').slice(1).join('). ').trim() : 'No additional insights.'}"
-                  </p>
+
+                {/* Key Learnings List */}
+                <div className="p-6 flex flex-col gap-4 bg-white">
+                  <span className="text-[13px] font-[600] text-gray-900">Key Learnings</span>
+                  <ul className="flex flex-col gap-3">
+                    {(() => {
+                       let bulletPoints: string[] = [];
+                       
+                       if (learning && learning.learning) {
+                         const parts = learning.learning.split('). ');
+                         if (parts.length > 1) {
+                           bulletPoints.push(parts[1].trim());
+                         }
+                       }
+                       if (insights?.ai_summary && !insights.ai_summary.includes('analyzed')) {
+                         const aiBullets = insights.ai_summary.split(/(?<=\.)\s+/).filter((s: string) => s.length > 10);
+                         bulletPoints = [...bulletPoints, ...aiBullets];
+                       }
+                       
+                       if (bulletPoints.length === 0) {
+                          bulletPoints = ["Campaign reached target audience efficiently."];
+                       }
+
+                       return bulletPoints.map((bp, i) => (
+                         <li key={i} className="flex items-start gap-2 text-[14px] text-gray-700 leading-relaxed">
+                           <span className="text-gray-900 font-bold mt-[2px]">✓</span>
+                           <span>{bp.replace(/^[✓\-•]\s*/, '')}</span>
+                         </li>
+                       ));
+                    })()}
+                  </ul>
                 </div>
               </>
             ) : (
-              <div className="flex flex-col items-center justify-center py-12 gap-5 w-full">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="animate-spin text-ink-muted">
+              <div className="flex flex-col items-center justify-center py-12 gap-5 w-full bg-white">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="animate-spin text-gray-400">
                   <line x1="12" y1="2" x2="12" y2="6"></line>
                   <line x1="12" y1="18" x2="12" y2="22"></line>
                   <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
@@ -202,8 +233,8 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
                   <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
                 </svg>
                 <div className="flex flex-col gap-1.5 items-center">
-                  <span className="text-[15px] font-[600] text-ink">Analyzing campaign performance...</span>
-                  <span className="text-[13px] text-ink-muted">Deep learning insights will appear here once the campaign finishes.</span>
+                  <span className="text-[14px] font-[600] text-gray-900">Analyzing performance...</span>
+                  <span className="text-[13px] text-gray-500">Insights will appear here once the campaign finishes.</span>
                 </div>
               </div>
             )}
