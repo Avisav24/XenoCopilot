@@ -47,15 +47,17 @@ function CampaignStudioContent() {
         body: JSON.stringify({ goal: query })
       });
       setRecommendation(res);
-      setSelectedChannel(res.channel || 'WhatsApp');
+      
+      const defaultChannel = ['WhatsApp', 'Email', 'SMS'].includes(res.channel) ? res.channel : 'WhatsApp';
+      setSelectedChannel(defaultChannel);
       
       const simRes = await fetchAPI<any>('/api/copilot/simulate', {
         method: 'POST',
-        body: JSON.stringify({ channel: res.channel || 'WhatsApp', offer: res.offer })
+        body: JSON.stringify({ channel: defaultChannel, offer: res.offer })
       });
       setSimulations(simRes);
       
-      await fetchMessagePreview(res.channel || 'WhatsApp', res, query);
+      await fetchMessagePreview(defaultChannel, res, query);
       
       setHasAnalyzed(true);
     } catch (e) {
@@ -103,19 +105,21 @@ function CampaignStudioContent() {
       } else {
         predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, ""));
       }
+      if (isNaN(predictedRevenue)) predictedRevenue = 0;
       
       const convStr = String(selectedSim?.conversion || recommendation?.expectedConversion || recommendation?.confidence || '0');
-      const predictedConversion = Number(convStr.replace(/[^0-9.-]+/g, ""));
+      let predictedConversion = Number(convStr.replace(/[^0-9.-]+/g, ""));
+      if (isNaN(predictedConversion)) predictedConversion = 0;
       
       const campaign = await fetchAPI<any>('/api/campaigns', {
         method: 'POST',
         body: JSON.stringify({
-          name: goalInput.slice(0, 40) + '...',
+          name: goalInput.slice(0, 40) + (goalInput.length > 40 ? '...' : ''),
           goal: goalInput,
-          audience_type: recommendation.audience.name,
-          audience_size: recommendation.audience.count,
+          audience_type: recommendation.audience?.name || 'Target Audience',
+          audience_size: recommendation.audience?.count || 0,
           channel: selectedChannel,
-          offer: recommendation.offer,
+          offer: recommendation.offer || 'Promo',
           message: messagePreview?.variantA?.copy || '',
           predicted_revenue: predictedRevenue,
           predicted_conversion: predictedConversion
@@ -233,21 +237,21 @@ function CampaignStudioContent() {
 
         {/* 3-COLUMN WORKSPACE */}
         {hasAnalyzed && recommendation && (
-          <div className="flex items-start gap-8 w-full mt-4">
+          <div className="flex items-start gap-6 w-full mt-4 flex-wrap xl:flex-nowrap">
             
-            {/* LEFT COLUMN: CAMPAIGN RECOMMENDATION (320px) */}
-            <div className="w-[320px] flex-shrink-0 flex flex-col gap-6">
+            {/* LEFT COLUMN: CAMPAIGN RECOMMENDATION */}
+            <div className="w-full xl:w-[280px] flex-shrink-0 flex flex-col gap-6">
               <div className="border border-slate-200 rounded-lg p-5 flex flex-col gap-4 bg-white">
                 <h2 className="text-[18px] font-semibold text-slate-900 leading-tight">Campaign Recommendation</h2>
                 
                 <div className="flex flex-col gap-3 mt-1">
                   <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                     <span className="text-[13px] text-slate-500">Campaign Name</span>
-                    <span className="text-[13px] font-medium text-slate-900 text-right max-w-[140px] truncate" title={goalInput}>{goalInput}</span>
+                    <span className="text-[13px] font-medium text-slate-900 text-right max-w-[120px] truncate" title={goalInput}>{goalInput}</span>
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                     <span className="text-[13px] text-slate-500">Audience Size</span>
-                    <span className="text-[13px] font-medium text-slate-900">{recommendation.audience.count.toLocaleString()} Customers</span>
+                    <span className="text-[13px] font-medium text-slate-900">{recommendation.audience?.count?.toLocaleString() || '0'} Customers</span>
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                     <span className="text-[13px] text-slate-500">Expected Revenue</span>
@@ -257,7 +261,7 @@ function CampaignStudioContent() {
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                     <span className="text-[13px] text-slate-500">Confidence</span>
-                    <span className="text-[14px] font-mono font-medium text-slate-900">{recommendation.confidence}%</span>
+                    <span className="text-[14px] font-mono font-medium text-slate-900">{recommendation.confidence || recommendation.expectedConversion || '85%'}</span>
                   </div>
                   <div className="flex justify-between items-center border-b border-slate-100 pb-2">
                     <span className="text-[13px] text-slate-500">Best Channel</span>
@@ -289,8 +293,8 @@ function CampaignStudioContent() {
               </div>
             </div>
 
-            {/* CENTER COLUMN: MESSAGE PREVIEW (640px) */}
-            <div className="w-[640px] flex-shrink-0 flex flex-col gap-4">
+            {/* CENTER COLUMN: MESSAGE PREVIEW */}
+            <div className="w-full xl:flex-1 xl:min-w-[500px] flex flex-col gap-4">
               <h2 className="text-[18px] font-semibold text-slate-900">Message Preview</h2>
               
               <div className="flex items-center gap-6 border-b border-slate-200">
@@ -331,7 +335,7 @@ function CampaignStudioContent() {
                             <div className="text-slate-400 text-[11px] font-medium">Promo Image</div>
                           )}
                         </div>
-                        {messagePreview?.variantA?.copy?.replace(/<[^>]*>?/gm, '') || `Hi ${recommendation.audience.name}, we miss you! Here is a ${recommendation.offer} just for you.`}
+                        {(messagePreview?.variantA?.copy?.replace(/<[^>]*>?/gm, '').replace(/\[(?:Customer )?Name\]/gi, 'Sarah').replace(/Hi \w+ (Customers|Audience)/gi, 'Hi Sarah') || `Hi Sarah, we miss you! Here is a ${recommendation.offer} just for you.`)}
                         <div className="text-[10px] text-slate-400 text-right mt-1">10:42 AM</div>
                       </div>
                       <div className="flex gap-2 w-[90%]">
@@ -360,7 +364,7 @@ function CampaignStudioContent() {
                            <div className="text-slate-400 text-[12px] font-medium">Hero Image</div>
                         )}
                       </div>
-                      <p>{messagePreview?.variantA?.copy?.replace(/<[^>]*>?/gm, '') || `We noticed it's been a while since your last purchase. Come back and enjoy ${recommendation.offer} on our new collection.`}</p>
+                      <p>{(messagePreview?.variantA?.copy?.replace(/<[^>]*>?/gm, '').replace(/\[(?:Customer )?Name\]/gi, 'Sarah') || `Hi Sarah, we noticed it's been a while since your last purchase. Come back and enjoy ${recommendation.offer} on our new collection.`)}</p>
                       <button className="bg-slate-900 text-white px-8 py-3 mt-4 text-[13px] font-medium tracking-wide">CLAIM OFFER</button>
                       <div className="text-[11px] text-slate-400 mt-8 pt-4 border-t border-slate-100 w-full">Update your email preferences or unsubscribe.</div>
                     </div>
@@ -377,7 +381,7 @@ function CampaignStudioContent() {
                     </div>
                     <div className="flex-1 p-4 bg-slate-50 flex flex-col gap-2 justify-end min-h-[300px]">
                       <div className="bg-slate-200 rounded-2xl rounded-tl-sm p-3 max-w-[85%] self-start text-[13px] text-slate-800 leading-snug">
-                        {messagePreview?.variantA?.copy?.replace(/<[^>]*>?/gm, '') || `BRAND: Miss you! Use code VIP20 for ${recommendation.offer} at checkout. Valid 48 hrs. Shop: link.co/vip Reply STOP to opt out.`}
+                        {(messagePreview?.variantA?.copy?.replace(/<[^>]*>?/gm, '').replace(/\[(?:Customer )?Name\]/gi, 'Sarah') || `BRAND: Hi Sarah, use code VIP20 for ${recommendation.offer} at checkout. Valid 48 hrs. Shop: link.co/vip Reply STOP to opt out.`)}
                       </div>
                       <div className="text-[10px] text-slate-400 text-center mt-2">Read 10:42 AM</div>
                     </div>
@@ -386,8 +390,8 @@ function CampaignStudioContent() {
               </div>
             </div>
 
-            {/* RIGHT COLUMN: SCORECARD, SIMULATION, PROVENANCE (320px) */}
-            <div className="w-[320px] flex-shrink-0 flex flex-col gap-6">
+            {/* RIGHT COLUMN: SCORECARD, SIMULATION, PROVENANCE */}
+            <div className="w-full xl:w-[280px] flex-shrink-0 flex flex-col gap-6">
               
               {/* SCORECARD */}
               <div className="flex flex-col gap-4">
@@ -398,7 +402,7 @@ function CampaignStudioContent() {
                     <h3 className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Supporting Evidence</h3>
                     <ul className="flex flex-col gap-2">
                       <li className="text-[13px] text-slate-700 flex items-start gap-2">
-                        <span className="text-slate-400 mt-0.5">•</span> {recommendation.audience.count} {recommendation.audience.name.toLowerCase()} found
+                        <span className="text-slate-400 mt-0.5">•</span> {recommendation.audience?.count || 'Many'} {recommendation.audience?.name?.toLowerCase() || 'customers'} found
                       </li>
                       <li className="text-[13px] text-slate-700 flex items-start gap-2">
                         <span className="text-slate-400 mt-0.5">•</span> Similar campaigns generated ₹1.4L avg
