@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Spark, ArrowRight, Activity, Cpu, CloudSync, Menu, Xmark } from 'iconoir-react';
 
@@ -8,6 +8,14 @@ export default function MarketingPage() {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.push('/opportunities');
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [router]);
 
   const handleLaunch = (e: React.MouseEvent) => {
     e.preventDefault();
