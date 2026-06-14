@@ -86,6 +86,15 @@ export default function OpportunitiesPage() {
 
   const activeCount = useMemo(() => opportunities.filter(o => o.status === 'Active').length, [opportunities]);
 
+  const atRiskRevenue = useMemo(() => {
+    const total = opportunities.reduce((acc, o) => acc + (parseInt(o.revenue.replace(/[^0-9]/g, '')) || 0), 0);
+    return `₹${(total * 0.35 / 100000).toFixed(2)}L`;
+  }, [opportunities]);
+
+  const recoverableCustomers = useMemo(() => {
+    return opportunities.reduce((acc, o) => acc + (o.audience || 0), 0).toLocaleString('en-IN');
+  }, [opportunities]);
+
   return (
     <div className="flex flex-col w-full min-h-screen bg-canvas pb-20 relative overflow-hidden">
       
@@ -105,11 +114,11 @@ export default function OpportunitiesPage() {
         </div>
         <div className="flex-1 px-4 md:px-6 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
           <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider">At Risk Revenue</span>
-          <span className="text-[16px] font-[600] text-ink font-mono-numbers">₹2.1L</span>
+          <span className="text-[16px] font-[600] text-ink font-mono-numbers">{atRiskRevenue}</span>
         </div>
         <div className="flex-1 px-4 md:px-6 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
           <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider">Recoverable Customers</span>
-          <span className="text-[16px] font-[600] text-ink font-mono-numbers">1,668</span>
+          <span className="text-[16px] font-[600] text-ink font-mono-numbers">{recoverableCustomers}</span>
         </div>
         <div className="flex-1 px-4 md:px-6 py-4 md:py-0 md:h-[64px] flex items-center justify-between">
           <span className="text-[11px] font-[600] text-ink-muted uppercase tracking-wider">Active Opportunities</span>

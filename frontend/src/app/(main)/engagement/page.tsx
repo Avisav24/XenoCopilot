@@ -17,7 +17,9 @@ export default function EngagementListPage() {
 
   const totalCampaigns = campaigns?.length || 0;
   const activeCampaigns = campaigns?.filter((c: any) => c.status === 'active').length || 0;
-  const totalRevenue = campaigns?.reduce((acc: number, c: any) => acc + (Math.round((c.name.length * 1200) + 5000)), 0) || 0;
+  const totalRevenue = campaigns?.reduce((acc: number, c: any) => acc + (c.predicted_revenue || 0), 0) || 0;
+  const totalActualRevenue = campaigns?.reduce((acc: number, c: any) => acc + (c.actual_revenue || 0), 0) || 0;
+  const avgROI = totalRevenue > 0 ? Math.round((totalActualRevenue / totalRevenue) * 100) : 0;
 
   // Mock Calendar Events for June 2026
   const calendarDays = Array.from({ length: 30 }, (_, i) => i + 1);
@@ -102,7 +104,7 @@ export default function EngagementListPage() {
                 <h3 className="text-[14px] font-semibold text-slate-600">Avg ROI</h3>
               </div>
               <div className="flex flex-col">
-                <span className="text-[32px] font-bold tracking-tight text-emerald-600 font-mono-numbers leading-none">314%</span>
+                <span className="text-[32px] font-bold tracking-tight text-emerald-600 font-mono-numbers leading-none">{avgROI}%</span>
               </div>
             </div>
           </div>
@@ -133,8 +135,9 @@ export default function EngagementListPage() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {campaigns.map((c: any) => {
-                      const predRevenue = Math.round((c.name.length * 1200) + 5000);
-                      const roi = Math.round((predRevenue / 1500) * 100);
+                      const predRevenue = c.predicted_revenue || 0;
+                      const actualRev = c.actual_revenue || 0;
+                      const roi = predRevenue > 0 ? Math.round((actualRev / predRevenue) * 100) : 0;
                       
                       return (
                         <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
