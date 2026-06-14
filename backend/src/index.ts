@@ -5,7 +5,6 @@ import { aiRoutes } from './routes/ai';
 import { campaignRoutes } from './routes/campaigns';
 import { webhookRoutes } from './routes/webhooks';
 import { customerRoutes } from './routes/customers';
-import { revenueRoutes } from './routes/revenue';
 import { importRoutes } from './routes/import';
 import { prisma } from './lib/prisma';
 
@@ -31,7 +30,6 @@ async function main() {
   await server.register(campaignRoutes);
   await server.register(webhookRoutes);
   await server.register(customerRoutes);
-  await server.register(revenueRoutes);
   await server.register(importRoutes);
 
   // Health check

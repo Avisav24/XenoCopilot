@@ -3,16 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
-import { Spark, Group, Megaphone, StatsReport, Settings, GraphUp, DatabaseScript } from 'iconoir-react';
+import { Spark, Group, Megaphone, Settings } from 'iconoir-react';
 
 const navGroups = [
-  {
-    label: 'Overview',
-    items: [
-      { href: '/command-center', label: 'Revenue Command Center', icon: <DatabaseScript height={18} width={18} /> },
-      { href: '/revenue', label: 'Revenue Operations', icon: <GraphUp height={18} width={18} /> },
-    ]
-  },
   {
     label: 'Audience',
     items: [

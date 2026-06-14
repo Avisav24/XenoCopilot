@@ -124,43 +124,35 @@ model Segment {
   @@map("segments")
 }
 
-model Opportunity {
-  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                String
-  audience_size       Int      @default(0)
-  potential_revenue   Decimal  @default(0) @db.Decimal(10, 2)
-  confidence          String?
-  recommended_channel String?
-  status              String   @default("active")
-  created_at          DateTime @default(now())
-
-  @@map("opportunities")
-}
-
 model RevenueMemory {
   id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   campaign_id      String?  @db.Uuid
+  campaign_type    String?
   audience_type    String
   channel          String
+  offer            String?
   discount         String?
+  send_time        String?
   revenue          Decimal  @db.Decimal(10, 2)
   conversion_rate  Decimal  @db.Decimal(5, 2)
   learning         String
-  impact_score     Float    @default(0)
   created_at       DateTime @default(now())
 
   @@map("revenue_memories")
 }
 
-model RevenueDecisionLedger {
-  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  campaign_id         String?  @db.Uuid
-  recommendation_type String
-  predicted_revenue   Decimal  @db.Decimal(10, 2)
-  actual_revenue      Decimal? @db.Decimal(10, 2)
-  prediction_error    Float?
-  confidence_score    Float    @default(0)
-  created_at          DateTime @default(now())
+model CampaignReview {
+  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  campaign_id          String   @db.Uuid
+  predicted_revenue    Decimal  @db.Decimal(10, 2)
+  actual_revenue       Decimal  @db.Decimal(10, 2)
+  predicted_conversion Decimal  @db.Decimal(5, 2)
+  actual_conversion    Decimal  @db.Decimal(5, 2)
+  prediction_accuracy  Decimal  @db.Decimal(5, 2)
+  what_worked          String
+  what_failed          String
+  learning             String
+  created_at           DateTime @default(now())
 
-  @@map("revenue_decision_ledger")
+  @@map("campaign_reviews")
 }
