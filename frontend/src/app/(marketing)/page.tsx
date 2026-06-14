@@ -18,7 +18,10 @@ export default function MarketingPage() {
       {/* TOP NAVIGATION */}
       <nav className="h-16 flex items-center justify-between px-8 bg-canvas border-b border-hairline sticky top-0 z-50">
         <div className="flex items-center gap-6">
-          <div className="font-display text-[20px] text-ink font-semibold tracking-tight">XenoCopilot</div>
+          <div className="flex items-center gap-3">
+            <img src="/XC.png" alt="XC Logo" className="h-6 w-auto" />
+            <span className="font-sans font-bold text-[18px] text-ink tracking-tight">XenoCopilot</span>
+          </div>
           <div className="hidden md:flex items-center gap-6 text-[15px] font-medium text-body">
             <button className="hover:text-ink transition-colors">Platform</button>
             <button className="hover:text-ink transition-colors">Agents</button>
