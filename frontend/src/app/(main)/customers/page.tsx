@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import { fetchAPI, getDynamicPersonas } from '@/lib/api';

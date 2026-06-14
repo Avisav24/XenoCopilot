@@ -158,12 +158,20 @@ function CampaignStudioContent() {
       ? recommendation.audience.name.split(' ')[0] 
       : 'First Name';
     
-    const parts = text.split(/(\{\{Name\}\})/gi);
+    const parts = text.split(/(\{\{Name\}\}|\[(?:Customer )?Name\]|\[\s*First Name\s*\]|\[\s*Shop Now\s*\]|\{\{Link\}\})/gi);
     return parts.map((part, i) => {
-      if (part.toLowerCase() === '{{name}}') {
+      const p = part.toLowerCase();
+      if (p.includes('name')) {
         return (
           <span key={i} className="inline-flex items-center bg-blue-50 text-blue-700 border border-blue-200/80 rounded-[4px] px-1.5 py-px mx-0.5 text-[13px] font-mono leading-none align-baseline shadow-sm">
             {singleCustomerName}
+          </span>
+        );
+      }
+      if (p.includes('shop') || p.includes('link')) {
+        return (
+          <span key={i} className="inline-flex items-center bg-emerald-50 text-emerald-700 border border-emerald-200/80 rounded-[4px] px-1.5 py-px mx-0.5 text-[13px] font-mono leading-none align-baseline shadow-sm cursor-pointer hover:bg-emerald-100 transition-colors">
+            Shop Now
           </span>
         );
       }
@@ -352,9 +360,12 @@ function CampaignStudioContent() {
                       </div>
                     </div>
                     <div className="flex-1 p-4 flex flex-col gap-3 relative z-10">
-                      <div className="bg-white rounded-[8px] rounded-tl-none p-3 max-w-[90%] shadow-sm self-start relative text-[14px] text-slate-800 leading-relaxed whitespace-pre-wrap">
-                        {renderMessagePreview(editableMessage)}
-                        <div className="text-[10px] text-slate-400 text-right mt-1">10:42 AM</div>
+                      <div className="bg-white rounded-[8px] rounded-tl-none p-1 max-w-[90%] shadow-sm self-start relative text-[14px] text-slate-800 leading-relaxed whitespace-pre-wrap">
+                        <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=400" className="w-full h-[140px] object-cover rounded-[6px] mb-2" alt="Preview" />
+                        <div className="px-2 pb-2">
+                           {renderMessagePreview(editableMessage)}
+                           <div className="text-[10px] text-slate-400 text-right mt-1">10:42 AM</div>
+                        </div>
                       </div>
                       <div className="flex gap-2 w-[90%]">
                         <button className="flex-1 bg-white text-[#00A884] border border-slate-200 py-2 rounded-md text-[13px] font-[500] shadow-sm">Shop Now</button>
@@ -370,6 +381,7 @@ function CampaignStudioContent() {
                       <div className="flex items-center gap-2"><span className="text-ink-muted w-12">From:</span><span className="font-[500] text-ink">Brand Team</span></div>
                       <div className="flex items-center gap-2"><span className="text-ink-muted w-12">Subject:</span><span className="font-[600] text-ink">Exclusive Offer</span></div>
                     </div>
+                    <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=800" className="w-full h-[180px] object-cover" alt="Email Header" />
                     <div className="p-6 flex flex-col gap-4 text-[14px] text-ink leading-relaxed items-center text-center">
                       <div className="text-[20px] font-serif font-bold tracking-tight">BRAND.</div>
                       <p className="whitespace-pre-wrap text-left w-full">{renderMessagePreview(editableMessage)}</p>
@@ -407,8 +419,8 @@ function CampaignStudioContent() {
                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
                     </div>
                     {/* Image Area */}
-                    <div className="w-full aspect-square bg-slate-900 flex flex-col items-center justify-center relative">
-                       <span className="text-white/30 font-bold tracking-widest uppercase text-[12px]">Post Image / Video</span>
+                    <div className="w-full aspect-square bg-slate-900 flex flex-col items-center justify-center relative overflow-hidden">
+                       <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover" alt="Post" />
                     </div>
                     {/* Actions & Caption */}
                     <div className="flex-1 p-4 flex flex-col gap-3 relative z-10 bg-black">
@@ -442,8 +454,8 @@ function CampaignStudioContent() {
                        {renderMessagePreview(editableMessage)}
                     </div>
                     {/* Image Area */}
-                    <div className="w-full h-[200px] bg-slate-100 flex flex-col items-center justify-center border-y border-hairline">
-                       <span className="text-slate-400 font-bold tracking-widest uppercase text-[12px]">Ad Creative</span>
+                    <div className="w-full h-[200px] bg-slate-100 flex flex-col items-center justify-center border-y border-hairline overflow-hidden">
+                       <img src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover" alt="Ad Creative" />
                     </div>
                     {/* Actions */}
                     <div className="px-4 py-3 bg-slate-50 flex items-center justify-between border-b border-hairline">
