@@ -28,21 +28,9 @@ function CampaignStudioContent() {
   const [selectedVariant, setSelectedVariant] = useState<'A'|'B'>('A');
 
   const [recommendationsData, setRecommendationsData] = useState<any>(null);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchAPI<any>('/api/ai/recommendations').then(setRecommendationsData).catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownVisible(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Initialize from Context (e.g. clicking from Revenue Opportunities)
@@ -186,23 +174,18 @@ function CampaignStudioContent() {
         
         {/* SECTION 1: GOAL MODE */}
         {true && (
-          <div className={clsx("flex flex-col gap-4 transition-all duration-500", step !== 'GOAL' && "opacity-60")} ref={dropdownRef}>
-            <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Business Goal Input</label>
-            <div className="relative flex flex-col">
-              <form onSubmit={handleAnalyzeGoal} className="relative flex items-center w-full z-20">
+          <div className={clsx("flex flex-col gap-6 transition-all duration-500", step !== 'GOAL' && "opacity-60")}>
+            <div className="flex flex-col gap-2">
+              <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider">Business Goal Input</label>
+              <form onSubmit={handleAnalyzeGoal} className="relative flex items-center w-full">
                 <input
                   type="text"
                   value={goalInput}
-                  onChange={(e) => {
-                    setGoalInput(e.target.value);
-                    if (!isDropdownVisible) setIsDropdownVisible(true);
-                  }}
-                  onFocus={() => setIsDropdownVisible(true)}
+                  onChange={(e) => setGoalInput(e.target.value)}
                   placeholder="e.g. Increase revenue by ₹10 lakh this month"
                   disabled={step !== 'GOAL' || isProcessing}
                   className={clsx(
-                    "w-full bg-white border border-[#E5E7EB] pl-4 pr-32 py-4 text-[15px] font-medium focus:outline-none disabled:bg-slate-50 transition-all",
-                    isDropdownVisible && step === 'GOAL' ? "rounded-t-[12px] border-b-0" : "rounded-[12px] focus:border-slate-800"
+                    "w-full bg-white border border-[#E5E7EB] pl-4 pr-32 py-4 text-[15px] font-medium focus:outline-none disabled:bg-slate-50 transition-all rounded-[12px] focus:border-slate-800"
                   )}
                 />
                 {step === 'GOAL' && (
@@ -215,51 +198,57 @@ function CampaignStudioContent() {
                   </button>
                 )}
               </form>
-
-              {/* DROPDOWN */}
-              {isDropdownVisible && step === 'GOAL' && recommendationsData && (
-                <div className="absolute top-full left-0 right-0 bg-white border border-[#E5E7EB] border-t-0 rounded-b-[12px] z-10 flex flex-col overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.08)]">
-                  <div className="px-4 py-3 border-b border-[#F1F5F9] bg-slate-50/50">
-                    <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Top Revenue Opportunities Right Now</h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Updated {recommendationsData.globalStats?.updatedAgo} • Based on {recommendationsData.globalStats?.totalCustomers?.toLocaleString()} customers and {recommendationsData.globalStats?.totalOrders?.toLocaleString()} orders
-                    </p>
-                  </div>
-                  <div className="flex flex-col max-h-[400px] overflow-y-auto">
-                    {recommendationsData.recommendations
-                      .filter((r: any) => r.title.toLowerCase().includes(goalInput.toLowerCase()) || r.type.toLowerCase().includes(goalInput.toLowerCase()))
-                      .map((r: any) => (
-                        <div 
-                          key={r.id}
-                          onClick={() => {
-                            setGoalInput(r.title);
-                            setIsDropdownVisible(false);
-                          }}
-                          className="flex items-center px-4 h-[72px] hover:bg-[#F8FAFC] cursor-pointer border-b border-[#F1F5F9] last:border-b-0 transition-colors"
-                        >
-                           <div className="flex flex-col flex-1 gap-1">
-                             <div className="text-[13px] font-bold text-slate-900">{r.title}</div>
-                             <div className="text-[12px] text-slate-500">{r.reasoning}</div>
-                           </div>
-                           <div className="flex items-center gap-6">
-                             <div className="flex flex-col items-end gap-1">
-                               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expected</div>
-                               <div className="text-[13px] font-mono font-bold text-slate-900">{r.expectedRevenueFormatted}</div>
-                             </div>
-                             <div className="flex flex-col items-end gap-1 w-16">
-                               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Conf</div>
-                               <div className="text-[13px] font-mono font-bold text-slate-900">{r.confidence}%</div>
-                             </div>
-                           </div>
-                        </div>
-                      ))}
-                    {recommendationsData.recommendations.filter((r: any) => r.title.toLowerCase().includes(goalInput.toLowerCase()) || r.type.toLowerCase().includes(goalInput.toLowerCase())).length === 0 && (
-                       <div className="px-4 py-8 text-center text-[13px] text-slate-500">No matching opportunities found. Type to analyze from scratch.</div>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
+
+            {/* SUGGESTED OPPORTUNITIES (Always Visible in GOAL step) */}
+            {step === 'GOAL' && recommendationsData && (
+              <div className="flex flex-col gap-4 mt-2">
+                <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                  <h3 className="text-[12px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                    <Spark height={14} width={14} className="text-emerald-600" />
+                    Recommended Opportunities
+                  </h3>
+                  <span className="text-[11px] text-slate-500 font-medium">
+                    Updated {recommendationsData.globalStats?.updatedAgo} • Based on {recommendationsData.globalStats?.totalCustomers?.toLocaleString()} customers
+                  </span>
+                </div>
+                
+                <div className="flex flex-col gap-3">
+                  {recommendationsData.recommendations
+                    .filter((r: any) => r.title.toLowerCase().includes(goalInput.toLowerCase()) || r.type.toLowerCase().includes(goalInput.toLowerCase()))
+                    .map((r: any) => (
+                      <div 
+                        key={r.id}
+                        onClick={() => {
+                          setGoalInput(r.title);
+                        }}
+                        className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-[12px] hover:border-emerald-300 hover:shadow-sm cursor-pointer transition-all group"
+                      >
+                         <div className="flex flex-col gap-1.5 flex-1">
+                           <div className="text-[14px] font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">{r.title}</div>
+                           <div className="text-[13px] text-slate-500">{r.reasoning}</div>
+                         </div>
+                         <div className="flex items-center gap-8 ml-6">
+                           <div className="flex flex-col items-end gap-1">
+                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Expected Revenue</div>
+                             <div className="text-[15px] font-mono font-bold text-emerald-600">{r.expectedRevenueFormatted}</div>
+                           </div>
+                           <div className="flex flex-col items-end gap-1 w-16">
+                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Confidence</div>
+                             <div className="text-[15px] font-mono font-bold text-slate-900">{r.confidence}%</div>
+                           </div>
+                           <div className="w-8 flex justify-end text-slate-300 group-hover:text-emerald-500 transition-colors">
+                             <ArrowRight height={18} width={18} />
+                           </div>
+                         </div>
+                      </div>
+                    ))}
+                  {recommendationsData.recommendations.filter((r: any) => r.title.toLowerCase().includes(goalInput.toLowerCase()) || r.type.toLowerCase().includes(goalInput.toLowerCase())).length === 0 && (
+                     <div className="p-8 text-center bg-slate-50 border border-gray-200 rounded-[12px] text-[13px] text-slate-500 font-medium">No matching opportunities found.</div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
