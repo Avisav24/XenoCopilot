@@ -329,7 +329,7 @@ function CampaignStudioContent() {
                   <textarea
                     value={editableMessage}
                     onChange={(e) => setEditableMessage(e.target.value)}
-                    className="w-full min-h-[140px] border border-hairline rounded-[8px] p-4 text-[14px] leading-relaxed resize-none focus:outline-none focus:border-ink bg-white font-sans"
+                    className="w-full min-h-[240px] border border-hairline rounded-[8px] p-4 text-[14px] leading-relaxed resize-none focus:outline-none focus:border-ink bg-white font-sans shadow-sm"
                   />
                   <div className="flex items-center justify-between text-[12px] text-ink-muted mt-1">
                     <span>Variables: [Name], [Offer], [Link]</span>
@@ -367,7 +367,11 @@ function CampaignStudioContent() {
               </div>
 
               {/* Right: Actual Mockup */}
-              <div className="flex-1 flex items-start justify-center min-h-[400px] pt-4">
+              <div className="flex-1 bg-[#FBFBFB] border border-slate-200/60 rounded-[20px] flex items-center justify-center p-8 min-h-[450px] relative overflow-hidden shadow-[inset_0_0_20px_rgba(0,0,0,0.01)]">
+                {/* Subtle ElevenLabs style background grid */}
+                <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '16px 16px' }}></div>
+                
+                <div className="relative z-10 w-full flex justify-center">
                 {selectedChannel === 'WhatsApp' && (
                   <div className="w-[320px] bg-[#EFEAE2] rounded-[24px] border-[8px] border-slate-800 overflow-hidden flex flex-col shadow-sm relative">
                     <div className="bg-[#008069] text-white px-4 py-3 flex items-center gap-3 z-10">
@@ -494,6 +498,7 @@ function CampaignStudioContent() {
                     </div>
                   </div>
                 )}
+                </div>
               </div>
             </div>
 
