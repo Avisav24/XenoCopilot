@@ -35,6 +35,43 @@ Xeno Copilot is an AI-Native CRM designed to help consumer brands intelligently 
 * **Database:** PostgreSQL hosted on Supabase, managed with Prisma ORM
 * **AI Providers:** Google Gemini 2.5 Flash with fallback to Groq LLaMA 3.3
 
+### Architecture Diagram
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Marketer
+    participant Frontend as Vercel (Next.js)
+    participant Backend as Render (Fastify Node.js)
+    participant Database as PostgreSQL (Supabase)
+    participant ChannelSim as Channel Simulator (Microservice)
+
+    Note over Marketer, Backend: Phase 1: AI Opportunity Engine
+    Marketer->>Frontend: Types NLP Goal ("Recover VIPs")
+    Frontend->>Backend: POST /api/copilot/analyze-goal
+    Backend->>Database: Query Customer Segments & AOV
+    Database-->>Backend: Returns Live Data
+    Backend->>Backend: Multi-LLM Cascade (Gemini/Groq)
+    Backend-->>Frontend: Returns Campaign Blueprint & Revenue Prediction
+
+    Note over Marketer, ChannelSim: Phase 2: Asynchronous Delivery Loop
+    Marketer->>Frontend: Clicks "Launch Campaign"
+    Frontend->>Backend: POST /api/campaigns/send
+    Backend->>Database: Creates Campaign (Status: Pending)
+    Backend-)ChannelSim: POST /api/simulate-channel (Async Payload)
+    Backend-->>Frontend: 202 Accepted (Campaign Queued)
+    
+    loop Webhook Callbacks
+        ChannelSim->>ChannelSim: Simulates Network Jitter & Failures
+        ChannelSim-)Backend: POST /api/webhooks/receipt (Status: Sent)
+        Backend->>Database: Updates Communication Status
+        ChannelSim-)Backend: POST /api/webhooks/receipt (Status: Delivered/Failed)
+        Backend->>Database: Updates Communication Status
+        ChannelSim-)Backend: POST /api/webhooks/receipt (Status: Opened)
+        Backend->>Database: Updates Communication Status
+    end
+```
+
 ### Tradeoffs & Scalability Assumptions
 I consciously chose a two-service, webhook-driven loop because synchronous HTTP requests do not scale for mass marketing campaigns. At a massive scale (e.g., dispatching 1 million WhatsApp messages), I would replace the internal Node queue with a robust message broker like **Kafka** or **AWS SQS**. However, for the scope of this assignment, this webhook architecture perfectly models a real-world event-driven system without over-engineering the infrastructure.
 
