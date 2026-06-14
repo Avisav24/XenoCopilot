@@ -49,6 +49,12 @@ export async function runSimulation(campaign: any) {
 
   if (customers.length === 0) return;
 
+  // FIX: Sync the real number of found customers back to the campaign, overwriting the fake LLM prediction
+  await prisma.campaign.update({
+    where: { id: campaign.id },
+    data: { audience_size: customers.length }
+  });
+
   // Create initial communications
   const commsToCreate = customers.map(c => ({
     campaign_id: campaign.id,

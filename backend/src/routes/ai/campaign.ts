@@ -226,6 +226,12 @@ export async function campaignRoutes(fastify: FastifyInstance) {
         targetCustomerIds = randomCustomers.map(c => c.id);
       }
 
+      // Update the campaign with the REAL audience size, discarding any fake/hallucinated numbers from the UI
+      await prisma.campaign.update({
+        where: { id: campaign.id },
+        data: { audience_size: targetCustomerIds.length }
+      });
+
       // Respond immediately, then run simulation in background
       reply.send({
         success: true,
