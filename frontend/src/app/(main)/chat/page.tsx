@@ -88,8 +88,16 @@ function CampaignStudioContent() {
       setMessagePreview(res);
       
       const rawMsg = res?.variantA?.copy || '';
-      const cleanMsg = rawMsg.replace(/<[^>]*>?/gm, '').replace(/\[(?:Customer )?Name\]/gi, 'Sarah');
-      setEditableMessage(cleanMsg || `Hi Sarah, we miss you! Here is a ${rec.offer} just for you.`);
+      let cleanMsg = rawMsg.replace(/<[^>]*>?/gm, '').replace(/\[(?:Customer )?Name\]/gi, '{{Name}}');
+      
+      // If AI hallucinated a specific name like "Hi Nisha," replace it with template
+      if (rec.audience?.count === 1 && rec.audience?.name) {
+        const firstName = rec.audience.name.split(' ')[0];
+        cleanMsg = cleanMsg.replace(new RegExp(`Hi ${firstName},`, 'gi'), 'Hi {{Name}},');
+      }
+      cleanMsg = cleanMsg.replace(/Hi Sarah,/gi, 'Hi {{Name}},');
+
+      setEditableMessage(cleanMsg || `Hi {{Name}},\n\nWe miss you! Here is a ${rec.offer} just for you.`);
     } catch (e) {
       console.error(e);
     }
@@ -142,6 +150,25 @@ function CampaignStudioContent() {
     setRecommendation(null);
     setSimulations(null);
     setMessagePreview(null);
+  };
+
+  const renderMessagePreview = (text: string) => {
+    const isSingleCustomer = recommendation?.audience?.count === 1;
+    const singleCustomerName = isSingleCustomer && recommendation?.audience?.name 
+      ? recommendation.audience.name.split(' ')[0] 
+      : 'First Name';
+    
+    const parts = text.split(/(\{\{Name\}\})/gi);
+    return parts.map((part, i) => {
+      if (part.toLowerCase() === '{{name}}') {
+        return (
+          <span key={i} className="inline-flex items-center bg-blue-50 text-blue-700 border border-blue-200/80 rounded-[4px] px-1.5 py-px mx-0.5 text-[13px] font-mono leading-none align-baseline shadow-sm">
+            {singleCustomerName}
+          </span>
+        );
+      }
+      return part;
+    });
   };
 
   return (
@@ -326,7 +353,7 @@ function CampaignStudioContent() {
                     </div>
                     <div className="flex-1 p-4 flex flex-col gap-3 relative z-10">
                       <div className="bg-white rounded-[8px] rounded-tl-none p-3 max-w-[90%] shadow-sm self-start relative text-[14px] text-slate-800 leading-relaxed whitespace-pre-wrap">
-                        {editableMessage}
+                        {renderMessagePreview(editableMessage)}
                         <div className="text-[10px] text-slate-400 text-right mt-1">10:42 AM</div>
                       </div>
                       <div className="flex gap-2 w-[90%]">
@@ -345,7 +372,7 @@ function CampaignStudioContent() {
                     </div>
                     <div className="p-6 flex flex-col gap-4 text-[14px] text-ink leading-relaxed items-center text-center">
                       <div className="text-[20px] font-serif font-bold tracking-tight">BRAND.</div>
-                      <p className="whitespace-pre-wrap text-left w-full">{editableMessage}</p>
+                      <p className="whitespace-pre-wrap text-left w-full">{renderMessagePreview(editableMessage)}</p>
                       <button className="bg-ink text-white px-8 py-3 mt-4 text-[13px] font-[600] tracking-wide w-full">CLAIM OFFER</button>
                     </div>
                   </div>
@@ -358,7 +385,7 @@ function CampaignStudioContent() {
                     </div>
                     <div className="flex-1 p-4 bg-canvas flex flex-col gap-2 justify-end min-h-[300px]">
                       <div className="bg-slate-200 rounded-2xl rounded-tl-sm p-3 max-w-[85%] self-start text-[14px] text-ink leading-snug whitespace-pre-wrap">
-                        {editableMessage}
+                        {renderMessagePreview(editableMessage)}
                       </div>
                       <div className="text-[10px] text-ink-muted text-center mt-2">Read 10:42 AM</div>
                     </div>
