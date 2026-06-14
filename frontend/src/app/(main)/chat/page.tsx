@@ -411,7 +411,7 @@ function CampaignStudioContent() {
                 )}
 
                 {selectedChannel === 'Email & SMS' && (
-                  <div className="w-full flex flex-col gap-4 items-center overflow-y-auto max-h-[500px] pb-4">
+                  <div className="w-full flex justify-center pb-4">
                     <div className="w-full max-w-[400px] bg-white rounded-lg border border-hairline shadow-sm flex flex-col overflow-hidden shrink-0">
                       <div className="bg-canvas-soft border-b border-hairline px-4 py-3 flex flex-col gap-1 text-[13px]">
                         <div className="flex items-center gap-2"><span className="text-ink-muted w-12">From:</span><span className="font-[500] text-ink">Brand Team</span></div>
@@ -422,16 +422,6 @@ function CampaignStudioContent() {
                         <div className="text-[20px] font-serif font-bold tracking-tight">BRAND.</div>
                         <p className="whitespace-pre-wrap text-left w-full">{renderMessagePreview(editableMessage.split('[SMS]')[0].replace('[Email]', '').trim())}</p>
                         <button className="bg-ink text-white px-8 py-3 mt-4 text-[13px] font-[600] tracking-wide w-full">CLAIM OFFER</button>
-                      </div>
-                    </div>
-                    <div className="w-[300px] bg-white rounded-[28px] border-[8px] border-slate-200 overflow-hidden flex flex-col shadow-sm shrink-0">
-                      <div className="bg-canvas-soft px-4 py-3 flex items-center justify-center border-b border-hairline">
-                        <span className="text-[11px] font-[600] text-ink leading-none">BRAND SMS</span>
-                      </div>
-                      <div className="flex-1 p-4 bg-canvas flex flex-col gap-2 justify-end min-h-[150px]">
-                        <div className="bg-slate-200 rounded-2xl rounded-tl-sm p-3 max-w-[85%] self-start text-[14px] text-ink leading-snug whitespace-pre-wrap">
-                          {renderMessagePreview(editableMessage.split('[SMS]')[1]?.trim() || "Exclusive offer! Shop now at brand.com")}
-                        </div>
                       </div>
                     </div>
                   </div>
