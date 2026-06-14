@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchAPI } from '@/lib/api';
-import { Spark, ArrowRight, CheckCircle, DatabaseScript, Presentation, FastArrowRight, NavArrowRight, RefreshDouble, GraphUp } from 'iconoir-react';
+import { Spark, ArrowRight, CheckCircle, DatabaseScript, Presentation, FastArrowRight, NavArrowRight, RefreshDouble, GraphUp, Eye } from 'iconoir-react';
 import { getCampaignContext, clearCampaignContext } from '@/lib/campaignContext';
 import { clsx } from 'clsx';
 
@@ -23,6 +23,9 @@ function CampaignStudioContent() {
   const [simulations, setSimulations] = useState<any>(null);
   const [selectedChannel, setSelectedChannel] = useState('WhatsApp');
   const [learnings, setLearnings] = useState<any>(null);
+  const [messagePreview, setMessagePreview] = useState<any>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [selectedVariant, setSelectedVariant] = useState<'A'|'B'>('A');
 
   // Initialize from Context (e.g. clicking from Revenue Opportunities)
   useEffect(() => {
@@ -55,6 +58,11 @@ function CampaignStudioContent() {
       });
       setSimulations(simRes);
       
+      setSimulations(simRes);
+      
+      // Fetch initial message preview
+      await fetchMessagePreview(res.channel, res);
+
       setStep('RECOMMENDATION');
     } catch (e) {
       console.error(e);
@@ -66,7 +74,29 @@ function CampaignStudioContent() {
 
   const handleSimulateChannelChange = async (channel: string) => {
     setSelectedChannel(channel);
-    // Ideally call /simulate again, but we already have the scenarios in state for the demo
+    await fetchMessagePreview(channel, recommendation);
+  };
+
+  const fetchMessagePreview = async (channel: string, rec: any) => {
+    if (!rec) return;
+    setPreviewLoading(true);
+    try {
+      const res = await fetchAPI<any>('/api/copilot/message-preview', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          channel, 
+          offer: rec.offer,
+          audience: rec.audience?.name,
+          goal: goalInput
+        })
+      });
+      setMessagePreview(res);
+      setSelectedVariant('A');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setPreviewLoading(false);
+    }
   };
 
   const handleLaunchCampaign = async () => {
@@ -267,6 +297,109 @@ function CampaignStudioContent() {
                  </div>
               </div>
             )}
+
+             {/* SECTION 4.5: MESSAGE EXPERIENCE PREVIEW */}
+             {messagePreview && (
+               <div className="flex flex-col gap-4 border-t border-gray-200 pt-12">
+                 <h2 className="text-[12px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                   <Eye height={14} width={14} className="text-blue-600" /> Customer Experience Preview
+                 </h2>
+                 <p className="text-[13px] text-slate-500 mb-2">See exactly how customers will experience this campaign across every channel.</p>
+                 
+                 {previewLoading ? (
+                   <div className="flex justify-center items-center h-32 text-slate-400 text-[13px] font-medium">Generating realistic preview...</div>
+                 ) : (
+                   <div className="flex flex-col gap-6">
+                     {/* TABS */}
+                     <div className="flex gap-1 border-b border-gray-200">
+                       <button className="px-4 py-2 border-b-2 border-slate-900 text-[13px] font-bold text-slate-900">{messagePreview.channel}</button>
+                     </div>
+                     
+                     <div className="grid grid-cols-2 gap-8">
+                       {/* LEFT: PREVIEW */}
+                       <div className="flex flex-col gap-4">
+                         <div className="bg-slate-50 border border-gray-200 rounded-[8px] p-6 flex items-center justify-center min-h-[300px]">
+                           {messagePreview.channel === 'WhatsApp' && (
+                             <div className="bg-[#E5DDD5] w-full max-w-[280px] rounded-[12px] p-4 flex flex-col gap-2 shadow-sm border border-gray-300">
+                               <div className="bg-white rounded-[8px] rounded-tl-none p-3 shadow-sm flex flex-col relative">
+                                 <div className="text-[#075E54] text-[12px] font-bold mb-1">Xeno Fashion</div>
+                                 <div className="text-[13px] text-slate-800 whitespace-pre-wrap">{messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy}</div>
+                                 <div className="text-[10px] text-slate-400 self-end mt-1">8:00 PM</div>
+                               </div>
+                             </div>
+                           )}
+                           {messagePreview.channel === 'Email' && (
+                             <div className="bg-white w-full max-w-[320px] rounded-[8px] p-0 shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+                               <div className="bg-slate-100 p-3 border-b border-gray-200">
+                                 <div className="text-[11px] font-bold text-slate-500 mb-1">Subject:</div>
+                                 <div className="text-[13px] font-bold text-slate-900 line-clamp-1">{messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.split('\n\n')[0]?.replace('Subject: ', '')}</div>
+                               </div>
+                               <div className="p-4 text-[13px] text-slate-700 whitespace-pre-wrap leading-relaxed">
+                                 {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.split('\n\n').slice(1).join('\n\n')}
+                               </div>
+                             </div>
+                           )}
+                           {messagePreview.channel === 'SMS' && (
+                             <div className="bg-white w-full max-w-[260px] rounded-[16px] p-4 shadow-sm border border-gray-200 flex flex-col">
+                               <div className="bg-gray-100 rounded-[12px] rounded-bl-none p-3 text-[13px] text-slate-800 whitespace-pre-wrap leading-relaxed">
+                                 {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy}
+                               </div>
+                               <div className="text-[10px] text-slate-400 mt-2 ml-1">
+                                 {messagePreview[selectedVariant === 'A' ? 'variantA' : 'variantB']?.copy?.length} / 160 characters
+                               </div>
+                             </div>
+                           )}
+                         </div>
+                       </div>
+
+                       {/* RIGHT: VARIANTS & REASONING */}
+                       <div className="flex flex-col gap-6">
+                         <div className="flex flex-col gap-3">
+                           <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider border-b border-gray-200 pb-2">Variants</h3>
+                           <div className="flex rounded-[6px] overflow-hidden border border-gray-200 w-full">
+                             <button onClick={() => setSelectedVariant('A')} className={clsx("flex-1 py-2 text-[12px] font-bold text-center transition-colors", selectedVariant === 'A' ? "bg-slate-900 text-white" : "bg-slate-50 text-slate-600 hover:bg-slate-100")}>
+                               Variant A ({messagePreview.variantA?.type})
+                             </button>
+                             <button onClick={() => setSelectedVariant('B')} className={clsx("flex-1 py-2 text-[12px] font-bold text-center border-l border-gray-200 transition-colors", selectedVariant === 'B' ? "bg-slate-900 text-white" : "bg-slate-50 text-slate-600 hover:bg-slate-100")}>
+                               Variant B ({messagePreview.variantB?.type})
+                             </button>
+                           </div>
+                         </div>
+                         
+                         <div className="flex flex-col gap-3">
+                           <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-wider border-b border-gray-200 pb-2">Why This Copy?</h3>
+                           <ul className="flex flex-col gap-2.5">
+                             {messagePreview.reasoning?.map((ev: string, i: number) => (
+                               <li key={i} className="text-[13px] text-slate-600 leading-snug flex items-start gap-2">
+                                 <span className="text-emerald-500 font-bold mt-0.5">✓</span> {ev}
+                               </li>
+                             ))}
+                           </ul>
+                         </div>
+
+                         <div className="border border-gray-200 rounded-[8px] bg-slate-50 p-4 mt-auto">
+                           <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Similar Campaign Performance</h4>
+                           <div className="flex justify-between items-center">
+                             <div>
+                               <div className="text-[10px] text-slate-400 uppercase">Revenue</div>
+                               <div className="text-[14px] font-mono font-bold text-emerald-600">{messagePreview.historicalPerformance?.revenue}</div>
+                             </div>
+                             <div>
+                               <div className="text-[10px] text-slate-400 uppercase">Conv.</div>
+                               <div className="text-[14px] font-mono font-bold text-slate-900">{messagePreview.historicalPerformance?.conversion}</div>
+                             </div>
+                             <div>
+                               <div className="text-[10px] text-slate-400 uppercase">CTR</div>
+                               <div className="text-[14px] font-mono font-bold text-slate-900">{messagePreview.historicalPerformance?.ctr}</div>
+                             </div>
+                           </div>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 )}
+               </div>
+             )}
 
             <div className="flex justify-end pt-6 border-t border-gray-200">
                <button 

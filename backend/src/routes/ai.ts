@@ -1729,5 +1729,70 @@ Return ONLY valid JSON matching this structure:
     }
   });
 
+  fastify.post('/api/copilot/message-preview', async (request, reply) => {
+    try {
+      const { channel, offer, goal, audience } = request.body as any;
+
+      // Mock variants based on the requested channel
+      let variantA = { type: "urgency", copy: "", preview: "" };
+      let variantB = { type: "reward", copy: "", preview: "" };
+
+      if (channel === "WhatsApp") {
+        variantA = {
+          type: "urgency",
+          copy: `Hi [Name],\nYou've been one of our most valued customers. We noticed you haven't shopped recently.\nEnjoy ${offer} off your next order.\nOffer expires in 48 hours.\n[ Shop Now ]`,
+          preview: "WhatsApp Preview Text"
+        };
+        variantB = {
+          type: "reward",
+          copy: `Hi [Name],\nExclusive offer for our valued customers!\nWe noticed you haven't shopped recently. Enjoy ${offer} off your next order.\n[ Shop Now ]`,
+          preview: "WhatsApp Preview Text"
+        };
+      } else if (channel === "Email") {
+        variantA = {
+          type: "urgency",
+          copy: `Subject: [Name], an exclusive ${offer} offer expiring soon\n\nHi [Name],\nWe've missed you. As one of our top customers we reserved an exclusive ${offer} offer.\nOffer expires in 48 hours.\n[ Redeem Offer ]`,
+          preview: `${offer} off your next order - Expiring soon`
+        };
+        variantB = {
+          type: "reward",
+          copy: `Subject: [Name], a special ${offer} offer just for you\n\nHi [Name],\nWe've missed you. As one of our top customers we reserved an exclusive ${offer} offer.\n[ Redeem Offer ]`,
+          preview: `${offer} off your next order`
+        };
+      } else if (channel === "SMS") {
+        variantA = {
+          type: "urgency",
+          copy: `XENO: [Name], enjoy ${offer} OFF your next purchase. Offer valid for 48 hours. Shop now: xeno.co/recover`,
+          preview: "SMS Preview"
+        };
+        variantB = {
+          type: "reward",
+          copy: `XENO: Exclusive offer for valued customers! [Name], enjoy ${offer} OFF your next purchase. Shop now: xeno.co/recover`,
+          preview: "SMS Preview"
+        };
+      }
+
+      return reply.send({
+        channel,
+        variantA,
+        variantB,
+        reasoning: [
+          `Similar campaign generated ₹1.4L`,
+          `Urgency messaging improved CTR by 22%`,
+          `VIP customers respond better to reward framing`
+        ],
+        historicalPerformance: {
+          campaign: "Dormant VIP Recovery",
+          revenue: "₹1.4L",
+          conversion: "8.2%",
+          ctr: "12.4%"
+        }
+      });
+    } catch (e) {
+      console.error("Message preview failed", e);
+      return reply.status(500).send({ error: "Failed to generate message preview" });
+    }
+  });
+
 }
 
