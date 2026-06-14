@@ -7,10 +7,33 @@ import { Spark, ArrowRight, Activity, Cpu, CloudSync, Menu, Xmark } from 'iconoi
 export default function MarketingPage() {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   const handleLaunch = (e: React.MouseEvent) => {
     e.preventDefault();
     router.push('/opportunities');
+  };
+
+  const toggleDropdown = (name: string) => {
+    setOpenDropdown(openDropdown === name ? null : name);
+  };
+
+  const navData = {
+    platform: [
+      { title: "Opportunity Engine", desc: "AI-driven discovery of hidden revenue streams." },
+      { title: "Campaign Studio", desc: "Generative AI for instant, multi-channel campaigns." },
+      { title: "Customer 360", desc: "Holistic, unified view of all your customer data." }
+    ],
+    useCases: [
+      { title: "Dormant Recovery", desc: "Win back customers who haven't purchased recently." },
+      { title: "Cross-Selling", desc: "Recommend perfect products based on purchase history." },
+      { title: "VIP Retention", desc: "Keep your highest lifetime value customers engaged." }
+    ],
+    enterprise: [
+      { title: "Dedicated Infrastructure", desc: "Private clusters and custom VPC peering." },
+      { title: "Custom Integrations", desc: "Native connection to your internal data warehouse." },
+      { title: "Advanced Security", desc: "SOC2 compliant and enterprise-grade data encryption." }
+    ]
   };
 
   return (
@@ -23,12 +46,53 @@ export default function MarketingPage() {
             <img src="/XC.png" alt="XC Logo" className="h-6 w-auto" />
             <span className="font-sans font-bold text-[18px] text-ink tracking-tight">XenoCopilot</span>
           </div>
-          <div className="hidden md:flex items-center gap-6 text-[15px] font-medium text-body">
-            <button className="hover:text-ink transition-colors">Platform</button>
-            <button className="hover:text-ink transition-colors">Agents</button>
-            <button className="hover:text-ink transition-colors">Use Cases</button>
-            <button className="hover:text-ink transition-colors">Pricing</button>
-            <button className="hover:text-ink transition-colors">Enterprise</button>
+          <div className="hidden md:flex items-center gap-6 text-[15px] font-medium text-body relative">
+            
+            {/* Platform Dropdown */}
+            <div>
+              <button onClick={() => toggleDropdown('platform')} className="hover:text-ink transition-colors">Platform</button>
+              {openDropdown === 'platform' && (
+                <div className="absolute top-full left-0 mt-5 w-[340px] bg-canvas border border-hairline rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-2">
+                  {navData.platform.map((item, idx) => (
+                    <div key={idx} className="flex flex-col cursor-pointer hover:bg-canvas-soft p-3 rounded-[8px] transition-colors">
+                      <span className="text-[14px] font-[600] text-ink">{item.title}</span>
+                      <span className="text-[13px] text-body mt-0.5 leading-snug">{item.desc}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Use Cases Dropdown */}
+            <div>
+              <button onClick={() => toggleDropdown('useCases')} className="hover:text-ink transition-colors">Use Cases</button>
+              {openDropdown === 'useCases' && (
+                <div className="absolute top-full left-[80px] mt-5 w-[340px] bg-canvas border border-hairline rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-2">
+                  {navData.useCases.map((item, idx) => (
+                    <div key={idx} className="flex flex-col cursor-pointer hover:bg-canvas-soft p-3 rounded-[8px] transition-colors">
+                      <span className="text-[14px] font-[600] text-ink">{item.title}</span>
+                      <span className="text-[13px] text-body mt-0.5 leading-snug">{item.desc}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Enterprise Dropdown */}
+            <div>
+              <button onClick={() => toggleDropdown('enterprise')} className="hover:text-ink transition-colors">Enterprise</button>
+              {openDropdown === 'enterprise' && (
+                <div className="absolute top-full left-[160px] mt-5 w-[340px] bg-canvas border border-hairline rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-3 flex flex-col gap-1 z-50 animate-in fade-in slide-in-from-top-2">
+                  {navData.enterprise.map((item, idx) => (
+                    <div key={idx} className="flex flex-col cursor-pointer hover:bg-canvas-soft p-3 rounded-[8px] transition-colors">
+                      <span className="text-[14px] font-[600] text-ink">{item.title}</span>
+                      <span className="text-[13px] text-body mt-0.5 leading-snug">{item.desc}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
         </div>
         <div className="hidden md:flex items-center gap-4">
@@ -52,13 +116,49 @@ export default function MarketingPage() {
 
       {/* MOBILE FULLSCREEN MENU */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 top-16 bg-canvas z-40 flex flex-col p-6 border-t border-hairline">
+        <div className="md:hidden fixed inset-0 top-16 bg-canvas z-40 flex flex-col p-6 border-t border-hairline overflow-y-auto">
           <div className="flex flex-col gap-6 text-[18px] font-medium text-ink flex-1">
-            <button className="text-left py-2 border-b border-hairline" onClick={() => setMobileMenuOpen(false)}>Platform</button>
-            <button className="text-left py-2 border-b border-hairline" onClick={() => setMobileMenuOpen(false)}>Agents</button>
-            <button className="text-left py-2 border-b border-hairline" onClick={() => setMobileMenuOpen(false)}>Use Cases</button>
-            <button className="text-left py-2 border-b border-hairline" onClick={() => setMobileMenuOpen(false)}>Pricing</button>
-            <button className="text-left py-2 border-b border-hairline" onClick={() => setMobileMenuOpen(false)}>Enterprise</button>
+            <div className="flex flex-col gap-2 border-b border-hairline pb-4">
+               <button className="text-left py-2 font-[600]" onClick={() => toggleDropdown('platformMobile')}>Platform</button>
+               {openDropdown === 'platformMobile' && (
+                 <div className="flex flex-col gap-3 pl-4 border-l-2 border-hairline ml-2">
+                    {navData.platform.map((item, idx) => (
+                       <div key={idx} className="flex flex-col">
+                          <span className="text-[15px] font-[600] text-ink">{item.title}</span>
+                          <span className="text-[13px] text-body font-normal">{item.desc}</span>
+                       </div>
+                    ))}
+                 </div>
+               )}
+            </div>
+            
+            <div className="flex flex-col gap-2 border-b border-hairline pb-4">
+               <button className="text-left py-2 font-[600]" onClick={() => toggleDropdown('useCasesMobile')}>Use Cases</button>
+               {openDropdown === 'useCasesMobile' && (
+                 <div className="flex flex-col gap-3 pl-4 border-l-2 border-hairline ml-2">
+                    {navData.useCases.map((item, idx) => (
+                       <div key={idx} className="flex flex-col">
+                          <span className="text-[15px] font-[600] text-ink">{item.title}</span>
+                          <span className="text-[13px] text-body font-normal">{item.desc}</span>
+                       </div>
+                    ))}
+                 </div>
+               )}
+            </div>
+
+            <div className="flex flex-col gap-2 border-b border-hairline pb-4">
+               <button className="text-left py-2 font-[600]" onClick={() => toggleDropdown('enterpriseMobile')}>Enterprise</button>
+               {openDropdown === 'enterpriseMobile' && (
+                 <div className="flex flex-col gap-3 pl-4 border-l-2 border-hairline ml-2">
+                    {navData.enterprise.map((item, idx) => (
+                       <div key={idx} className="flex flex-col">
+                          <span className="text-[15px] font-[600] text-ink">{item.title}</span>
+                          <span className="text-[13px] text-body font-normal">{item.desc}</span>
+                       </div>
+                    ))}
+                 </div>
+               )}
+            </div>
           </div>
           <div className="flex flex-col gap-4 mt-8 pb-8">
              <button className="text-[16px] font-medium text-ink py-3 border border-hairline rounded-pill">Sign In</button>
