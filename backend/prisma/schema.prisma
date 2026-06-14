@@ -21,8 +21,9 @@ model Customer {
   health_score      Int               @default(100)
   preferred_channel String?
   communications    Communication[]
-  customer_personas CustomerPersona[]
-  orders            Order[]
+  customer_personas  CustomerPersona[]
+  orders             Order[]
+  customer_learnings CustomerLearning[]
 
   @@map("customers")
 }
@@ -168,4 +169,19 @@ model CampaignReview {
   created_at           DateTime @default(now())
 
   @@map("campaign_reviews")
+}
+
+model CustomerLearning {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  customer_id      String   @db.Uuid
+  type             String
+  title            String
+  detail           String
+  confidence       Int
+  impact_score     Int
+  created_at       DateTime @default(now())
+  customer         Customer @relation(fields: [customer_id], references: [id], onDelete: Cascade)
+
+  @@index([customer_id])
+  @@map("customer_learnings")
 }
