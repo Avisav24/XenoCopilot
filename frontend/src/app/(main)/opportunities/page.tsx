@@ -220,10 +220,8 @@ export default function OpportunitiesPage() {
                         <div className="text-[12px] text-slate-500 mt-0.5">Based on {opp.confidenceBasis}</div>
                       </td>
                       <td className="py-4 px-5">
-                        <span className={clsx(
-                          "px-2.5 py-1 rounded-[6px] text-[12px] font-medium",
-                          opp.priority === 'Critical' ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"
-                        )}>
+                        <span className="inline-flex items-center gap-1.5 text-[13px] font-medium text-slate-700">
+                          <span className={clsx("w-2 h-2 rounded-full", opp.priority === 'Critical' ? "bg-red-500" : "bg-amber-500")} />
                           {opp.priority}
                         </span>
                       </td>

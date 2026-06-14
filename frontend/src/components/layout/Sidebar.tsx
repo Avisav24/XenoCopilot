@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
@@ -47,8 +48,8 @@ export function Sidebar() {
 
           <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col gap-6">
             {navGroups.map((group) => (
-              <div key={group.label} className="flex flex-col gap-1">
-                <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider px-3 mb-2">{group.label}</span>
+              <div key={group.label} className="flex flex-col gap-0.5">
+                <span className="text-[11px] font-bold text-ink-muted uppercase tracking-wider px-3 mb-1 mt-2">{group.label}</span>
                 {group.items.map((item) => {
                   const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
                   
@@ -57,14 +58,14 @@ export function Sidebar() {
                       key={item.href} 
                       href={item.href}
                       className={clsx(
-                        'flex items-center gap-3 px-3 py-2 rounded-md text-[14px] font-medium transition-colors duration-150',
+                        'flex items-center gap-2 px-3 py-1.5 border-l-2 text-[13px] font-medium transition-colors duration-150',
                         isActive 
-                          ? 'text-primary bg-primary-soft' 
-                          : 'text-ink-muted hover:bg-canvas-soft hover:text-ink'
+                          ? 'border-ink text-ink bg-canvas-soft' 
+                          : 'border-transparent text-ink-muted hover:bg-canvas-soft hover:text-ink'
                       )}
                     >
-                      <div className={clsx("flex-shrink-0", isActive ? "text-primary" : "text-ink-muted")}>
-                        {item.icon}
+                      <div className={clsx("flex-shrink-0", isActive ? "text-ink" : "text-ink-muted")}>
+                        {React.cloneElement(item.icon as React.ReactElement, { width: 16, height: 16 })}
                       </div>
                       <span className="whitespace-nowrap overflow-hidden text-ellipsis">{item.label}</span>
                     </Link>

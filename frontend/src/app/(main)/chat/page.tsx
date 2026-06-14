@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchAPI } from '@/lib/api';
-import { Search, NavArrowDown, NavArrowRight, FastArrowRight, UserStar, Xmark } from 'iconoir-react';
+import { Search, FastArrowRight, UserStar, Xmark, Check } from 'iconoir-react';
 import { getCampaignContext, clearCampaignContext } from '@/lib/campaignContext';
 import { clsx } from 'clsx';
 
@@ -20,8 +20,8 @@ function CampaignStudioContent() {
   const [simulations, setSimulations] = useState<any>(null);
   const [selectedChannel, setSelectedChannel] = useState('WhatsApp');
   const [messagePreview, setMessagePreview] = useState<any>(null);
-  const [showProvenance, setShowProvenance] = useState(false);
   const [opportunities, setOpportunities] = useState<any[]>([]);
+  const [editableMessage, setEditableMessage] = useState('');
 
   useEffect(() => {
     fetchAPI<any[]>('/api/ai/opportunities').then(res => setOpportunities(res || [])).catch(console.error);
@@ -86,6 +86,10 @@ function CampaignStudioContent() {
         })
       });
       setMessagePreview(res);
+      
+      const rawMsg = res?.variantA?.copy || '';
+      const cleanMsg = rawMsg.replace(/<[^>]*>?/gm, '').replace(/\[(?:Customer )?Name\]/gi, 'Sarah');
+      setEditableMessage(cleanMsg || `Hi Sarah, we miss you! Here is a ${rec.offer} just for you.`);
     } catch (e) {
       console.error(e);
     }
@@ -120,7 +124,7 @@ function CampaignStudioContent() {
           audience_size: recommendation.audience?.count || 0,
           channel: selectedChannel,
           offer: recommendation.offer || 'Promo',
-          message: messagePreview?.variantA?.copy || '',
+          message: editableMessage,
           predicted_revenue: predictedRevenue,
           predicted_conversion: predictedConversion
         })
@@ -138,49 +142,6 @@ function CampaignStudioContent() {
     }
   };
 
-  const handleReviewCampaign = async () => {
-    setIsProcessing(true);
-    try {
-      const selectedSim = simulations?.scenarios?.find((s: any) => s.channel === selectedChannel) || recommendation;
-      
-      let revStr = String(selectedSim?.revenue || recommendation?.expectedRevenue || '0');
-      let predictedRevenue = 0;
-      if (revStr.includes('L')) {
-        predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, "")) * 100000;
-      } else if (revStr.includes('K')) {
-        predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, "")) * 1000;
-      } else {
-        predictedRevenue = Number(revStr.replace(/[^0-9.-]+/g, ""));
-      }
-      if (isNaN(predictedRevenue)) predictedRevenue = 0;
-      
-      const convStr = String(selectedSim?.conversion || recommendation?.expectedConversion || recommendation?.confidence || '0');
-      let predictedConversion = Number(convStr.replace(/[^0-9.-]+/g, ""));
-      if (isNaN(predictedConversion)) predictedConversion = 0;
-      
-      const campaign = await fetchAPI<any>('/api/campaigns', {
-        method: 'POST',
-        body: JSON.stringify({
-          name: goalInput.slice(0, 40) + (goalInput.length > 40 ? '...' : ''),
-          goal: goalInput,
-          audience_type: recommendation.audience?.name || 'Target Audience',
-          audience_size: recommendation.audience?.count || 0,
-          channel: selectedChannel,
-          offer: recommendation.offer || 'Promo',
-          message: messagePreview?.variantA?.copy || '',
-          predicted_revenue: predictedRevenue,
-          predicted_conversion: predictedConversion
-        })
-      });
-
-      router.push(`/campaigns/${campaign.id}/review`);
-    } catch (e) {
-      console.error(e);
-      alert('Review failed: ' + (e instanceof Error ? e.message : String(e)));
-      setIsProcessing(false);
-    }
-  };
-
   const handleResetSearch = () => {
     setGoalInput('');
     setHasAnalyzed(false);
@@ -189,198 +150,161 @@ function CampaignStudioContent() {
     setMessagePreview(null);
   };
 
-  const getPriorityColor = (rev: number, conf: number) => {
-    const score = rev * conf;
-    if (score > 10000000) return { label: 'Critical', color: 'bg-red-50 text-red-700 border-red-200' };
-    if (score > 5000000) return { label: 'High', color: 'bg-orange-50 text-orange-700 border-orange-200' };
-    if (score > 1000000) return { label: 'Medium', color: 'bg-blue-50 text-blue-700 border-blue-200' };
-    return { label: 'Low', color: 'bg-gray-50 text-gray-700 border-gray-200' };
-  };
-
-  // Extract numeric revenue
-  let expectedRevenueNum = 0;
-  if (recommendation?.expectedRevenue) {
-    expectedRevenueNum = typeof recommendation.expectedRevenue === 'string' 
-      ? Number(recommendation.expectedRevenue.replace(/[^0-9.-]+/g, "")) 
-      : recommendation.expectedRevenue;
-  }
-  let confidenceNum = recommendation?.confidence || 0;
-  const priority = getPriorityColor(expectedRevenueNum, confidenceNum);
-
   return (
-    <div className="flex flex-col w-full min-h-screen bg-white text-slate-900 font-sans">
+    <div className="flex flex-col w-full min-h-screen bg-canvas pb-20">
       
       {/* PAGE HEADER */}
-      <div className="px-8 pt-8 pb-6 border-b border-slate-200">
-        <h1 className="text-[32px] font-semibold tracking-tight text-slate-900">Campaign Studio</h1>
-        <p className="text-[14px] text-slate-500 mt-1">Create revenue campaigns using customer and campaign intelligence.</p>
+      <div className="px-6 py-6 border-b border-hairline flex flex-col gap-1">
+        <h1 className="text-[24px] font-[700] text-ink leading-tight">Campaign Studio</h1>
+        <p className="text-[14px] text-ink-muted">AI-assisted campaign creation and intelligence.</p>
       </div>
 
-      <div className="max-w-[1400px] w-full px-8 py-8 flex flex-col gap-8 mx-auto">
+      <div className="flex flex-col p-6 max-w-[1000px]">
         
-        {/* TOP BAR */}
-        <div className="flex flex-col gap-3 max-w-[800px]">
-          <label className="text-[14px] font-medium text-slate-700">Goal Input</label>
-          <form onSubmit={handleAnalyzeGoal} className="relative flex items-center w-full">
-            <Search className="absolute left-4 text-slate-400" height={18} width={18} />
-            <input
-              type="text"
-              value={goalInput}
-              onChange={(e) => setGoalInput(e.target.value)}
-              placeholder="e.g. Recover dormant customers"
-              disabled={isProcessing}
-              className="w-full bg-white border border-slate-300 pl-11 pr-36 py-3.5 text-[14px] font-medium focus:outline-none focus:border-slate-800 focus:ring-1 focus:ring-slate-800 disabled:bg-slate-50 rounded-lg transition-all"
-            />
-            {hasAnalyzed && (
-              <button
-                type="button"
-                onClick={handleResetSearch}
-                className="absolute right-28 p-2 text-slate-400 hover:text-slate-600 transition-colors"
-                title="Clear Search"
-              >
-                <Xmark height={18} width={18} />
-              </button>
-            )}
+        {/* COMMAND BAR */}
+        <form onSubmit={handleAnalyzeGoal} className="relative flex items-center w-full mb-6">
+          <Search className="absolute left-4 text-ink-muted" height={16} width={16} />
+          <input
+            type="text"
+            value={goalInput}
+            onChange={(e) => setGoalInput(e.target.value)}
+            placeholder="e.g. Recover dormant customers or clear winter inventory"
+            disabled={isProcessing}
+            className="w-full bg-white border border-hairline pl-10 pr-32 py-3 text-[14px] font-[500] focus:outline-none focus:border-ink rounded-[8px] transition-all"
+          />
+          {hasAnalyzed && (
             <button
-              type="submit"
-              disabled={!goalInput.trim() || isProcessing}
-              className="absolute right-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2 rounded-[6px] text-[13px] font-medium transition-all disabled:opacity-50 flex items-center gap-2"
+              type="button"
+              onClick={handleResetSearch}
+              className="absolute right-28 p-2 text-ink-muted hover:text-ink transition-colors"
             >
-              {isProcessing ? (
-                <>
-                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Analyzing
-                </>
-              ) : 'Analyze'}
+              <Xmark height={16} width={16} />
             </button>
-          </form>
-          {!hasAnalyzed && (
-            <div className="flex flex-col gap-3 mt-6">
-              <h2 className="text-[14px] font-semibold text-slate-800 uppercase tracking-wider mb-2">Growth Opportunities</h2>
-              <div className="flex flex-col gap-3 w-full">
-                {(Array.isArray(opportunities) ? opportunities : []).map((opp, i) => {
-                  if (!opp) return null;
-                  const score = (opp.expectedRevenue || 0) * (opp.confidence || 0);
-                  let colorClass = "bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300";
-                  let tagClass = "bg-slate-200 text-slate-700";
-                  let tagLabel = "Low";
-                  if (score > 10000000) { colorClass = "bg-red-50 border-red-200 hover:bg-red-100 hover:border-red-300"; tagClass = "bg-red-100 text-red-700 border border-red-200"; tagLabel = "Critical"; }
-                  else if (score > 5000000) { colorClass = "bg-orange-50 border-orange-200 hover:bg-orange-100 hover:border-orange-300"; tagClass = "bg-orange-100 text-orange-700 border border-orange-200"; tagLabel = "High"; }
-                  else if (score > 1000000) { colorClass = "bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300"; tagClass = "bg-blue-100 text-blue-700 border border-blue-200"; tagLabel = "Medium"; }
-                  
-                  return (
-                    <button 
-                      key={i}
-                      onClick={() => handleAnalyzeGoal(undefined, opp.title)}
-                      className={clsx("w-full text-left p-4 rounded-[12px] border flex flex-col gap-3 transition-all", colorClass)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-3">
-                          <span className={clsx("text-[10px] font-bold uppercase px-2 py-0.5 rounded", tagClass)}>{tagLabel}</span>
-                          <span className="text-[15px] font-semibold text-slate-900">{opp.title || 'Opportunity'}</span>
-                        </div>
-                        <span className="text-[14px] font-mono font-semibold text-slate-900">₹{opp.expectedRevenue?.toLocaleString() || '0'}</span>
-                      </div>
-                      <div className="flex gap-6 text-[13px] text-slate-600 pl-[56px]">
-                        <span className="font-medium">Audience: <span className="text-slate-900">{opp.audience?.toLocaleString() || '0'}</span></span>
-                        <span className="font-medium">Channel: <span className="text-slate-900">{opp.channel || 'Multi'}</span></span>
-                        <span className="font-medium">Confidence: <span className="text-slate-900">{opp.confidence || '0'}%</span></span>
-                      </div>
-                      <div className="text-[12px] text-slate-500 bg-white/60 px-3 py-2 rounded-lg border border-white/50 ml-[56px] shadow-sm">
-                        <span className="font-medium text-slate-700">Reason:</span> {opp.reasoning?.join(' • ') || 'Data-driven insight'}
-                      </div>
-                    </button>
-                  );
-                })}
+          )}
+          <button
+            type="submit"
+            disabled={!goalInput.trim() || isProcessing}
+            className="absolute right-2 bg-ink hover:bg-ink-muted text-canvas px-4 py-1.5 rounded-[6px] text-[13px] font-[600] transition-all disabled:opacity-50 flex items-center gap-2"
+          >
+            {isProcessing ? 'Analyzing...' : 'Generate'}
+          </button>
+        </form>
+
+        {/* PRE-ANALYSIS: RECOMMENDATION ROWS */}
+        {!hasAnalyzed && (
+          <div className="flex flex-col gap-4">
+            <h2 className="text-[14px] font-[600] text-ink uppercase tracking-wider">Suggested Automations</h2>
+            <div className="table-container">
+              <table className="table-enterprise">
+                <thead>
+                  <tr>
+                    <th>Opportunity</th>
+                    <th>Reason</th>
+                    <th>Audience</th>
+                    <th>Est. Revenue</th>
+                    <th className="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white">
+                  {(Array.isArray(opportunities) ? opportunities : []).slice(0, 4).map((opp, i) => {
+                    if (!opp) return null;
+                    return (
+                      <tr key={i} className="hover:bg-canvas-soft group transition-colors">
+                        <td className="font-[500] text-ink">{opp.title}</td>
+                        <td className="text-ink-muted truncate max-w-[200px]">{opp.reasoning?.[0] || 'Data-driven insight'}</td>
+                        <td className="text-ink">{opp.audience?.toLocaleString() || '0'}</td>
+                        <td className="font-mono-numbers text-green-600 font-[500]">₹{opp.expectedRevenue?.toLocaleString() || '0'}</td>
+                        <td className="text-right">
+                          <button 
+                            onClick={() => handleAnalyzeGoal(undefined, opp.title)}
+                            className="text-[13px] font-[600] text-primary hover:text-primary-press"
+                          >
+                            Apply
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* POST-ANALYSIS: SPLIT VIEW */}
+        {hasAnalyzed && recommendation && (
+          <div className="flex flex-col gap-8">
+            
+            {/* Metrics Row */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="card !p-4 flex flex-col gap-1">
+                <span className="text-[12px] font-[600] text-ink-muted uppercase tracking-wider">Audience</span>
+                <span className="text-[16px] font-[600] text-ink">{recommendation.audience?.count?.toLocaleString() || '0'}</span>
+              </div>
+              <div className="card !p-4 flex flex-col gap-1">
+                <span className="text-[12px] font-[600] text-ink-muted uppercase tracking-wider">Expected Rev</span>
+                <span className="text-[16px] font-mono-numbers font-[600] text-green-600">
+                  {typeof recommendation.expectedRevenue === 'number' ? `₹${recommendation.expectedRevenue.toLocaleString()}` : recommendation.expectedRevenue}
+                </span>
+              </div>
+              <div className="card !p-4 flex flex-col gap-1">
+                <span className="text-[12px] font-[600] text-ink-muted uppercase tracking-wider">Confidence</span>
+                <span className="text-[16px] font-mono-numbers font-[600] text-ink">{recommendation.confidence || '85%'}</span>
+              </div>
+              <div className="card !p-4 flex flex-col gap-1">
+                <span className="text-[12px] font-[600] text-ink-muted uppercase tracking-wider">Channel Lift</span>
+                <span className="text-[16px] font-mono-numbers font-[600] text-ink">+12% via {selectedChannel}</span>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* 3-COLUMN WORKSPACE */}
-        {hasAnalyzed && recommendation && (
-          <div className="flex items-start gap-6 w-full mt-4 flex-wrap xl:flex-nowrap">
-            
-            {/* LEFT COLUMN: CAMPAIGN RECOMMENDATION */}
-            <div className="w-full xl:w-[280px] flex-shrink-0 flex flex-col gap-6">
-              <div className="border border-slate-200 rounded-lg p-5 flex flex-col gap-4 bg-white">
-                <h2 className="text-[18px] font-semibold text-slate-900 leading-tight">Campaign Recommendation</h2>
-                
-                <div className="flex flex-col gap-3 mt-1">
-                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                    <span className="text-[13px] text-slate-500">Campaign Name</span>
-                    <span className="text-[13px] font-medium text-slate-900 text-right max-w-[120px] truncate" title={goalInput}>{goalInput}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                    <span className="text-[13px] text-slate-500">Audience Size</span>
-                    <span className="text-[13px] font-medium text-slate-900">{recommendation.audience?.count?.toLocaleString() || '0'} Customers</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                    <span className="text-[13px] text-slate-500">Expected Revenue</span>
-                    <span className="text-[14px] font-mono font-medium text-emerald-600">
-                      {typeof recommendation.expectedRevenue === 'number' ? `₹${recommendation.expectedRevenue.toLocaleString()}` : recommendation.expectedRevenue}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                    <span className="text-[13px] text-slate-500">Confidence</span>
-                    <span className="text-[14px] font-mono font-medium text-slate-900">{recommendation.confidence || recommendation.expectedConversion || '85%'}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
-                    <span className="text-[13px] text-slate-500">Best Channel</span>
-                    <span className="text-[13px] font-medium text-slate-900">{selectedChannel}</span>
-                  </div>
-                  <div className="flex justify-between items-center pt-1">
-                    <span className="text-[13px] text-slate-500">Priority</span>
-                    <span className={clsx("text-[12px] font-semibold px-2 py-0.5 rounded border", priority.color)}>
-                      {priority.label}
-                    </span>
+            {/* Split Message Editor / Preview */}
+            <div className="flex flex-col md:flex-row gap-6 items-stretch">
+              
+              {/* Left: Editor */}
+              <div className="flex-1 flex flex-col gap-4">
+                <div className="flex items-center gap-4 border-b border-hairline">
+                  {['WhatsApp', 'Email', 'SMS'].map((channel) => (
+                    <button
+                      key={channel}
+                      onClick={() => handleSimulateChannelChange(channel)}
+                      className={clsx(
+                        "pb-2 text-[14px] font-[600] transition-colors border-b-2",
+                        selectedChannel === channel 
+                          ? "border-ink text-ink" 
+                          : "border-transparent text-ink-muted hover:text-ink"
+                      )}
+                    >
+                      {channel}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex flex-col gap-2 flex-1">
+                  <label className="text-[13px] font-[600] text-ink">Message Content</label>
+                  <textarea
+                    value={editableMessage}
+                    onChange={(e) => setEditableMessage(e.target.value)}
+                    className="w-full flex-1 min-h-[200px] border border-hairline rounded-[8px] p-4 text-[14px] leading-relaxed resize-none focus:outline-none focus:border-ink bg-white font-sans"
+                  />
+                  <div className="flex items-center justify-between text-[12px] text-ink-muted mt-1">
+                    <span>Variables: [Name], [Offer], [Link]</span>
+                    <span>{editableMessage.length} chars</span>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3 mt-2">
-                  <button 
-                    onClick={handleReviewCampaign}
-                    disabled={isProcessing}
-                    className="w-full border border-slate-300 hover:bg-slate-50 text-slate-900 px-4 py-2 rounded-md text-[13px] font-medium transition-colors"
-                  >
-                    Review Campaign
-                  </button>
+                <div className="pt-4 border-t border-hairline">
                   <button 
                     onClick={handleLaunchCampaign}
                     disabled={isProcessing}
-                    className="w-full bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-md text-[13px] font-medium transition-colors flex items-center justify-center gap-2"
+                    className="btn-primary w-full py-3 text-[14px]"
                   >
-                    Launch Campaign <FastArrowRight height={14} width={14} />
+                    {isProcessing ? 'Launching...' : 'Launch Campaign'} <FastArrowRight height={16} width={16} />
                   </button>
                 </div>
               </div>
-            </div>
 
-            {/* CENTER COLUMN: MESSAGE PREVIEW */}
-            <div className="w-full xl:flex-1 xl:min-w-[500px] flex flex-col gap-4">
-              <h2 className="text-[18px] font-semibold text-slate-900">Message Preview</h2>
-              
-              <div className="flex items-center gap-6 border-b border-slate-200">
-                {['WhatsApp', 'Email', 'SMS'].map((channel) => (
-                  <button
-                    key={channel}
-                    onClick={() => handleSimulateChannelChange(channel)}
-                    className={clsx(
-                      "pb-3 text-[14px] font-medium transition-colors border-b-2",
-                      selectedChannel === channel 
-                        ? "text-slate-900 border-slate-900" 
-                        : "text-slate-500 border-transparent hover:text-slate-700"
-                    )}
-                  >
-                    {channel}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-4 flex justify-center bg-slate-50 border border-slate-200 rounded-lg p-8 min-h-[500px]">
+              {/* Right: Actual Mockup */}
+              <div className="flex-1 bg-canvas-soft border border-hairline rounded-[8px] flex items-center justify-center p-8 min-h-[400px]">
                 {selectedChannel === 'WhatsApp' && (
                   <div className="w-[320px] bg-[#EFEAE2] rounded-[24px] border-[8px] border-slate-800 overflow-hidden flex flex-col shadow-sm relative">
                     <div className="bg-[#008069] text-white px-4 py-3 flex items-center gap-3 z-10">
@@ -388,140 +312,55 @@ function CampaignStudioContent() {
                         <UserStar height={18} width={18} className="text-slate-500" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="text-[14px] font-medium leading-tight">Brand Account</span>
-                        <span className="text-[11px] opacity-80">Official Business Account</span>
+                        <span className="text-[14px] font-[500] leading-tight">Brand Account</span>
+                        <span className="text-[11px] opacity-80">Official Business</span>
                       </div>
                     </div>
                     <div className="flex-1 p-4 flex flex-col gap-3 relative z-10">
-                      <div className="bg-white rounded-lg p-2 max-w-[90%] shadow-sm self-start relative text-[13px] text-slate-800 leading-relaxed">
-                        <div className="w-full h-32 bg-slate-200 rounded mb-2 flex items-center justify-center overflow-hidden">
-                        <img src="/xenocopilot-mock.png" className="object-cover w-full h-full" alt="Promo" />
-                        </div>
-                        {(messagePreview?.variantA?.copy?.replace(/<[^>]*>?/gm, '').replace(/\[(?:Customer )?Name\]/gi, 'Sarah').replace(/Hi \w+ (Customers|Audience)/gi, 'Hi Sarah') || `Hi Sarah, we miss you! Here is a ${recommendation.offer} just for you.`)}
+                      <div className="bg-white rounded-[8px] rounded-tl-none p-3 max-w-[90%] shadow-sm self-start relative text-[14px] text-slate-800 leading-relaxed whitespace-pre-wrap">
+                        {editableMessage}
                         <div className="text-[10px] text-slate-400 text-right mt-1">10:42 AM</div>
                       </div>
                       <div className="flex gap-2 w-[90%]">
-                        <button className="flex-1 bg-white text-[#00A884] border border-slate-200 py-2 rounded-md text-[13px] font-medium shadow-sm">Shop Now</button>
-                        <button className="flex-1 bg-white text-[#00A884] border border-slate-200 py-2 rounded-md text-[13px] font-medium shadow-sm">Stop msgs</button>
+                        <button className="flex-1 bg-white text-[#00A884] border border-slate-200 py-2 rounded-md text-[13px] font-[500] shadow-sm">Shop Now</button>
                       </div>
                     </div>
-                    {/* Fake WA background pattern */}
                     <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '10px 10px' }}></div>
                   </div>
                 )}
 
                 {selectedChannel === 'Email' && (
-                  <div className="w-[100%] max-w-[500px] bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col overflow-hidden">
-                    <div className="bg-slate-100 border-b border-slate-200 px-4 py-3 flex flex-col gap-1 text-[13px]">
-                      <div className="flex items-center gap-2"><span className="text-slate-500 w-12">From:</span><span className="font-medium">Brand Team &lt;hello@brand.com&gt;</span></div>
-                      <div className="flex items-center gap-2"><span className="text-slate-500 w-12">To:</span><span className="text-slate-700">customer@email.com</span></div>
-                      <div className="flex items-center gap-2"><span className="text-slate-500 w-12">Subject:</span><span className="font-semibold text-slate-900">{messagePreview?.variantA?.copy?.split('.')[0] || `Exclusive Offer: ${recommendation.offer}`}</span></div>
+                  <div className="w-full max-w-[400px] bg-white rounded-lg border border-hairline shadow-sm flex flex-col overflow-hidden">
+                    <div className="bg-canvas-soft border-b border-hairline px-4 py-3 flex flex-col gap-1 text-[13px]">
+                      <div className="flex items-center gap-2"><span className="text-ink-muted w-12">From:</span><span className="font-[500] text-ink">Brand Team</span></div>
+                      <div className="flex items-center gap-2"><span className="text-ink-muted w-12">Subject:</span><span className="font-[600] text-ink">Exclusive Offer</span></div>
                     </div>
-                    <div className="p-6 flex flex-col gap-4 text-[14px] text-slate-800 leading-relaxed items-center text-center">
-                      <div className="text-[20px] font-serif font-bold text-slate-900 tracking-tight">BRAND.</div>
-                      <div className="w-full h-48 bg-slate-100 rounded-md my-2 flex items-center justify-center overflow-hidden">
-                        <img src="/xenocopilot-mock.png" className="object-cover w-full h-full" alt="Sale" />
-                      </div>
-                      <p>{(messagePreview?.variantA?.copy?.replace(/<[^>]*>?/gm, '').replace(/\[(?:Customer )?Name\]/gi, 'Sarah') || `Hi Sarah, we noticed it's been a while since your last purchase. Come back and enjoy ${recommendation.offer} on our new collection.`)}</p>
-                      <button className="bg-slate-900 text-white px-8 py-3 mt-4 text-[13px] font-medium tracking-wide">CLAIM OFFER</button>
-                      <div className="text-[11px] text-slate-400 mt-8 pt-4 border-t border-slate-100 w-full">Update your email preferences or unsubscribe.</div>
+                    <div className="p-6 flex flex-col gap-4 text-[14px] text-ink leading-relaxed items-center text-center">
+                      <div className="text-[20px] font-serif font-bold tracking-tight">BRAND.</div>
+                      <p className="whitespace-pre-wrap text-left w-full">{editableMessage}</p>
+                      <button className="bg-ink text-white px-8 py-3 mt-4 text-[13px] font-[600] tracking-wide w-full">CLAIM OFFER</button>
                     </div>
                   </div>
                 )}
 
                 {selectedChannel === 'SMS' && (
                   <div className="w-[300px] bg-white rounded-[28px] border-[8px] border-slate-200 overflow-hidden flex flex-col shadow-sm">
-                    <div className="bg-slate-100/80 backdrop-blur-md px-4 py-3 flex items-center justify-center border-b border-slate-200">
-                      <div className="flex flex-col items-center">
-                        <div className="w-8 h-8 rounded-full bg-slate-300 flex items-center justify-center text-[10px] font-bold text-white mb-1">BR</div>
-                        <span className="text-[11px] font-semibold text-slate-900 leading-none">BRAND</span>
-                      </div>
+                    <div className="bg-canvas-soft px-4 py-3 flex items-center justify-center border-b border-hairline">
+                      <span className="text-[11px] font-[600] text-ink leading-none">BRAND</span>
                     </div>
-                    <div className="flex-1 p-4 bg-slate-50 flex flex-col gap-2 justify-end min-h-[300px]">
-                      <div className="bg-slate-200 rounded-2xl rounded-tl-sm p-3 max-w-[85%] self-start text-[13px] text-slate-800 leading-snug">
-                        {(messagePreview?.variantA?.copy?.replace(/<[^>]*>?/gm, '').replace(/\[(?:Customer )?Name\]/gi, 'Sarah') || `BRAND: Hi Sarah, use code VIP20 for ${recommendation.offer} at checkout. Valid 48 hrs. Shop: link.co/vip Reply STOP to opt out.`)}
+                    <div className="flex-1 p-4 bg-canvas flex flex-col gap-2 justify-end min-h-[300px]">
+                      <div className="bg-slate-200 rounded-2xl rounded-tl-sm p-3 max-w-[85%] self-start text-[14px] text-ink leading-snug whitespace-pre-wrap">
+                        {editableMessage}
                       </div>
-                      <div className="text-[10px] text-slate-400 text-center mt-2">Read 10:42 AM</div>
+                      <div className="text-[10px] text-ink-muted text-center mt-2">Read 10:42 AM</div>
                     </div>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* RIGHT COLUMN: SCORECARD, SIMULATION, PROVENANCE */}
-            <div className="w-full xl:w-[280px] flex-shrink-0 flex flex-col gap-6">
-              
-              {/* SCORECARD */}
-              <div className="flex flex-col gap-4">
-                <h2 className="text-[18px] font-semibold text-slate-900">Historical Performance</h2>
-                
-                <div className="border border-slate-200 rounded-lg p-5 flex flex-col gap-5 bg-white">
-                  <div className="flex flex-col gap-3">
-                    <h3 className="text-[12px] font-medium text-slate-500 uppercase tracking-wider">Supporting Evidence</h3>
-                    <ul className="flex flex-col gap-2">
-                      <li className="text-[13px] text-slate-700 flex items-start gap-2">
-                        <span className="text-slate-400 mt-0.5">•</span> {recommendation.audience?.count || 'Many'} {recommendation.audience?.name?.toLowerCase() || 'customers'} found
-                      </li>
-                      <li className="text-[13px] text-slate-700 flex items-start gap-2">
-                        <span className="text-slate-400 mt-0.5">•</span> Similar campaigns generated ₹1.4L avg
-                      </li>
-                      <li className="text-[13px] text-slate-700 flex items-start gap-2">
-                        <span className="text-slate-400 mt-0.5">•</span> {selectedChannel} converts 2.1x better here
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              {/* SIMULATION */}
-              {simulations?.scenarios && (
-                <div className="flex flex-col gap-4">
-                  <h2 className="text-[14px] font-semibold text-slate-900">Alternative Channels</h2>
-                  <div className="border border-slate-200 rounded-lg bg-white overflow-hidden">
-                    <table className="w-full text-left">
-                      <tbody className="divide-y divide-slate-100">
-                        {simulations.scenarios.map((s: any, i: number) => (
-                          <tr key={i} className="hover:bg-slate-50 transition-colors">
-                            <td className="py-2.5 px-4 text-[13px] font-medium text-slate-700">{s.channel}</td>
-                            <td className="py-2.5 px-4 text-[13px] font-mono text-slate-900 text-right">
-                              {typeof s.revenue === 'number' ? `₹${s.revenue.toLocaleString()}` : s.revenue}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* PROVENANCE */}
-              <div className="border border-slate-200 rounded-lg bg-white overflow-hidden mt-2">
-                <button 
-                  onClick={() => setShowProvenance(!showProvenance)}
-                  className="w-full flex items-center justify-between p-4 text-[13px] font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  View Data Provenance
-                  {showProvenance ? <NavArrowDown height={16} width={16} /> : <NavArrowRight height={16} width={16} />}
-                </button>
-                {showProvenance && (
-                  <div className="p-4 border-t border-slate-100 bg-slate-50 flex flex-col gap-3">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-medium text-slate-500 uppercase">Data Sources</span>
-                      <span className="text-[13px] text-slate-800">Historical Orders DB, Segment Activity</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[11px] font-medium text-slate-500 uppercase">Campaign History</span>
-                      <span className="text-[13px] text-slate-800">14 previous retention campaigns analyzed</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-            </div>
-            
           </div>
         )}
-
       </div>
     </div>
   );
@@ -529,7 +368,7 @@ function CampaignStudioContent() {
 
 export default function CampaignStudio() {
   return (
-    <Suspense fallback={<div className="p-10 text-center text-slate-500">Loading Studio...</div>}>
+    <Suspense fallback={<div className="p-6 text-ink-muted">Loading Studio...</div>}>
       <CampaignStudioContent />
     </Suspense>
   );

@@ -10,23 +10,23 @@
   }
 
   h1 {
-    @apply text-[48px] font-bold text-ink;
+    @apply text-[32px] font-[700] text-ink;
   }
   h2 {
-    @apply text-[24px] font-bold text-ink;
+    @apply text-[18px] font-[600] text-ink;
   }
   h3 {
-    @apply text-[18px] font-bold text-ink;
+    @apply text-[14px] font-[600] text-ink;
   }
   p {
-    @apply text-[15px] text-ink-muted leading-[1.6];
+    @apply text-[14px] text-ink-muted leading-[1.5];
   }
 }
 
 @layer components {
   /* Enterprise Cards */
   .card {
-    @apply bg-canvas rounded-[12px] border border-hairline p-6;
+    @apply bg-canvas rounded-[10px] border border-hairline p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-150;
   }
   
   /* Tables */
@@ -37,10 +37,10 @@
     @apply w-full text-left border-collapse;
   }
   .table-enterprise th {
-    @apply px-4 py-3 text-[12px] font-bold text-ink-muted border-b border-hairline bg-canvas-soft whitespace-nowrap uppercase tracking-wider;
+    @apply px-4 py-3 text-[13px] font-[600] text-ink-muted border-b border-hairline bg-canvas-soft whitespace-nowrap;
   }
   .table-enterprise td {
-    @apply px-4 py-4 text-[14px] text-ink border-b border-hairline whitespace-nowrap;
+    @apply px-4 py-3 text-[14px] text-ink border-b border-hairline whitespace-nowrap transition-colors duration-150;
   }
   .table-enterprise tr:hover td {
     @apply bg-canvas-soft/50;
