@@ -14,7 +14,7 @@ export async function fetchAPI<T>(path: string, options?: RequestInit): Promise<
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(err.error || err.message || `HTTP ${res.status}`);
+    throw new Error(err.message || err.error || `HTTP ${res.status}`);
   }
 
   return res.json();

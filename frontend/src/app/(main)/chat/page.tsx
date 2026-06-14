@@ -392,11 +392,7 @@ function CampaignStudioContent() {
                     <div className="flex-1 p-4 flex flex-col gap-3 relative z-10">
                       <div className="bg-white rounded-lg p-2 max-w-[90%] shadow-sm self-start relative text-[13px] text-slate-800 leading-relaxed">
                         <div className="w-full h-32 bg-slate-200 rounded mb-2 flex items-center justify-center overflow-hidden">
-                          {messagePreview?.variantA?.copy?.includes('shoe') || recommendation.offer?.includes('shoe') ? (
-                            <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&h=300&fit=crop" className="object-cover w-full h-full" alt="Promo" />
-                          ) : (
-                            <div className="text-slate-400 text-[11px] font-medium">Promo Image</div>
-                          )}
+                        <img src="/xenocopilot-mock.png" className="object-cover w-full h-full" alt="Promo" />
                         </div>
                         {(messagePreview?.variantA?.copy?.replace(/<[^>]*>?/gm, '').replace(/\[(?:Customer )?Name\]/gi, 'Sarah').replace(/Hi \w+ (Customers|Audience)/gi, 'Hi Sarah') || `Hi Sarah, we miss you! Here is a ${recommendation.offer} just for you.`)}
                         <div className="text-[10px] text-slate-400 text-right mt-1">10:42 AM</div>
@@ -421,11 +417,7 @@ function CampaignStudioContent() {
                     <div className="p-6 flex flex-col gap-4 text-[14px] text-slate-800 leading-relaxed items-center text-center">
                       <div className="text-[20px] font-serif font-bold text-slate-900 tracking-tight">BRAND.</div>
                       <div className="w-full h-48 bg-slate-100 rounded-md my-2 flex items-center justify-center overflow-hidden">
-                        {messagePreview?.variantA?.copy?.includes('VIP') ? (
-                          <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600&h=400&fit=crop" className="object-cover w-full h-full" alt="Sale" />
-                        ) : (
-                           <div className="text-slate-400 text-[12px] font-medium">Hero Image</div>
-                        )}
+                        <img src="/xenocopilot-mock.png" className="object-cover w-full h-full" alt="Sale" />
                       </div>
                       <p>{(messagePreview?.variantA?.copy?.replace(/<[^>]*>?/gm, '').replace(/\[(?:Customer )?Name\]/gi, 'Sarah') || `Hi Sarah, we noticed it's been a while since your last purchase. Come back and enjoy ${recommendation.offer} on our new collection.`)}</p>
                       <button className="bg-slate-900 text-white px-8 py-3 mt-4 text-[13px] font-medium tracking-wide">CLAIM OFFER</button>
