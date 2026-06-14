@@ -51,9 +51,7 @@ export default function OpportunitiesPage() {
       setIsLoading(false);
     });
   }, []);
-  const router = useRouter();
-  const [selectedOppId, setSelectedOppId] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
+
 
   // Keyboard shortcut to close drawer
   useEffect(() => {
