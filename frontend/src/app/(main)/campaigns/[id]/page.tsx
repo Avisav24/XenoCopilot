@@ -157,48 +157,56 @@ export default function CampaignDetail({ params }: { params: { id: string } }) {
               </div>
             </div>
 
-            <div className="flex flex-col gap-4">
-              <h2 className="text-[18px] font-[600] text-ink flex items-center gap-2">
-                <Spark height={18} width={18} className={campaign.status === 'completed' && learning ? "text-ink" : "text-ink-muted"} /> Operational Learnings
-              </h2>
-              <div className="card !p-0 overflow-hidden">
-                {campaign.status === 'completed' && learning ? (
-                  <table className="table-enterprise !m-0">
-                    <tbody className="divide-y divide-hairline">
-                      <tr>
-                        <th className="w-[120px] !text-[12px] whitespace-nowrap bg-canvas-soft border-r border-hairline align-top">Prediction</th>
-                        <td className="!text-[13px] leading-relaxed whitespace-pre-wrap p-4">{learning.learning.includes('). ') ? learning.learning.split('). ')[0] + ').' : learning.learning}</td>
-                      </tr>
-                      <tr>
-                        <th className="!text-[12px] whitespace-nowrap bg-canvas-soft border-r border-hairline align-top">Actual Output</th>
-                        <td className="!text-[13px] leading-relaxed p-4">₹{Number(campaign.actual_revenue || 0).toLocaleString('en-IN')} revenue generated</td>
-                      </tr>
-                      <tr>
-                        <th className="!text-[12px] whitespace-nowrap bg-canvas-soft border-r border-hairline align-top">Key Insight</th>
-                        <td className="!text-[13px] font-[500] leading-relaxed whitespace-pre-wrap p-4">{learning.learning.includes('). ') ? learning.learning.split('). ').slice(1).join('). ').trim() : 'No additional insights.'}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-8 gap-4 text-center h-[200px]">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="animate-spin text-ink-muted">
-                      <line x1="12" y1="2" x2="12" y2="6"></line>
-                      <line x1="12" y1="18" x2="12" y2="22"></line>
-                      <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
-                      <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
-                      <line x1="2" y1="12" x2="6" y2="12"></line>
-                      <line x1="18" y1="12" x2="22" y2="12"></line>
-                      <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
-                      <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
-                    </svg>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[13px] font-[600] text-ink">Analyzing performance...</span>
-                      <span className="text-[12px] text-ink-muted">Insights will appear here once the campaign finishes.</span>
-                    </div>
-                  </div>
-                )}
+          </div>
+        </div>
+
+        {/* Big Centered Operational Learnings */}
+        <div className="w-full flex flex-col gap-6 items-center mt-4">
+          <h2 className="text-[20px] font-[600] text-ink flex items-center justify-center gap-2">
+            <Spark height={20} width={20} className={campaign.status === 'completed' && learning ? "text-primary" : "text-ink-muted"} /> Operational Learnings
+          </h2>
+          
+          <div className="card !p-10 flex flex-col items-center text-center gap-8 max-w-[900px] w-full shadow-sm">
+            {campaign.status === 'completed' && learning ? (
+              <>
+                <div className="flex flex-col gap-3">
+                  <span className="text-[12px] font-[600] text-ink-muted uppercase tracking-widest">Prediction vs Actual</span>
+                  <p className="text-[16px] text-ink leading-relaxed">
+                    {learning.learning.includes('). ') ? learning.learning.split('). ')[0] + ').' : learning.learning}
+                    <br/>
+                    <strong className="text-[18px] mt-2 block font-mono-numbers">₹{Number(campaign.actual_revenue || 0).toLocaleString('en-IN')} revenue generated</strong>
+                  </p>
+                </div>
+                
+                <div className="w-24 h-px bg-hairline"></div>
+                
+                <div className="flex flex-col gap-3 items-center">
+                  <span className="text-[12px] font-[700] text-primary uppercase tracking-widest bg-primary/10 px-3 py-1 rounded-full flex items-center gap-1.5">
+                    <Spark width={14} height={14}/> Key Insight
+                  </span>
+                  <p className="text-[20px] font-[500] text-ink leading-snug max-w-[700px] italic">
+                    "{learning.learning.includes('). ') ? learning.learning.split('). ').slice(1).join('). ').trim() : 'No additional insights.'}"
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 gap-5 w-full">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="animate-spin text-ink-muted">
+                  <line x1="12" y1="2" x2="12" y2="6"></line>
+                  <line x1="12" y1="18" x2="12" y2="22"></line>
+                  <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                  <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                  <line x1="2" y1="12" x2="6" y2="12"></line>
+                  <line x1="18" y1="12" x2="22" y2="12"></line>
+                  <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                  <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                </svg>
+                <div className="flex flex-col gap-1.5 items-center">
+                  <span className="text-[15px] font-[600] text-ink">Analyzing campaign performance...</span>
+                  <span className="text-[13px] text-ink-muted">Deep learning insights will appear here once the campaign finishes.</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
