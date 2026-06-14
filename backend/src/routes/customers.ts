@@ -164,6 +164,14 @@ export async function customerRoutes(fastify: FastifyInstance) {
       else if (customer.health_score < 40) personasList.push('Dormant');
       else personasList.push('Discount Hunter');
     }
+    
+    // Ensure "Beauty VIP" is always the very first tag displayed
+    personasList.sort((a, b) => {
+      if (a.toLowerCase() === 'beauty vip') return -1;
+      if (b.toLowerCase() === 'beauty vip') return 1;
+      return 0;
+    });
+    
     const primaryPersona = personasList[0];
 
     // Days Since
