@@ -440,7 +440,7 @@ function CampaignStudioContent() {
                     </div>
                     {/* Image Area */}
                     <div className="w-full aspect-square bg-slate-900 flex flex-col items-center justify-center relative overflow-hidden">
-                       <img src={messageData?.imageUrl || "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=800"} className="w-full h-full object-cover" alt="Post" />
+                       <img src={messagePreview?.imageUrl || "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=800"} className="w-full h-full object-cover" alt="Post" />
                     </div>
                     {/* Actions & Caption */}
                     <div className="flex-1 p-4 flex flex-col gap-3 relative z-10 bg-black">
@@ -475,7 +475,7 @@ function CampaignStudioContent() {
                     </div>
                     {/* Image Area */}
                     <div className="w-full h-[200px] bg-slate-100 flex flex-col items-center justify-center border-y border-hairline overflow-hidden">
-                       <img src={messageData?.imageUrl || "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=800"} className="w-full h-full object-cover" alt="Ad Creative" />
+                       <img src={messagePreview?.imageUrl || "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=80&w=800"} className="w-full h-full object-cover" alt="Ad Creative" />
                     </div>
                     {/* Actions */}
                     <div className="px-4 py-3 bg-slate-50 flex items-center justify-between border-b border-hairline">
