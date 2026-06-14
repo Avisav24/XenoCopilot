@@ -230,7 +230,7 @@ export async function campaignRoutes(fastify: FastifyInstance) {
     const actualRevenue = Math.round(totalRevenue);
     
     // Revenue Attribution Engine
-    const predictedRevenue = Math.round(total * 0.02 * 1500); // Mock baseline prediction
+    const predictedRevenue = Number(campaign.predicted_revenue || 0) || Math.round(total * 0.05 * 1500);
     const difference = actualRevenue - predictedRevenue;
     const performanceVsPrediction = predictedRevenue > 0 ? ((difference / predictedRevenue) * 100).toFixed(1) : '0';
     

@@ -111,8 +111,9 @@ export async function runSimulation(campaign: any) {
   await sleep(2000);
 
   // -- Tick 5: Purchased --
-  // We want to hit the target conversion rate overall
-  const targetPurchases = Math.ceil(total * targetConversionRate);
+  // We want to hit the target conversion rate overall, but let's add some realistic noise (±20%)
+  const noise = 0.8 + (Math.random() * 0.4);
+  const targetPurchases = Math.ceil(total * (targetConversionRate * noise));
   const purchasedIds = getRandomSubset(clickedIds, targetPurchases / Math.max(1, clickedIds.length)); 
   
   await updateComms(purchasedIds, 'purchased', 'purchased_at');
