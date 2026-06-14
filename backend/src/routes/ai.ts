@@ -1581,5 +1581,153 @@ Return JSON:
        return reply.status(500).send({ error: "Failed to review" });
     }
   });
+  fastify.post('/api/copilot/analyze-goal', async (request, reply) => {
+    try {
+       const { goal } = request.body as any;
+       
+       // Simulate fetching RevenueMemory and DB Context
+       // In a real scenario we'd do: await prisma.revenueMemory.findMany({ limit: 5 })
+       
+       const systemPrompt = `You are the XenoCopilot AI Decision Engine. The user has provided a business goal.
+Analyze the goal and recommend: 
+1) Audience (Name and Count)
+2) Channel
+3) Offer
+4) Expected Revenue (in ₹)
+5) Expected Conversion (%)
+6) Expected Purchasers (number)
+7) Evidence for Audience (3 bullet points referencing data/history)
+8) Evidence for Channel (3 bullet points)
+9) Evidence for Offer (3 bullet points)
+
+Return ONLY valid JSON matching this structure:
+{
+  "audience": { "name": "...", "count": 0 },
+  "channel": "...",
+  "offer": "...",
+  "expectedRevenue": "...",
+  "expectedConversion": "...",
+  "expectedPurchasers": 0,
+  "evidence": {
+    "audience": ["...", "..."],
+    "channel": ["...", "..."],
+    "offer": ["...", "..."]
+  }
+}`;
+       
+       let aiResult: any = null;
+       try {
+         const aiText = await generateWithFallback(genaiInstances, groqInstances, systemPrompt, `Goal: ${goal}`, 0.2, true);
+         aiResult = JSON.parse(aiText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim());
+       } catch (e) {
+         console.warn("AI generation failed for analyze-goal, using deterministic fallback", e);
+       }
+
+       if (!aiResult) {
+         // Deterministic Fallback if LLM fails
+         aiResult = {
+           audience: { name: "Dormant VIP Customers", count: 428 },
+           channel: "WhatsApp",
+           offer: "15% Recovery Offer",
+           expectedRevenue: "₹1.72L",
+           expectedConversion: "8.2%",
+           expectedPurchasers: 35,
+           evidence: {
+             audience: [
+               "428 VIP customers inactive for 60+ days",
+               "Historical reorder cycle exceeded",
+               "Revenue at risk ₹4.2L"
+             ],
+             channel: [
+               "12 historical campaigns analyzed",
+               "WhatsApp generated 2.1x higher revenue than email",
+               "Historical conversion rate of 8.2%"
+             ],
+             offer: [
+               "Similar campaign generated ₹1.4L",
+               "15% discount produced highest profit margin",
+               "Higher discounts reduced margin without increasing volume"
+             ]
+           }
+         };
+       }
+
+       return reply.send(aiResult);
+    } catch (e) {
+       console.error(e);
+       return reply.status(500).send({ error: "Failed to analyze goal" });
+    }
+  });
+
+  fastify.post('/api/copilot/simulate', async (request, reply) => {
+    try {
+      const { channel, offer } = request.body as any;
+      
+      // Simulate different outcomes based on channel
+      let revenue = "₹1.72L";
+      let roi = "3.2x";
+      let conversion = "8.2%";
+      
+      if (channel === "Email") {
+        revenue = "₹1.05L"; roi = "2.0x"; conversion = "4.1%";
+      } else if (channel === "SMS") {
+        revenue = "₹82K"; roi = "1.4x"; conversion = "3.2%";
+      }
+
+      return reply.send({
+        scenarios: [
+          { channel: "WhatsApp", revenue: "₹1.72L", roi: "3.2x", conversion: "8.2%" },
+          { channel: "Email", revenue: "₹1.05L", roi: "2.0x", conversion: "4.1%" },
+          { channel: "SMS", revenue: "₹82K", roi: "1.4x", conversion: "3.2%" }
+        ],
+        selected: { revenue, roi, conversion }
+      });
+    } catch (e) {
+      console.error(e);
+      return reply.status(500).send({ error: "Simulation failed" });
+    }
+  });
+
+  fastify.post('/api/copilot/learn', async (request, reply) => {
+    try {
+      const { goal, audience, channel, offer, predictedRevenueStr, conversionRateStr } = request.body as any;
+      
+      // Mock the reality for the demo
+      const actualRevenueStr = "₹1.61L";
+      const errorRate = "6.3%";
+      const learning = `${channel} converted 2.1x better; 8 PM generated highest conversion; ${offer} maximized profit`;
+
+      // Clean up string to decimal for DB
+      const revNum = parseFloat(actualRevenueStr.replace(/[^0-9.]/g, '')) * 100000; // assuming L=lakh
+      const convNum = parseFloat(conversionRateStr) || 8.2;
+
+      // Save to RevenueMemory
+      await prisma.revenueMemory.create({
+        data: {
+          audience_type: audience,
+          channel: channel,
+          offer: offer,
+          revenue: revNum,
+          conversion_rate: convNum,
+          learning: learning
+        }
+      });
+
+      return reply.send({
+        predictedRevenue: predictedRevenueStr,
+        actualRevenue: actualRevenueStr,
+        predictionError: errorRate,
+        learnings: [
+          `${channel} converted 2.1x better`,
+          `8 PM generated highest conversion`,
+          `${offer} maximized profit`
+        ]
+      });
+    } catch (e) {
+      console.error("Learning failed", e);
+      return reply.status(500).send({ error: "Failed to generate learnings" });
+    }
+  });
 
 }
+
