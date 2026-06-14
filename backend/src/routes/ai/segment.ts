@@ -60,6 +60,15 @@ Rules:
       if (parsed.goal_category === "Audience Discovery" || !parsed.goal_category) {
         let prismaWhere: any = {};
         if (parsed.filters) {
+          // FIX 1: The "Invalid Filter" Crash
+          // Sanitize incoming LLM JSON keys against our actual database schema
+          const allowedKeys = ['city', 'gender', 'min_spent', 'max_spent', 'days_since_last_order', 'health_score_less_than'];
+          const safeFilters: any = {};
+          for (const key of Object.keys(parsed.filters)) {
+            if (allowedKeys.includes(key)) safeFilters[key] = parsed.filters[key];
+          }
+          parsed.filters = safeFilters;
+
           if (parsed.filters.city) prismaWhere.city = { contains: parsed.filters.city, mode: 'insensitive' };
           if (parsed.filters.gender) prismaWhere.gender = { equals: parsed.filters.gender, mode: 'insensitive' };
           if (parsed.filters.min_spent || parsed.filters.max_spent) {
@@ -105,6 +114,31 @@ Rules:
         databaseMetrics = { topOpportunities: [] };
       } else {
         databaseMetrics = { status: "System Operational" };
+      }
+
+      // FIX 4: The "Empty State" Delusion
+      // If the database returns 0 rows, LLMs hallucinate badly. Short-circuit the API call here.
+      if (parsed.goal_category === "Audience Discovery" && count === 0) {
+        return reply.send({
+          id: 'dyn_' + Date.now(),
+          name: parsed.goal_category,
+          description: goal,
+          count: 0,
+          revenue: '₹0',
+          revenueRaw: 0,
+          expectedRevenue: 0,
+          expectedPurchasers: 0,
+          conversionRate: convRate,
+          audienceMatch: 'Low',
+          aov: '₹0',
+          risk: 'Low',
+          channel: channelName,
+          goal: parsed.goal_category,
+          ai_response_text: "No customers match this exact criteria. Try broadening your search or removing strict filters.",
+          structuredInsight: null,
+          prismaLogic: activeFilters ? JSON.stringify(activeFilters, null, 2) : null,
+          segmentReasoning: "Short-circuited AI generation due to 0 matching records to save API costs and prevent hallucination."
+        });
       }
 
       // STEP 3: INSIGHT GENERATION — LLM synthesizes business recommendation

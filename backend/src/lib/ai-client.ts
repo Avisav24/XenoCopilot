@@ -36,7 +36,8 @@ export async function generateWithFallback(
   systemInstruction: string,
   userPrompt: string,
   temperature: number,
-  isJson: boolean = false
+  isJson: boolean = false,
+  timeoutMs: number = 8500 // FIX 3: Vercel Serverless Timeouts (10s limit)
 ): Promise<string> {
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
   let lastGeminiError: Error | undefined;
@@ -46,11 +47,19 @@ export async function generateWithFallback(
       const config: any = { systemInstruction, temperature };
       if (isJson) config.responseMimeType = 'application/json';
 
-      const response = await genaiInstances[i].models.generateContent({
-        model,
-        contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-        config,
-      });
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('LLM Request Timeout')), timeoutMs)
+      );
+
+      const response = await Promise.race([
+        genaiInstances[i].models.generateContent({
+          model,
+          contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
+          config,
+        }),
+        timeoutPromise
+      ]);
+      
       return response?.text ?? '';
     } catch (error: any) {
       console.warn(`[Gemini API] Key ${i + 1} Failed: ${error.message}. Trying next...`);
@@ -75,7 +84,15 @@ export async function generateWithFallback(
       };
       if (isJson) params.response_format = { type: 'json_object' };
 
-      const response = await groqInstances[i].chat.completions.create(params);
+      const timeoutPromise = new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('LLM Request Timeout')), timeoutMs)
+      );
+
+      const response = await Promise.race([
+        groqInstances[i].chat.completions.create(params),
+        timeoutPromise
+      ]);
+      
       return response.choices[0]?.message?.content ?? '';
     } catch (groqError: any) {
       console.warn(`[Groq API] Key ${i + 1} Failed: ${groqError.message}. Trying next...`);
