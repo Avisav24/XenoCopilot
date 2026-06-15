@@ -41,7 +41,7 @@ export default function MarketingPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       router.push('/opportunities');
-    }, 3000);
+    }, 1500);
 
     return () => clearTimeout(timer);
   }, [router]);
