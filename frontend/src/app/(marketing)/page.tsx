@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 
 const AiSpinner = () => (
   <div className="relative flex items-center justify-center w-12 h-12">
-    <div className="absolute inset-0 rounded-full blur-[8px] bg-gradient-to-r from-[#c8b8e0] via-[#e8b8c4] to-[#a8c8e8] opacity-60 animate-spin" style={{ animationDuration: '2s' }} />
     <svg
       width="48"
       height="48"
